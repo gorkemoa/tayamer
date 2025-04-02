@@ -78,6 +78,9 @@ class AuthService {
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.setString(_tokenKey, token);
                 
+                // UserID'yi SharedPreferences'a int olarak kaydet
+                await prefs.setInt('user_id', userId is int ? userId : int.parse(userId.toString()));
+                
                 // UserID'yi kullanıcı bilgisi olarak kaydedelim
                 await prefs.setString(_userDataKey, jsonEncode({
                   'userID': userId,
@@ -99,6 +102,9 @@ class AuthService {
                 // Token ve kullanıcı bilgilerini kaydet
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.setString(_tokenKey, token);
+                
+                // UserID'yi SharedPreferences'a int olarak kaydet
+                await prefs.setInt('user_id', userId is int ? userId : int.parse(userId.toString()));
                 
                 // UserID'yi kullanıcı bilgisi olarak kaydedelim
                 await prefs.setString(_userDataKey, jsonEncode({

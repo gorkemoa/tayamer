@@ -31,7 +31,27 @@ class UserService {
       }
       
       // Kullanıcı ID'sini SharedPreferences'tan al
-      final userId = prefs.getInt('user_id');
+      int? userId = prefs.getInt('user_id');
+      
+      // Eğer user_id anahtarıyla bulunamazsa, user_data içindeki JSON'dan almayı dene
+      if (userId == null) {
+        final userData = prefs.getString('user_data');
+        if (userData != null && userData.isNotEmpty) {
+          try {
+            final Map<String, dynamic> userDataMap = jsonDecode(userData);
+            if (userDataMap.containsKey('userID')) {
+              final userIdValue = userDataMap['userID'];
+              userId = userIdValue is int ? userIdValue : int.parse(userIdValue.toString());
+              
+              // Gelecekteki istekler için user_id anahtarıyla kaydedelim
+              await prefs.setInt('user_id', userId);
+            }
+          } catch (e) {
+            print('Kullanıcı verisi JSON çözümleme hatası: $e');
+          }
+        }
+      }
+      
       if (userId == null) {
         print('Kullanıcı ID bulunamadı, kullanıcı bilgileri alınamıyor');
         return null;
