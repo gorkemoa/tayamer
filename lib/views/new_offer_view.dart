@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+import 'dashboard_view.dart';
+import 'home_view.dart';
 
 class NewOfferView extends StatefulWidget {
   const NewOfferView({super.key});
@@ -9,11 +11,14 @@ class NewOfferView extends StatefulWidget {
 }
 
 class _NewOfferViewState extends State<NewOfferView> {
+  bool _isBottomSheetActive = false;
+
   @override
   void initState() {
     super.initState();
     // Widget tamamen initialize olduktan sonra bottom sheet'i göster
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       _showPolicyTypeBottomSheet(context);
     });
   }
@@ -22,47 +27,6 @@ class _NewOfferViewState extends State<NewOfferView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text(
-          'Teklif Merkezi',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        elevation: 0,
-        backgroundColor: Colors.white,
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.description_outlined, 
-              size: 100, 
-              color: Colors.grey[400]
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Henüz teklifiniz bulunmuyor',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[700],
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Yeni teklif oluşturmak için aşağıdaki butona tıklayın',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
       bottomNavigationBar: BottomAppBar(
         elevation: 8,
         color: Colors.white,
@@ -92,8 +56,13 @@ class _NewOfferViewState extends State<NewOfferView> {
   }
   
   void _showPolicyTypeBottomSheet(BuildContext context) {
+    if (_isBottomSheetActive) return;
+    
+    _isBottomSheetActive = true;
+    
     showModalBottomSheet(
       context: context,
+      isDismissible: true,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -114,7 +83,11 @@ class _NewOfferViewState extends State<NewOfferView> {
                 title: const Text('Poliçe Tipi Seç'),
                 leading: IconButton(
                   icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    // Bottom sheet'i kapat ve ana sayfaya dön
+                    Navigator.pop(context);
+                    _navigateToHomeIndex(0); // Ana sayfa (Dashboard) indeksi
+                  },
                 ),
               ),
               Expanded(
@@ -180,6 +153,26 @@ class _NewOfferViewState extends State<NewOfferView> {
           );
         },
       ),
+    ).then((_) {
+      _isBottomSheetActive = false;
+      // Bottom sheet kapatıldığında ana sayfaya dön
+      // Bu, kullanıcı swipe ile kapatırsa da çalışır
+      if (mounted) {
+        _navigateToHomeIndex(0); // Ana sayfa (Dashboard) indeksi
+      }
+    });
+  }
+
+  void _navigateToHomeIndex(int index) {
+    if (!mounted) return;
+    
+    // Ana sayfaya geri dön ve belirli bir indekse git
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (context) => HomeView(), 
+        settings: RouteSettings(arguments: index)
+      ),
+      (route) => false, // Tüm route'ları temizle
     );
   }
 
@@ -264,15 +257,23 @@ class _NewOfferViewState extends State<NewOfferView> {
         _processQRResult(context, policyType, qrResult);
       } else {
         // Kullanıcı taramadan vazgeçti
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('QR tarama iptal edildi')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('QR tarama iptal edildi')),
+          );
+          // QR tarama iptal edildiğinde de ana sayfaya dön
+          _navigateToHomeIndex(0); // Ana sayfa (Dashboard) indeksi
+        }
       }
     } catch (e) {
       // Hata durumunda
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('QR tarama sırasında hata oluştu: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('QR tarama sırasında hata oluştu: $e')),
+        );
+        // Hata durumunda da ana sayfaya dön
+        _navigateToHomeIndex(0); // Ana sayfa (Dashboard) indeksi
+      }
     }
   }
   
@@ -280,11 +281,13 @@ class _NewOfferViewState extends State<NewOfferView> {
     // QR sonucunu işlemek için burada gerekli kodları ekle
     // Örneğin, API'ye istek gönderme, veritabanına kaydetme vb.
     
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$policyType için QR sonucu: $qrResult')),
-    );
-    
-    // Bu kısımda QR kod sonucuna göre yapılacak işlemleri ekle
-    // Örneğin, başka bir sayfaya yönlendirme, verileri görüntüleme vb.
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$policyType için QR sonucu: $qrResult')),
+      );
+      
+      // QR işlemi tamamlandıktan sonra ana sayfaya dön
+      _navigateToHomeIndex(0); // Ana sayfa (Dashboard) indeksi
+    }
   }
 } 

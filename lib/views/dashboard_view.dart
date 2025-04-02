@@ -23,15 +23,19 @@ class _DashboardViewState extends State<DashboardView> {
   Future<void> _fetchUserInfo() async {
     try {
       final user = await _userService.getUserInfo();
-      setState(() {
-        _user = user;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _user = user;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       print('Dashboard: Kullanıcı bilgileri alınırken hata: $e');
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 

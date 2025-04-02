@@ -30,18 +30,26 @@ class UserService {
         return null;
       }
       
-      // Test için sabit userId kullanıyoruz
-      const userId = 443; // Sabit kullanıcı ID'si
+      // Kullanıcı ID'sini SharedPreferences'tan al
+      final userId = prefs.getInt('user_id');
+      if (userId == null) {
+        print('Kullanıcı ID bulunamadı, kullanıcı bilgileri alınamıyor');
+        return null;
+      }
       
+      // Token ile istek yap
       print('Kullanıcı bilgileri isteği gönderiliyor: $_baseUrl/user/id/$userId');
       
-      final response = await http.get(
+      // PUT isteği ile userToken gönderiyoruz
+      final response = await http.put(
         Uri.parse('$_baseUrl/user/id/$userId'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': _getBasicAuthHeader(),
-          'userToken': token,
         },
+        body: jsonEncode({
+          'userToken': token,
+        }),
       );
       
       print('API yanıtı: StatusCode=${response.statusCode}');
@@ -62,13 +70,20 @@ class UserService {
       
       // API başarılı yanıt verdiyse kullanıcı verisini dön
       if (data is Map<String, dynamic> && data['error'] == false) {
-        if (data['data'] != null && data['data'] is Map<String, dynamic>) {
-          // Gerçek API verisini kullan
-          final user = User.fromJson(data['data']);
+        // Yeni API yapısı: data.user içinde kullanıcı bilgileri var
+        if (data['data'] != null && 
+            data['data'] is Map<String, dynamic> && 
+            data['data']['user'] != null && 
+            data['data']['user'] is Map<String, dynamic>) {
+          
+          // Kullanıcı verisini data.user'dan al
+          final user = User.fromJson(data['data']['user']);
           print('Kullanıcı bilgileri alındı: ${user.userFullname}');
           return user;
-        } else {
-          print('API yanıtında kullanıcı verisi bulunamadı');
+        } 
+        // API yanıtında data.user alanı yoksa null döndür
+        else {
+          print('API yanıtında beklenen veri yapısı yok. API yanıtı: ${response.body}');
           return null;
         }
       } else {

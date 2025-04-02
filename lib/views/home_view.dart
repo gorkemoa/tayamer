@@ -36,6 +36,18 @@ class _HomeViewState extends State<HomeView> {
       const ProfileView(),
     ];
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Route argümanlarını kontrol et ve gerekirse seçili indeksi güncelle
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args != null && args is int && args >= 0 && args < _pages.length) {
+      setState(() {
+        _selectedIndex = args;
+      });
+    }
+  }
   
   Future<void> _fetchUserInfo() async {
     try {

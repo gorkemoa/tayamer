@@ -117,7 +117,7 @@ class _ProfileViewState extends State<ProfileView> {
                           ),
                           width: double.infinity,
                           child: Text(
-                            _user?.userFullname ?? 'Görkem ÖZTÜRK',
+                            _user?.userFullname ?? 'Adınız Soyadınız',
                             style: const TextStyle(fontSize: 16),
                           ),
                         ),
@@ -137,7 +137,7 @@ class _ProfileViewState extends State<ProfileView> {
                           ),
                           width: double.infinity,
                           child: Text(
-                            _user?.username ?? 'gorkemozturk',
+                            _user?.username ?? 'Kullanıcı Adınız',
                             style: const TextStyle(fontSize: 16),
                           ),
                         ),
