@@ -38,34 +38,15 @@ class _ProfileViewState extends State<ProfileView> {
   }
 
   Future<void> _logout(BuildContext context) async {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Çıkış Yap'),
-        content: const Text('Hesabınızdan çıkış yapmak istediğinize emin misiniz?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('İptal'),
-          ),
-          TextButton(
-            onPressed: () async {
-              await _authService.logout();
-              if (context.mounted) {
-                Navigator.pop(context); // Dialog'u kapat
-                // Ana sayfaya yönlendir ve tüm geçmişi temizle
-                Navigator.pushNamedAndRemoveUntil(
-                  context, 
-                  '/', 
-                  (route) => false
-                );
-              }
-            },
-            child: const Text('Çıkış Yap'),
-          ),
-        ],
-      ),
-    );
+    await _authService.logout();
+    if (context.mounted) {
+      // Ana sayfaya yönlendir ve tüm geçmişi temizle
+      Navigator.pushNamedAndRemoveUntil(
+        context, 
+        '/', 
+        (route) => false
+      );
+    }
   }
 
   @override
@@ -76,244 +57,208 @@ class _ProfileViewState extends State<ProfileView> {
       );
     }
 
-    return Container(
-      color: Colors.grey[100],
-      padding: const EdgeInsets.all(16),
-      child: ListView(
-        children: [
-          const SizedBox(height: 16),
-          // Profil Resmi ve Kullanıcı Adı
-          _buildProfileHeader(),
-          const SizedBox(height: 24),
-          
-          // Ayarlar Bölümü
-          const Text(
-            'Hesap Ayarları',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
-            ),
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1F3567),
+        title: const Text(
+          'Hesabım',
+          style: TextStyle(color: Colors.white),
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+          onPressed: () {},
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_none, color: Colors.white),
+            onPressed: () {},
           ),
-          const SizedBox(height: 8),
-          _buildSettingsCard(),
-          
-          const SizedBox(height: 24),
-          // Destek Bölümü
-          const Text(
-            'Destek',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 8),
-          _buildSupportCard(),
-          
-          const SizedBox(height: 24),
-          // Hesap İşlemleri
-          const Text(
-            'Hesap',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 8),
-          _buildAccountCard(),
-          const SizedBox(height: 24),
         ],
       ),
-    );
-  }
-
-  Widget _buildProfileHeader() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            CircleAvatar(
-              radius: 30,
-              backgroundColor: Colors.grey[200],
-              child: const Icon(
-                Icons.person,
-                size: 30,
-                color: Colors.grey,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
+            // Kullanıcı Bilgileri Bölümü
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    _user?.userFullname ?? 'Kullanıcı Adı',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                  // Profil Fotoğrafı
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      border: Border.all(color: Colors.grey[300]!),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _user?.userEmail ?? 'email@example.com',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
+                  const SizedBox(width: 16),
+                  // Kullanıcı Bilgileri
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Adınız Soyadınız',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        Container(
+                          margin: const EdgeInsets.only(top: 8, bottom: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          width: double.infinity,
+                          child: Text(
+                            _user?.userFullname ?? 'Görkem ÖZTÜRK',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ),
+                        const Text(
+                          'Kullanıcı Adınız',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        Container(
+                          margin: const EdgeInsets.only(top: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          width: double.infinity,
+                          child: Text(
+                            _user?.username ?? 'gorkemozturk',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _buildSettingsCard() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          _buildSettingsItem(
-            icon: Icons.person_outline,
-            title: 'Profil Bilgilerim',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Profil bilgileri yakında eklenecek')),
-              );
-            },
-          ),
-          const Divider(height: 1),
-          _buildSettingsItem(
-            icon: Icons.notifications_outlined,
-            title: 'Bildirim Ayarları',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Bildirim ayarları yakında eklenecek')),
-              );
-            },
-          ),
-          const Divider(height: 1),
-          _buildSettingsItem(
-            icon: Icons.lock_outline,
-            title: 'Güvenlik',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Güvenlik ayarları yakında eklenecek')),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSupportCard() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          _buildSettingsItem(
-            icon: Icons.help_outline,
-            title: 'Yardım Merkezi',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Yardım merkezi yakında eklenecek')),
-              );
-            },
-          ),
-          const Divider(height: 1),
-          _buildSettingsItem(
-            icon: Icons.message_outlined,
-            title: 'Bize Ulaşın',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('İletişim bilgileri yakında eklenecek')),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAccountCard() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          _buildSettingsItem(
-            icon: Icons.info_outline,
-            title: 'Uygulama Hakkında',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Uygulama bilgileri yakında eklenecek')),
-              );
-            },
-          ),
-          const Divider(height: 1),
-          _buildSettingsItem(
-            icon: Icons.logout,
-            title: 'Çıkış Yap',
-            color: Colors.red,
-            onTap: () => _logout(context),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSettingsItem({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-    Color? color,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: color ?? Colors.grey[700],
-              size: 24,
+            // Menü Öğeleri
+            _buildMenuItem(
+              icon: Icons.person,
+              title: 'Profilim',
+              onTap: () {},
             ),
-            const SizedBox(width: 16),
-            Expanded(
+            
+            _buildMenuItem(
+              icon: Icons.message,
+              title: 'SMS Taleplerim',
+              onTap: () {},
+            ),
+            
+            _buildMenuItem(
+              icon: Icons.help,
+              title: 'Yardım',
+              onTap: () {},
+            ),
+            
+            // Alt bilgiler
+            const SizedBox(height: 20),
+            const Center(
               child: Text(
-                title,
+                'Office701 Bilgi Teknolojileri © 2025',
                 style: TextStyle(
-                  fontSize: 16,
-                  color: color ?? Colors.black87,
+                  color: Colors.grey,
+                  fontSize: 14,
                 ),
               ),
             ),
-            Icon(
-              Icons.arrow_forward_ios,
-              color: Colors.grey[400],
-              size: 16,
+            
+            const SizedBox(height: 16),
+            const Center(
+              child: Text(
+                'Gizlilik Politikası',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 14,
+                ),
+              ),
             ),
+            
+            const SizedBox(height: 16),
+            const Center(
+              child: Text(
+                'v2.3.7',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            Center(
+              child: TextButton(
+                onPressed: () => _logout(context),
+                child: const Text(
+                  'Çıkış Yap',
+                  style: TextStyle(
+                    color: Colors.redAccent,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 20),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMenuItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        leading: Icon(
+          icon,
+          color: Colors.grey[600],
+          size: 28,
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        trailing: const Icon(
+          Icons.chevron_right,
+          color: Colors.black54,
+        ),
+        onTap: onTap,
       ),
     );
   }

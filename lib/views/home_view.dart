@@ -63,46 +63,7 @@ class _HomeViewState extends State<HomeView> {
     }
     
     return Scaffold(
-      body: Column(
-        children: [
-          // Üst kısım - Profil bilgileri
-          Container(
-            padding: const EdgeInsets.only(top: 60, bottom: 30),
-            width: double.infinity,
-            color: const Color(0xFF1E3A73), // Koyu mavi arka plan
-            child: Column(
-              children: [
-                // Logo
-                Image.asset('assets/images/tayamer-logo.png', height: 50),
-                const SizedBox(height: 40),
-                
-                // Kullanıcı Bilgileri
-                Text(
-                  _user?.userFullname ?? 'Kullanıcı Adı',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  _user?.userEmail ?? 'email@tayamer.com',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Sayfa içeriği - seçilen alt navigasyon sayfasına göre değişir
-          Expanded(
-            child: _pages[_selectedIndex],
-          ),
-        ],
-      ),
+      body: _pages[_selectedIndex],
       
       // Alt navigasyon çubuğu
       bottomNavigationBar: BottomNavigationBar(

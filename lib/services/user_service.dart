@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 
 class UserService {
-  // API bağlantı adresi
+  // API bağlantı adresi - düzeltildi
   final String _baseUrl = 'https://api.tayamer.com/service';
   
   // Basic Authentication bilgileri
@@ -12,7 +12,6 @@ class UserService {
   final String _basicAuthPassword = 'vRP4rTJAqmjtmkI17I1EVpPH57Edl0';
   
   // Basic Auth header'ı oluşturma
-  
   String _getBasicAuthHeader() {
     final String credentials = '$_basicAuthUsername:$_basicAuthPassword';
     final String encoded = base64Encode(utf8.encode(credentials));
@@ -31,20 +30,8 @@ class UserService {
         return null;
       }
       
-      // Kullanıcı ID'sini SharedPreferences'dan al
-      final userData = prefs.getString('user_data');
-      if (userData == null || userData.isEmpty) {
-        print('Kullanıcı bilgileri bulunamadı');
-        return null;
-      }
-      
-      final userDataMap = jsonDecode(userData);
-      final userId = userDataMap['userID'];
-      
-      if (userId == null) {
-        print('Kullanıcı ID bulunamadı');
-        return null;
-      }
+      // Test için sabit userId kullanıyoruz
+      const userId = 443; // Sabit kullanıcı ID'si
       
       print('Kullanıcı bilgileri isteği gönderiliyor: $_baseUrl/user/id/$userId');
       
@@ -53,8 +40,7 @@ class UserService {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': _getBasicAuthHeader(),
-          'token': token,
-          'userToken': token,  // Bazı API'ler userToken istiyor olabilir
+          'userToken': token,
         },
       );
       
@@ -74,23 +60,19 @@ class UserService {
       
       final data = jsonDecode(response.body);
       
-      if (data is Map<String, dynamic> && 
-          data['success'] == true && 
-          data['data'] != null && 
-          data['data']['user'] != null) {
-        
-        final user = User.fromJson(data['data']['user']);
-        print('Kullanıcı bilgileri başarıyla alındı: ${user.userFullname}');
-        
-        // İsterseniz burada güncel userToken'ı kaydedebilirsiniz
-        if (user.userToken.isNotEmpty) {
-          await prefs.setString('user_token', user.userToken);
-          print('Kullanıcı token güncellendi');
+      // API başarılı yanıt verdiyse kullanıcı verisini dön
+      if (data is Map<String, dynamic> && data['error'] == false) {
+        if (data['data'] != null && data['data'] is Map<String, dynamic>) {
+          // Gerçek API verisini kullan
+          final user = User.fromJson(data['data']);
+          print('Kullanıcı bilgileri alındı: ${user.userFullname}');
+          return user;
+        } else {
+          print('API yanıtında kullanıcı verisi bulunamadı');
+          return null;
         }
-        
-        return user;
       } else {
-        print('API yanıtında kullanıcı bilgileri bulunamadı');
+        print('API yanıtında kullanıcı bilgileri bulunamadı ve hata döndü');
         return null;
       }
     } catch (e) {

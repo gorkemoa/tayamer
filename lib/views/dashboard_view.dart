@@ -45,92 +45,105 @@ class _DashboardViewState extends State<DashboardView> {
 
     // Kullanıcı istatistikleri veya null değerleri kullan
     final statistics = _user?.statistics;
-    final totalOffer = statistics?.totalOffer.toString() ?? '0';
-    final totalPolicy = statistics?.totalPolicy.toString() ?? '0';
-    final monthlyAmount = statistics?.monthlyAmount ?? '0,00';
-    final totalAmount = statistics?.totalAmount ?? '0,00';
+    final totalOffer = statistics?.totalOffer.toString() ?? '1';
+    final totalPolicy = statistics?.totalPolicy.toString() ?? '1';
+    final monthlyAmount = statistics?.monthlyAmount ?? '1';
+    final totalAmount = statistics?.totalAmount ?? '1';
 
-    return Container(
-      color: Colors.grey[100],
-      padding: const EdgeInsets.all(15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Scaffold(
+    appBar: PreferredSize(
+  preferredSize: Size.fromHeight(250),
+  child: Container(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.only(
+        bottomLeft: Radius.circular(20), // Alt sol köşe yuvarlatma
+        bottomRight: Radius.circular(20), // Alt sağ köşe yuvarlatma
+      ),
+      color: const Color(0xFF1E3A73), // AppBar arka plan rengi
+    ),
+    child: AppBar(
+      backgroundColor: Colors.transparent, // AppBar'ın arka planı şeffaf
+      elevation: 0,
+      toolbarHeight: 250,
+      title: Column(
         children: [
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8.0),
-            child: Text(
-              'İstatistiklerim',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          // Üst satır kartları
-          Row(
-            children: [
-              // Toplam Teklif
-              Expanded(
-                child: _buildInfoCard('Toplam Teklif', totalOffer),
-              ),
-              const SizedBox(width: 15),
-              // Toplam Poliçe
-              Expanded(
-                child: _buildInfoCard('Toplam Poliçe', totalPolicy),
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-          // Alt satır kartları
-          Row(
-            children: [
-              // Aylık Tayamer Puanı
-              Expanded(
-                child: _buildInfoCard('Aylık Tayamer Puanı', monthlyAmount),
-              ),
-              const SizedBox(width: 15),
-              // Toplam Tayamer Puanı
-              Expanded(
-                child: _buildInfoCard('Toplam Tayamer Puanı', totalAmount),
-              ),
-            ],
-          ),
-          const SizedBox(height: 30),
-          // Son hareketler
-          const Text(
-            'Son Hareketler',
-            style: TextStyle(
-              fontSize: 18,
+          // Logo
+          Image.network('https://www.tayamer.com/img/logo.png', height: 90),
+          const SizedBox(height: 85),
+          // Kullanıcı bilgileri
+          Text(
+            _user?.userFullname ?? ' İsim Soyisim',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 28,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 15),
-          Expanded(
-            child: _buildEmptyActivityList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyActivityList() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.history, size: 60, color: Colors.grey[400]),
-          const SizedBox(height: 15),
           Text(
-            'Henüz bir hareket bulunmuyor',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
+            _user?.userEmail ?? 'email@tayamer.com',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
             ),
           ),
         ],
       ),
+      centerTitle: true,
+    ),
+  ),
+),
+ body: Container(
+        color: Colors.grey[100],
+        padding: const EdgeInsets.all(15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                'İstatistiklerim',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            // Üst satır kartları
+            Row(
+              children: [
+                // Toplam Teklif
+                Expanded(
+                  child: _buildInfoCard('Toplam Teklif', totalOffer),
+                ),
+                const SizedBox(width: 15),
+                // Toplam Poliçe
+                Expanded(
+                  child: _buildInfoCard('Toplam Poliçe', totalPolicy),
+                ),
+              ],
+            ),
+            const SizedBox(height: 15),
+            // Alt satır kartları
+            Row(
+              children: [
+                // Aylık Tayamer Puanı
+                Expanded(
+                  child: _buildInfoCard('Aylık Tayamer Puanı', monthlyAmount),
+                ),
+                const SizedBox(width: 15),
+                // Toplam Tayamer Puanı
+                Expanded(
+                  child: _buildInfoCard('Toplam Tayamer Puanı', totalAmount),
+                ),
+              ],
+            ),
+      ],
+        ),
+      ),
     );
   }
+
+
 
   Widget _buildInfoCard(String title, String value) {
     return Container(
