@@ -89,7 +89,7 @@ class _ProfileViewState extends State<ProfileView> {
                   // Profil Fotoğrafı
                   Container(
                     width: 120,
-                    height: 120,
+                    height: 180,
                     decoration: BoxDecoration(
                       color: Colors.grey[200],
                       border: Border.all(color: Colors.grey[300]!),
