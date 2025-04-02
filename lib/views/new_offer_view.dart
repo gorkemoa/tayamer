@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+import 'package:provider/provider.dart';
+import '../models/policy_type_model.dart';
+import '../viewmodels/policy_type_viewmodel.dart';
 import 'dashboard_view.dart';
 import 'home_view.dart';
 
@@ -16,9 +19,15 @@ class _NewOfferViewState extends State<NewOfferView> {
   @override
   void initState() {
     super.initState();
-    // Widget tamamen initialize olduktan sonra bottom sheet'i göster
+    // Widget tamamen initialize olduktan sonra ViewModel'deki verileri yükle
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      
+      // PolicyTypeViewModel'den poliçe tiplerini yükle
+      final viewModel = Provider.of<PolicyTypeViewModel>(context, listen: false);
+      viewModel.loadPolicyTypes();
+      
+      // Bottom sheet'i göster
       _showPolicyTypeBottomSheet(context);
     });
   }
@@ -91,62 +100,55 @@ class _NewOfferViewState extends State<NewOfferView> {
                 ),
               ),
               Expanded(
-                child: GridView.count(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(16),
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                  children: [
-                    _buildPolicyTypeItem(
-                      context,
-                      title: 'Trafik Sigortası',
-                      icon: 'assets/icons/traffic_light.png',
-                      onTap: () => _onPolicySelected(context, 'Trafik Sigortası'),
-                    ),
-                    _buildPolicyTypeItem(
-                      context,
-                      title: 'Kasko',
-                      icon: 'assets/icons/car_insurance.png',
-                      onTap: () => _onPolicySelected(context, 'Kasko'),
-                    ),
-                    _buildPolicyTypeItem(
-                      context,
-                      title: 'Tamamlayıcı Sağlık',
-                      icon: 'assets/icons/health_care.png',
-                      onTap: () => _onPolicySelected(context, 'Tamamlayıcı Sağlık'),
-                    ),
-                    _buildPolicyTypeItem(
-                      context,
-                      title: 'Özel Sağlık',
-                      icon: 'assets/icons/hospital.png',
-                      onTap: () => _onPolicySelected(context, 'Özel Sağlık'),
-                    ),
-                    _buildPolicyTypeItem(
-                      context,
-                      title: 'DASK',
-                      icon: 'assets/icons/home.png',
-                      onTap: () => _onPolicySelected(context, 'DASK'),
-                    ),
-                    _buildPolicyTypeItem(
-                      context,
-                      title: 'Konut Sigortası',
-                      icon: 'assets/icons/home_insurance.png',
-                      onTap: () => _onPolicySelected(context, 'Konut Sigortası'),
-                    ),
-                    _buildPolicyTypeItem(
-                      context,
-                      title: 'Seyahat Sağlık',
-                      icon: 'assets/icons/travel.png',
-                      onTap: () => _onPolicySelected(context, 'Seyahat Sağlık'),
-                    ),
-                    _buildPolicyTypeItem(
-                      context,
-                      title: 'Hayat Sigortası',
-                      icon: 'assets/icons/hospital.png',
-                      onTap: () => _onPolicySelected(context, 'Hayat Sigortası'),
-                    ),
-                  ],
+                child: Consumer<PolicyTypeViewModel>(
+                  builder: (context, viewModel, child) {
+                    if (viewModel.state == PolicyTypeViewState.loading) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (viewModel.state == PolicyTypeViewState.error) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Hata: ${viewModel.errorMessage}',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () => viewModel.loadPolicyTypes(),
+                              child: const Text('Tekrar Dene'),
+                            ),
+                          ],
+                        ),
+                      );
+                    } else if (viewModel.activePolicyTypes.isEmpty) {
+                      return const Center(
+                        child: Text('Aktif poliçe tipi bulunamadı'),
+                      );
+                    }
+
+                    // Aktif poliçe tiplerini göster
+                    return GridView.builder(
+                      controller: scrollController,
+                      padding: const EdgeInsets.all(16),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 1.0,
+                      ),
+                      itemCount: viewModel.activePolicyTypes.length,
+                      itemBuilder: (context, index) {
+                        final policyType = viewModel.activePolicyTypes[index];
+                        return _buildPolicyTypeItem(
+                          context,
+                          policyType: policyType,
+                          onTap: () => _onPolicySelected(context, policyType),
+                        );
+                      },
+                    );
+                  },
                 ),
               ),
             ],
@@ -178,8 +180,7 @@ class _NewOfferViewState extends State<NewOfferView> {
 
   Widget _buildPolicyTypeItem(
     BuildContext context, {
-    required String title,
-    required String icon,
+    required PolicyType policyType,
     required VoidCallback onTap,
   }) {
     return InkWell(
@@ -199,20 +200,21 @@ class _NewOfferViewState extends State<NewOfferView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // İkon gösterimi - QR işlemi için
-            Image.asset(
-              icon,
+            // API'den gelen resmi göster
+            Image.network(
+              policyType.imageUrl,
               width: 64,
               height: 64,
               errorBuilder: (context, error, stackTrace) {
-                // Eğer asset bulunamazsa varsayılan ikonları göster
+                // Eğer resim yüklenmezse varsayılan ikonları göster
                 IconData iconData = Icons.help_outline;
-                if (title.contains('Trafik')) iconData = Icons.traffic;
-                if (title.contains('Kasko')) iconData = Icons.car_crash;
-                if (title.contains('Sağlık')) iconData = Icons.health_and_safety;
-                if (title.contains('DASK') || title.contains('Konut')) iconData = Icons.home;
-                if (title.contains('Seyahat')) iconData = Icons.flight;
-                if (title.contains('Hayat')) iconData = Icons.favorite;
+                if (policyType.title.contains('Trafik')) iconData = Icons.traffic;
+                if (policyType.title.contains('Kasko')) iconData = Icons.car_crash;
+                if (policyType.title.contains('Sağlık')) iconData = Icons.health_and_safety;
+                if (policyType.title.contains('DASK') || policyType.title.contains('Konut')) iconData = Icons.home;
+                if (policyType.title.contains('Seyahat')) iconData = Icons.flight;
+                if (policyType.title.contains('Hayat')) iconData = Icons.favorite;
+                if (policyType.title.contains('Evcil')) iconData = Icons.pets;
                 
                 return Icon(iconData, size: 56, color: Colors.blue.shade700);
               },
@@ -221,7 +223,7 @@ class _NewOfferViewState extends State<NewOfferView> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Text(
-                title,
+                policyType.title,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 16,
@@ -235,7 +237,11 @@ class _NewOfferViewState extends State<NewOfferView> {
     );
   }
 
-  void _onPolicySelected(BuildContext context, String policyType) {
+  void _onPolicySelected(BuildContext context, PolicyType policyType) {
+    // Seçilen poliçe tipini ViewModel'e kaydet
+    final viewModel = Provider.of<PolicyTypeViewModel>(context, listen: false);
+    viewModel.selectPolicyType(policyType);
+    
     // Önce bottom sheet'i kapat
     Navigator.pop(context);
     
@@ -243,7 +249,24 @@ class _NewOfferViewState extends State<NewOfferView> {
     _startQRScan(context, policyType);
   }
   
-  void _startQRScan(BuildContext context, String policyType) async {
+  void _startQRScan(BuildContext context, PolicyType policyType) async {
+    // QR kodu tarama öncesi yardım mesajını göster
+    if (policyType.qrCode != null) {
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('QR Kod Tarama'),
+          content: Text(policyType.qrCode!.helpText),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Tamam'),
+            ),
+          ],
+        ),
+      );
+    }
+    
     try {
       String qrResult = await FlutterBarcodeScanner.scanBarcode(
         '#3D8BEF', // tarayıcı çizgisi rengi
@@ -277,17 +300,52 @@ class _NewOfferViewState extends State<NewOfferView> {
     }
   }
   
-  void _processQRResult(BuildContext context, String policyType, String qrResult) {
-    // QR sonucunu işlemek için burada gerekli kodları ekle
-    // Örneğin, API'ye istek gönderme, veritabanına kaydetme vb.
+  void _processQRResult(BuildContext context, PolicyType policyType, String qrResult) {
+    // ViewModel aracılığıyla QR sonucunu işle
+    final viewModel = Provider.of<PolicyTypeViewModel>(context, listen: false);
+    viewModel.processQRCode(qrResult);
     
-    if (mounted) {
+    if (viewModel.state == PolicyTypeViewState.error) {
+      // QR kod işlenemedi
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$policyType için QR sonucu: $qrResult')),
+        SnackBar(content: Text('Hata: ${viewModel.errorMessage}')),
+      );
+    } else if (viewModel.qrCodeData != null) {
+      // QR kod başarıyla işlendi
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('QR kod başarıyla işlendi.'),
+          backgroundColor: Colors.green,
+        ),
       );
       
-      // QR işlemi tamamlandıktan sonra ana sayfaya dön
-      _navigateToHomeIndex(0); // Ana sayfa (Dashboard) indeksi
+      // Burada formu gösterebilir veya veriyi kullanabilirsiniz
+      // Örnek: QR verilerini göster
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('${policyType.title} için QR Kod Verileri'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: viewModel.qrCodeData!.entries.map((entry) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: Text('${entry.key}: ${entry.value}'),
+              );
+            }).toList(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _navigateToHomeIndex(0);
+              },
+              child: const Text('Tamam'),
+            ),
+          ],
+        ),
+      );
     }
   }
 } 
