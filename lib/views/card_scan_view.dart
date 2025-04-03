@@ -3,6 +3,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/offer_viewmodel.dart';
 import '../viewmodels/payment_viewmodel.dart';
+import 'package:flutter/services.dart';
 
 class CardScanView extends StatefulWidget {
   final String detailUrl;
@@ -108,8 +109,16 @@ class _CardScanViewState extends State<CardScanView> {
   }
 
   void processCardData(String cardData) {
-    // TODO: Kart verisini işle, burada kredi kartı bilgilerini ayrıştırma kodları eklenir
-    // Örnek: cardNumber, cardHolder, expiryDate, cvv gibi bilgileri parseCard fonksiyonu ile çıkarabilirsiniz
+    // Taranmış kart verisini ayrıştır
+    Map<String, String> cardInfo = _parseCardData(cardData);
+    
+    // Ayrıştırılmış verileri kullanarak CardData objesi oluştur
+    CardData parsedCardData = CardData(
+      cardNumber: cardInfo['cardNumber'] ?? '',
+      cardHolder: cardInfo['cardHolder'] ?? '',
+      expiryDate: cardInfo['expiryDate'] ?? '',
+      cvv: '', // CVV genellikle kart taramasından alınamaz
+    );
     
     // İşlem sonrası ödeme sayfasına yönlendir
     Navigator.push(
@@ -120,15 +129,67 @@ class _CardScanViewState extends State<CardScanView> {
           offerId: widget.offerId,
           wsPriceId: widget.wsPriceId,
           companyId: widget.companyId,
-          cardData: CardData(
-            cardNumber: '4242 4242 4242 4242', // Örnek veri
-            cardHolder: 'TEST KART',
-            expiryDate: '12/25',
-            cvv: '123',
-          ),
+          cardData: parsedCardData,
         ),
       ),
     );
+  }
+  
+  Map<String, String> _parseCardData(String cardData) {
+    // Kart verisini analiz eden metot
+    Map<String, String> result = {};
+    
+    try {
+      // Genellikle kart tarayıcıları tarafından döndürülen format:
+      // Kart numarası ve son kullanma tarihi arasında bir ayırıcı olabilir (^ = veya diğer karakterler)
+      // Örnek: 4111111111111111=2212...
+      
+      // Kart numarası: Genellikle ilk 16-19 haneli sayıdır
+      RegExp cardNumberRegex = RegExp(r'(\d{15,19})');
+      var cardNumberMatch = cardNumberRegex.firstMatch(cardData);
+      if (cardNumberMatch != null) {
+        String number = cardNumberMatch.group(1) ?? '';
+        // 4 haneli gruplar halinde ayır
+        number = number.replaceAllMapped(
+          RegExp(r'.{4}'), (match) => '${match.group(0)} '
+        ).trim();
+        result['cardNumber'] = number;
+      }
+      
+      // Son kullanma tarihi: Genellikle YYMM veya MMYY formatında
+      RegExp expiryRegex = RegExp(r'=(\d{4})');
+      var expiryMatch = expiryRegex.firstMatch(cardData);
+      if (expiryMatch != null) {
+        String expiry = expiryMatch.group(1) ?? '';
+        // YYMM formatını MM/YY formatına çevir
+        if (expiry.length == 4) {
+          result['expiryDate'] = '${expiry.substring(2, 4)}/${expiry.substring(0, 2)}';
+        }
+      }
+      
+      // Kart sahibi adı: Büyük harflerle yazılmış olan kısım olabilir
+      RegExp nameRegex = RegExp(r'[A-Z]+(?: [A-Z]+)+');
+      var nameMatch = nameRegex.firstMatch(cardData);
+      if (nameMatch != null) {
+        result['cardHolder'] = nameMatch.group(0) ?? '';
+      }
+      
+    } catch (e) {
+      print('Kart verisi ayrıştırma hatası: $e');
+    }
+    
+    // Eğer bazı alanlar eksikse varsayılan değerler ata
+    if (!result.containsKey('cardNumber') || result['cardNumber']!.isEmpty) {
+      result['cardNumber'] = '';
+    }
+    if (!result.containsKey('expiryDate') || result['expiryDate']!.isEmpty) {
+      result['expiryDate'] = '';
+    }
+    if (!result.containsKey('cardHolder') || result['cardHolder']!.isEmpty) {
+      result['cardHolder'] = '';
+    }
+    
+    return result;
   }
 }
 
@@ -243,9 +304,13 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                 ),
                 textCapitalization: TextCapitalization.characters,
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
+                  if (value == null || value.trim().isEmpty) {
                     return 'Kart sahibi adı gerekli';
                   }
+                  // İsteğe bağlı: Sadece harf ve boşluk kontrolü eklenebilir
+                  // if (!RegExp(r'^[a-zA-Z ]+$').hasMatch(value)) {
+                  //   return 'Geçerli bir ad girin';
+                  // }
                   return null;
                 },
               ),
@@ -286,10 +351,28 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
                 ),
                 keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(19), // 16 digit + 3 spaces
+                  CardNumberInputFormatter(),
+                ],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Kart numarası gerekli';
                   }
+                  final cleanValue = value.replaceAll(' ', '');
+                  if (cleanValue.length != 16) {
+                     // Genellikle 16 hanedir, bazı kartlar farklı olabilir. 
+                     // İhtiyaca göre 15-19 arası kontrolü eklenebilir.
+                    return 'Kart numarası 16 haneli olmalı';
+                  }
+                  if (!RegExp(r'^\d+$').hasMatch(cleanValue)) {
+                    return 'Sadece rakam girilmelidir';
+                  }
+                  // İsteğe bağlı: Luhn algoritması kontrolü eklenebilir
+                  // if (!isValidLuhn(cleanValue)) {
+                  //   return 'Geçersiz kart numarası';
+                  // }
                   return null;
                 },
               ),
@@ -335,10 +418,30 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                             ),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                           ),
-                          keyboardType: TextInputType.datetime,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(4),
+                            CardExpiryInputFormatter(),
+                          ],
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'SKT gerekli';
+                            }
+                            if (!RegExp(r'^(0[1-9]|1[0-2])\/\d{2}$').hasMatch(value)) {
+                              return 'Geçersiz format (AA/YY)';
+                            }
+                            final parts = value.split('/');
+                            final month = int.tryParse(parts[0]);
+                            final year = int.tryParse('20${parts[1]}'); // YY -> YYYY
+                            if (month == null || year == null) {
+                               return 'Geçersiz tarih';
+                            }
+                            final now = DateTime.now();
+                            // Ayın son gününü kontrol et
+                            final expiryDate = DateTime(year, month + 1, 0); // Bir sonraki ayın 0. günü = bu ayın son günü
+                            if (expiryDate.isBefore(DateTime(now.year, now.month))) {
+                              return 'Kartın süresi dolmuş';
                             }
                             return null;
                           },
@@ -386,9 +489,17 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                           ),
                           keyboardType: TextInputType.number,
                           obscureText: true,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(3), // Genellikle 3 haneli
+                          ],
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'CVV gerekli';
+                            }
+                            if (!RegExp(r'^\d{3}$').hasMatch(value)) {
+                              // Amex için 4 haneli olabilir, gerekirse kontrol eklenir
+                              return 'CVV 3 haneli olmalı';
                             }
                             return null;
                           },
@@ -496,10 +607,24 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
                 ),
                 keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(11),
+                ],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'TC No gerekli';
                   }
+                  if (value.length != 11) {
+                    return 'TC No 11 haneli olmalı';
+                  }
+                  if (!RegExp(r'^\d{11}$').hasMatch(value)) {
+                     return 'Sadece rakam girilmelidir';
+                  }
+                  // İsteğe bağlı: TC Kimlik No algoritma kontrolü eklenebilir
+                  // if (!isValidTCKN(value)) {
+                  //   return 'Geçersiz TC Kimlik No';
+                  // }
                   return null;
                 },
               ),
@@ -541,9 +666,31 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
                 ),
                 keyboardType: TextInputType.datetime,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                   LengthLimitingTextInputFormatter(8),
+                   BirthDateInputFormatter(),
+                ],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Doğum tarihi gerekli';
+                  }
+                  if (!RegExp(r'^(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.\d{4}$').hasMatch(value)) {
+                     return 'Geçersiz format (GG.AA.YYYY)';
+                  }
+                  try {
+                    final parts = value.split('.');
+                    final day = int.parse(parts[0]);
+                    final month = int.parse(parts[1]);
+                    final year = int.parse(parts[2]);
+                    // Basit tarih geçerlilik kontrolü (örn. 31 Şubat yok)
+                    DateTime(year, month, day); 
+                    // İsteğe bağlı: Daha detaylı yaş kontrolü eklenebilir
+                    // if (DateTime.now().year - year < 18) {
+                    //   return '18 yaşından büyük olmalısınız';
+                    // }
+                  } catch (e) {
+                    return 'Geçersiz tarih';
                   }
                   return null;
                 },
@@ -870,4 +1017,90 @@ class CardData {
     this.birthDate,
     this.instalment,
   });
+}
+
+// InputFormatters için helper sınıfları ekleyelim (dosyanın sonuna veya ayrı bir dosyaya eklenebilir)
+class CardNumberInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    var text = newValue.text;
+
+    if (newValue.selection.baseOffset == 0) {
+      return newValue;
+    }
+
+    var buffer = StringBuffer();
+    for (int i = 0; i < text.length; i++) {
+      buffer.write(text[i]);
+      var nonZeroIndex = i + 1;
+      if (nonZeroIndex % 4 == 0 && nonZeroIndex != text.length) {
+        buffer.write(' '); // Add space after every 4 digits
+      }
+    }
+
+    var string = buffer.toString();
+    return newValue.copyWith(
+        text: string,
+        selection: TextSelection.collapsed(offset: string.length));
+  }
+}
+
+class CardExpiryInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    var newText = newValue.text;
+
+    if (newValue.selection.baseOffset == 0) {
+      return newValue;
+    }
+    
+    var buffer = StringBuffer();
+    for (int i = 0; i < newText.length; i++) {
+      buffer.write(newText[i]);
+      var nonZeroIndex = i + 1;
+      if (nonZeroIndex % 2 == 0 && nonZeroIndex != newText.length) {
+        buffer.write('/'); // Add slash after 2 digits (month)
+      }
+    }
+
+    var string = buffer.toString();
+    return newValue.copyWith(
+      text: string,
+      selection: TextSelection.collapsed(offset: string.length),
+    );
+  }
+}
+
+class BirthDateInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    var newText = newValue.text;
+
+    if (newValue.selection.baseOffset == 0) {
+      return newValue;
+    }
+
+    var buffer = StringBuffer();
+    int digitCount = 0;
+    for (int i = 0; i < newText.length; i++) {
+       if (RegExp(r'\d').hasMatch(newText[i])) {
+         buffer.write(newText[i]);
+         digitCount++;
+         if ((digitCount == 2 || digitCount == 4) && digitCount != newText.replaceAll(RegExp(r'\D'), '').length) {
+             buffer.write('.'); // Add dot after day and month
+         }
+       }
+    }
+    
+    var string = buffer.toString();
+     // Limit total digits to 8 (DDMMAAAA)
+    if (string.replaceAll(RegExp(r'\D'), '').length > 8) {
+        string = oldValue.text; // Revert if more than 8 digits entered
+    }
+
+    return newValue.copyWith(
+      text: string,
+      selection: TextSelection.collapsed(offset: string.length),
+    );
+  }
 } 
