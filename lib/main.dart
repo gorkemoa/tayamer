@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'views/login_view.dart';
 import 'views/home_view.dart';
 import 'services/auth_service.dart';
+import 'viewmodels/policy_type_viewmodel.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const TayamerApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => PolicyTypeViewModel()),
+      ],
+      child: const TayamerApp(),
+    ),
+  );
 }
 
 class TayamerApp extends StatefulWidget {
@@ -79,16 +88,7 @@ class _TayamerAppState extends State<TayamerApp> {
         ),
       ),
       // Ana route tanımlamaları
-      initialRoute: '/',
-      routes: {
-        '/': (context) => _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _isLoggedIn
-                ? const HomeView()
-                : const LoginView(),
-        '/login': (context) => const LoginView(),
-        '/home': (context) => const HomeView(),
-      },
+      home: LoginView(),
     );
   }
 }

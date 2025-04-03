@@ -5,6 +5,9 @@ import '../models/policy_type_model.dart';
 import '../viewmodels/policy_type_viewmodel.dart';
 import 'dashboard_view.dart';
 import 'home_view.dart';
+import 'dart:convert';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:image_picker/image_picker.dart';
 
 class NewOfferView extends StatefulWidget {
   const NewOfferView({super.key});
@@ -245,47 +248,38 @@ class _NewOfferViewState extends State<NewOfferView> {
     // Önce bottom sheet'i kapat
     Navigator.pop(context);
     
-    // QR tarama işlemini başlat
-    _startQRScan(context, policyType);
+    // QR özelliği varsa tarama başlat, yoksa doğrudan manuel giriş formuna git
+    if (policyType.qrCode != null) {
+      // QR tarama işlemini başlat
+      _startQRScan(context, policyType);
+    } else {
+      // Doğrudan manuel form sayfasına yönlendir
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => ManualEntryView(policyType: policyType)),
+      );
+    }
   }
   
   void _startQRScan(BuildContext context, PolicyType policyType) async {
-    // QR kodu tarama öncesi yardım mesajını göster
-    if (policyType.qrCode != null) {
-      await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('QR Kod Tarama'),
-          content: Text(policyType.qrCode!.helpText),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Tamam'),
-            ),
-          ],
-        ),
-      );
-    }
-    
+    // Yardım mesajını göstermeden doğrudan QR tarayıcı görünümünü başlat
     try {
-      String qrResult = await FlutterBarcodeScanner.scanBarcode(
-        '#3D8BEF', // tarayıcı çizgisi rengi
-        'Vazgeç', // iptal butonu metni
-        true, // flaş ışığı aktif
-        ScanMode.QR, // sadece QR kod tara
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const QRScannerView()),
       );
       
-      if (qrResult != '-1') { // -1 taramadan vazgeçildiğinde dönüyor
+      if (result != null) {
         // QR kod başarıyla tarandı, sonucu işle
-        _processQRResult(context, policyType, qrResult);
+        _processQRResult(context, policyType, result);
       } else {
         // Kullanıcı taramadan vazgeçti
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('QR tarama iptal edildi')),
           );
-          // QR tarama iptal edildiğinde de ana sayfaya dön
-          _navigateToHomeIndex(0); // Ana sayfa (Dashboard) indeksi
+          // QR tarama iptal edildiğinde ana sayfaya dön
+          _navigateToHomeIndex(0); 
         }
       }
     } catch (e) {
@@ -294,8 +288,8 @@ class _NewOfferViewState extends State<NewOfferView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('QR tarama sırasında hata oluştu: $e')),
         );
-        // Hata durumunda da ana sayfaya dön
-        _navigateToHomeIndex(0); // Ana sayfa (Dashboard) indeksi
+        // Hata durumunda ana sayfaya dön
+        _navigateToHomeIndex(0);
       }
     }
   }
@@ -310,6 +304,11 @@ class _NewOfferViewState extends State<NewOfferView> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Hata: ${viewModel.errorMessage}')),
       );
+      // Hata durumunda manuel giriş formunu aç
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => ManualEntryView(policyType: policyType)),
+      );
     } else if (viewModel.qrCodeData != null) {
       // QR kod başarıyla işlendi
       ScaffoldMessenger.of(context).showSnackBar(
@@ -319,16 +318,298 @@ class _NewOfferViewState extends State<NewOfferView> {
         ),
       );
       
-      // Burada formu gösterebilir veya veriyi kullanabilirsiniz
-      // Örnek: QR verilerini göster
+      // QR koddan elde edilen verilerle form sayfasına yönlendir
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ManualEntryView(
+            policyType: policyType,
+            initialData: viewModel.qrCodeData,
+          ),
+        ),
+      );
+    }
+  }
+}
+
+class QRScannerView extends StatefulWidget {
+  const QRScannerView({Key? key}) : super(key: key);
+
+  @override
+  State<QRScannerView> createState() => _QRScannerViewState();
+}
+
+class _QRScannerViewState extends State<QRScannerView> {
+  MobileScannerController controller = MobileScannerController();
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          MobileScanner(
+            controller: controller,
+            onDetect: (capture) {
+              final List<Barcode> barcodes = capture.barcodes;
+              if (barcodes.isNotEmpty) {
+                // QR kod algılandığında yapılacak işlemler
+                final String code = barcodes.first.rawValue ?? '';
+                // İşlem tamamlandıktan sonra önceki sayfaya dön
+                Navigator.pop(context, code);
+              }
+            },
+          ),
+          SafeArea(
+            child: Column(
+              children: [
+                // Mavi başlık çubuğu
+                Container(
+                  color: Color(0xFF1C3879),
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.close, color: Colors.white),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'QR Kodunuzu Okutun',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.help_outline, color: Colors.white),
+                        onPressed: () {
+                          // Yardım bilgisi göster
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                
+                Spacer(), // Kamera alanı için boşluk
+                
+                // Alt butonlar
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                        ),
+                        onPressed: () {
+                          // Manuel giriş için sayfaya yönlendir
+                          final policyType = Provider.of<PolicyTypeViewModel>(context, listen: false).selectedPolicyType;
+                          if (policyType != null) {
+                            Navigator.pop(context); // QR tarayıcıyı kapat
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => ManualEntryView(policyType: policyType)),
+                            );
+                          }
+                        },
+                        child: Text('Manuel Giriş'),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                        ),
+                        onPressed: () async {
+                          // Galeriden fotoğraf seçme
+                          final ImagePicker picker = ImagePicker();
+                          final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                          if (image != null) {
+                            // Seçilen fotoğraftan QR okuma işlemi
+                          }
+                        },
+                        child: Text('Fotoğraf Yükle'),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Manuel giriş formu için yeni sınıf
+class ManualEntryView extends StatefulWidget {
+  final PolicyType policyType;
+  final Map<String, String>? initialData;
+
+  const ManualEntryView({Key? key, required this.policyType, this.initialData}) : super(key: key);
+
+  @override
+  State<ManualEntryView> createState() => _ManualEntryViewState();
+}
+
+class _ManualEntryViewState extends State<ManualEntryView> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final Map<String, TextEditingController> _controllers = {};
+
+  @override
+  void initState() {
+    super.initState();
+    // Form için controller'ları oluştur
+    for (var field in widget.policyType.fields) {
+      _controllers[field.key] = TextEditingController();
+    }
+    
+    // Eğer initialData varsa, controller'lara verileri yükle
+    if (widget.initialData != null) {
+      widget.initialData!.forEach((key, value) {
+        if (_controllers.containsKey(key)) {
+          _controllers[key]!.text = value;
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    // Controller'ları temizle
+    for (var controller in _controllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        centerTitle: true,
+        backgroundColor: const Color(0xFF1C3879),
+        foregroundColor: Colors.white,
+        title: Text('${widget.policyType.title} Bilgileri'),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Aşağıdaki bilgileri kontrol ederek, poliçenizi oluşturabilirsiniz.',
+                style: TextStyle(fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              
+              // Form alanlarını oluştur
+              ...widget.policyType.fields.map((field) => _buildFormField(field)).toList(),
+              
+              const SizedBox(height: 40),
+              
+              // Devam butonu
+              ElevatedButton(
+                onPressed: _submitForm,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1C3879),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Teklif Oluştur',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFormField(Field field) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${field.name} ${field.rules.containsKey('required') && field.rules['required']!.value ? '(*)' : ''}',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _controllers[field.key],
+            decoration: InputDecoration(
+              hintText: 'Örn: "${field.placeholder}"',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            ),
+            validator: (value) {
+              if (field.rules.containsKey('required') && 
+                  field.rules['required']!.value && 
+                  (value == null || value.isEmpty)) {
+                return field.rules['required']!.message ?? 'Bu alan zorunludur';
+              }
+              return null;
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _submitForm() {
+    if (_formKey.currentState!.validate()) {
+      // Form verilerini topla
+      Map<String, String> formData = {};
+      _controllers.forEach((key, controller) {
+        formData[key] = controller.text;
+      });
+      
+      // Verileri göster
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('${policyType.title} için QR Kod Verileri'),
+          title: Text('${widget.policyType.title} için Form Verileri'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: viewModel.qrCodeData!.entries.map((entry) {
+            children: formData.entries.map((entry) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
                 child: Text('${entry.key}: ${entry.value}'),
@@ -338,8 +619,11 @@ class _NewOfferViewState extends State<NewOfferView> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
-                _navigateToHomeIndex(0);
+                Navigator.pop(context); // Dialog'u kapat
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => HomeView(), settings: RouteSettings(arguments: 0)),
+                  (route) => false,
+                );
               },
               child: const Text('Tamam'),
             ),

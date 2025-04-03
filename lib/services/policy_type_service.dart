@@ -12,7 +12,7 @@ class PolicyTypeService {
       final response = await http.get(Uri.parse('$_baseUrl$_policyTypesEndpoint'));
       
       if (response.statusCode == 200) {
-        final List<dynamic> jsonData = jsonDecode(response.body);
+        final List<dynamic> jsonData = jsonDecode(utf8.decode(response.bodyBytes));
         return jsonData.map((data) => PolicyType.fromJson(data)).toList();
       } else {
         throw Exception('API yanıtı başarısız: ${response.statusCode}');
@@ -53,7 +53,14 @@ class PolicyTypeService {
         final groupRegex = RegExp(pattern);
         final groupMatch = groupRegex.firstMatch(qrData);
         if (groupMatch != null) {
-          extractedData[key] = groupMatch.group(0)!;
+          // Türkçe karakterler için UTF-8 decode et
+          String value = groupMatch.group(0)!;
+          try {
+            value = utf8.decode(latin1.encode(value));
+          } catch (e) {
+            print('Türkçe karakter düzeltme hatası: $e');
+          }
+          extractedData[key] = value;
         }
       });
 
