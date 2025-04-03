@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import '../services/user_service.dart';
 import '../services/auth_service.dart';
+import 'profile_detail_view.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -152,7 +153,20 @@ class _ProfileViewState extends State<ProfileView> {
             _buildMenuItem(
               icon: Icons.person,
               title: 'Profilim',
-              onTap: () {},
+              onTap: () {
+                if (_user != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProfileDetailView(user: _user!),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Kullanıcı bilgileri yüklenemedi.')),
+                  );
+                }
+              },
             ),
             
             _buildMenuItem(
