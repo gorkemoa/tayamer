@@ -4,6 +4,7 @@ import 'views/login_view.dart';
 import 'views/home_view.dart';
 import 'services/auth_service.dart';
 import 'viewmodels/policy_type_viewmodel.dart';
+import 'viewmodels/offer_viewmodel.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,6 +12,7 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => PolicyTypeViewModel()),
+        ChangeNotifierProvider(create: (_) => OfferViewModel()),
       ],
       child: const TayamerApp(),
     ),
