@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/offer_viewmodel.dart';
 import 'offer_detail_view.dart';
+import 'webview_screen.dart';
 
 class OffersView extends StatefulWidget {
   const OffersView({super.key});
@@ -94,8 +95,8 @@ class _OffersViewState extends State<OffersView> {
                     child: ListTile(
                       contentPadding: const EdgeInsets.all(16),
                       leading: CircleAvatar(
-                        backgroundColor: isGeneralChat 
-                          ? Colors.grey[300] 
+                        backgroundColor: isGeneralChat
+                          ? Colors.grey[300]
                           : const Color(0xFF1E3A8A).withOpacity(0.8),
                         child: Icon(
                           isGeneralChat ? Icons.chat : Icons.directions_car,
@@ -120,7 +121,7 @@ class _OffersViewState extends State<OffersView> {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: Color(int.parse(offer.statusColor.replaceAll('#', '0xFF'))),
+                                color: _parseColor(offer.statusColor, fallbackColor: Colors.grey),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -133,11 +134,45 @@ class _OffersViewState extends State<OffersView> {
                             ),
                         ],
                       ),
-                      trailing: const Icon(Icons.arrow_forward_ios),
+                      trailing: isGeneralChat
+                        ? const Icon(Icons.arrow_forward_ios)
+                        : offer.chatUrl.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.chat_bubble_outline),
+                              tooltip: 'Sohbeti Başlat',
+                              color: Theme.of(context).primaryColor,
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => WebViewScreen(
+                                      url: offer.chatUrl,
+                                      title: 'Sohbet - ${offer.plaka}',
+                                    ),
+                                  ),
+                                );
+                              },
+                            )
+                          : const Icon(Icons.arrow_forward_ios, color: Colors.grey),
                       onTap: () {
                         if (isGeneralChat) {
                           // GENEL SOHBET için WebView açılacak
-                          viewModel.openChatUrl(offer.chatUrl);
+                          if (offer.chatUrl.isNotEmpty) {
+                             Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => WebViewScreen(
+                                  url: offer.chatUrl,
+                                  title: 'Genel Sohbet',
+                                ),
+                              ),
+                            );
+                          } else {
+                             // URL yoksa kullanıcıya bilgi ver
+                             ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Sohbet bağlantısı bulunamadı.')),
+                            );
+                          }
                         } else {
                           // Normal teklifler için detay sayfasına git
                           Navigator.push(
@@ -160,4 +195,21 @@ class _OffersViewState extends State<OffersView> {
       ),
     );
   }
+}
+
+Color _parseColor(String hexColor, {Color fallbackColor = Colors.black}) {
+  try {
+    hexColor = hexColor.replaceAll("#", "");
+    if (hexColor.length == 6) {
+      hexColor = "FF$hexColor"; // Opak alfa kanalı ekle
+    }
+    if (hexColor.length == 8) {
+      return Color(int.parse("0x$hexColor"));
+    }
+  } catch (e) {
+    // Hata durumunda konsola yazdır ve varsayılan rengi kullan
+    debugPrint("Renk parse hatası: '$hexColor'. Hata: $e");
+  }
+  // Geçersiz format veya hata durumunda fallback rengi döndür
+  return fallbackColor;
 } 

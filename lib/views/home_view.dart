@@ -58,9 +58,11 @@ class _HomeViewState extends State<HomeView> {
       });
     } catch (e) {
       print('Kullanıcı bilgileri alınırken hata: $e');
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 

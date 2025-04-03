@@ -25,8 +25,8 @@ class _LoginViewState extends State<LoginView> {
   void initState() {
     super.initState();
     // Test için kullanıcı adı ve şifre otomatik doldurulabilir
-    // _emailController.text = 'gorkemozturk';
-    // _passwordController.text = 'GO5235010';
+    _emailController.text = 'gorkemozturk';
+    _passwordController.text = 'GO5235010';
   }
 
   @override

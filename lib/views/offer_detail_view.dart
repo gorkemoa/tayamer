@@ -116,13 +116,6 @@ class _OfferDetailViewState extends State<OfferDetailView> {
                         const SizedBox(height: 16),
                         _buildInfoRow('Teklif Kodu', offer.code),
                         _buildInfoRow('Plaka', offer.plaka),
-                        _buildInfoRow('Ruhsat No', offer.ruhsatNo),
-                        _buildInfoRow('TC Kimlik No', offer.tcNo),
-                        _buildInfoRow('Doğum Tarihi', offer.dogumTarihi),
-                        if (offer.shortDesc.isNotEmpty)
-                          _buildInfoRow('Açıklama', offer.shortDesc),
-                        _buildInfoRow('Oluşturulma Tarihi', offer.createDate),
-                        
                         const SizedBox(height: 16),
                         SizedBox(
                           width: double.infinity,
