@@ -79,70 +79,52 @@ class _OfferDetailViewState extends State<OfferDetailView> {
                 // Teklif Bilgileri
                 Card(
                   elevation: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  child: ExpansionTile(
+                    initiallyExpanded: true,
+                    title: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              offer.policyType,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Color(int.parse(offer.statusColor.replaceAll('#', '0xFF'))),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                offer.statusText,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        _buildInfoRow('Teklif Kodu', offer.code),
-                        _buildInfoRow('Plaka', offer.plaka),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            icon: const Icon(Icons.chat),
-                            label: const Text('Mesajlaş'),
-                            onPressed: () => viewModel.openChatUrl(offer.chatUrl),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF1E3A8A),
-                              foregroundColor: Colors.white,
-                            ),
+                        Text(
+                          offer.policyType,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        if (offer.pdfUrl.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                icon: const Icon(Icons.file_download),
-                                label: const Text('PDF İndir'),
-                                onPressed: () => viewModel.openPdfUrl(offer.pdfUrl),
-                              ),
-                            ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
                           ),
+                        ),
                       ],
                     ),
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0).copyWith(bottom: 16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 16),
+                            _buildInfoRow('Teklif Kodu', offer.code),
+                            _buildInfoRow('Plaka', offer.plaka),
+                            const SizedBox(height: 16),
+                            if (offer.pdfUrl.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton.icon(
+                                    icon: const Icon(Icons.file_download),
+                                    label: const Text('PDF İndir'),
+                                    onPressed: () => viewModel.openPdfUrl(offer.pdfUrl),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      )
+                    ],
                   ),
                 ),
 
