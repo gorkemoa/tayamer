@@ -94,15 +94,38 @@ class _OffersViewState extends State<OffersView> {
                     ),
                     child: ListTile(
                       contentPadding: const EdgeInsets.all(16),
-                      leading: CircleAvatar(
-                        backgroundColor: isGeneralChat
-                          ? Colors.grey[300]
-                          : const Color(0xFF1E3A8A).withOpacity(0.8),
-                        child: Icon(
-                          isGeneralChat ? Icons.chat : Icons.directions_car,
-                          color: isGeneralChat ? Colors.grey : Colors.white,
-                        ),
-                      ),
+                      leading: isGeneralChat
+                          ? CircleAvatar(
+                              backgroundColor: Colors.grey[300],
+                              child: const Icon(
+                                Icons.chat,
+                                color: Colors.grey,
+                              ),
+                            )
+                          : offer.chatUrl.isNotEmpty // Eğer chat URL varsa ikonu göster
+                            ? IconButton(
+                                icon: const Icon(Icons.chat_bubble_outline),
+                                tooltip: 'Sohbeti Başlat',
+                                color: Theme.of(context).primaryColor,
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => WebViewScreen(
+                                        url: offer.chatUrl,
+                                        title: 'Sohbet - ${offer.plaka}',
+                                      ),
+                                    ),
+                                  );
+                                },
+                              )
+                            : CircleAvatar( // Chat URL yoksa varsayılan araba ikonu
+                                backgroundColor: const Color(0xFF1E3A8A).withOpacity(0.8),
+                                child: const Icon(
+                                  Icons.directions_car,
+                                  color: Colors.white,
+                                ),
+                              ),
                       title: Text(
                         isGeneralChat ? offer.tcNo : offer.plaka,
                         style: const TextStyle(
@@ -136,24 +159,7 @@ class _OffersViewState extends State<OffersView> {
                       ),
                       trailing: isGeneralChat
                         ? const Icon(Icons.arrow_forward_ios)
-                        : offer.chatUrl.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.chat_bubble_outline),
-                              tooltip: 'Sohbeti Başlat',
-                              color: Theme.of(context).primaryColor,
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => WebViewScreen(
-                                      url: offer.chatUrl,
-                                      title: 'Sohbet - ${offer.plaka}',
-                                    ),
-                                  ),
-                                );
-                              },
-                            )
-                          : const Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                        : null, // Normal teklifler için trailing kaldırıldı
                       onTap: () {
                         if (isGeneralChat) {
                           // GENEL SOHBET için WebView açılacak
