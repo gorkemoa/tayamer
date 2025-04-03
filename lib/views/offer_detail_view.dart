@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../viewmodels/offer_viewmodel.dart';
 import '../models/offer_model.dart';
 import 'package:intl/intl.dart';
+import 'card_scan_view.dart';
 
 class OfferDetailView extends StatefulWidget {
   final String offerId;
@@ -280,7 +281,19 @@ class _OfferDetailViewState extends State<OfferDetailView> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => viewModel.openDetailUrl(price.detailUrl),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CardScanView(
+                        detailUrl: price.detailUrl,
+                        offerId: int.parse(widget.offerId),
+                        wsPriceId: int.parse(price.wsPriceID ?? '0'),
+                        companyId: int.parse(price.companyID),
+                      ),
+                    ),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1E3A8A),
                   foregroundColor: Colors.white,
