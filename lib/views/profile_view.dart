@@ -111,10 +111,11 @@ class _ProfileViewState extends State<ProfileView> {
                         ),
                         Container(
                           margin: const EdgeInsets.only(top: 8, bottom: 16),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
                             color: Colors.grey[200],
                             borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey[300]!),
                           ),
                           width: double.infinity,
                           child: Text(
@@ -131,10 +132,11 @@ class _ProfileViewState extends State<ProfileView> {
                         ),
                         Container(
                           margin: const EdgeInsets.only(top: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
                             color: Colors.grey[200],
                             borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey[300]!),
                           ),
                           width: double.infinity,
                           child: Text(
@@ -151,7 +153,7 @@ class _ProfileViewState extends State<ProfileView> {
 
             // Menü Öğeleri
             _buildMenuItem(
-              icon: Icons.person,
+              icon: Icons.person_outline,
               title: 'Profilim',
               onTap: () {
                 if (_user != null) {
@@ -170,13 +172,13 @@ class _ProfileViewState extends State<ProfileView> {
             ),
             
             _buildMenuItem(
-              icon: Icons.message,
+              icon: Icons.sms_outlined,
               title: 'SMS Taleplerim',
               onTap: () {},
             ),
             
             _buildMenuItem(
-              icon: Icons.help,
+              icon: Icons.public,
               title: 'Yardım',
               onTap: () {},
             ),
@@ -258,7 +260,7 @@ class _ProfileViewState extends State<ProfileView> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         leading: Icon(
           icon,
-          color: Colors.grey[600],
+          color: Colors.black54,
           size: 28,
         ),
         title: Text(

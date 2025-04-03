@@ -9,7 +9,7 @@ class ProfileDetailView extends StatelessWidget {
 
   // URL'yi açan metot (Sınıf içine taşındı)
   Future<void> _launchURL() async {
-    final Uri url = Uri.parse('https://crm.tayamer.com/portal/');
+    final Uri url = Uri.parse('https://crm.tayamer.com/portal/?code=FB-profile-${user.userCode}');
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
       // TODO: Hata durumunu kullanıcıya bildir (Snackbar vb.)
       print('Could not launch $url');
@@ -41,8 +41,8 @@ class ProfileDetailView extends StatelessWidget {
               children: [
                 // Profil Fotoğrafı Alanı (Boş)
                 Container(
-                  width: 100, // Biraz daha küçük
-                  height: 100, // Kare şeklinde
+                  width: 140, // Biraz daha küçük
+                  height: 140, // Kare şeklinde
                   decoration: BoxDecoration(
                     color: Colors.grey[200],
                     borderRadius: BorderRadius.circular(8), // Köşeleri yuvarlatılmış
@@ -53,14 +53,14 @@ class ProfileDetailView extends StatelessWidget {
                   //     ? Image.network(user.profilePhoto, fit: BoxFit.cover)
                   //     : const Icon(Icons.person, size: 60, color: Colors.grey),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 20),
                 // Ad Soyad ve Kullanıcı Adı
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildInfoField('Adınız Soyadınız', user.userFullname),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
                       _buildInfoField('Kullanıcı Adınız', user.username),
                     ],
                   ),

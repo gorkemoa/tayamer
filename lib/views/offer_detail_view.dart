@@ -285,7 +285,7 @@ class _OfferDetailViewState extends State<OfferDetailView> {
                   backgroundColor: const Color(0xFF1E3A8A),
                   foregroundColor: Colors.white,
                 ),
-                child: const Text('Detayları Görüntüle'),
+                child: const Text('İlerle'),
               ),
             ),
           ],

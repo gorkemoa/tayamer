@@ -1,5 +1,6 @@
 class User {
   final int userID;
+  final String userCode;
   final String username;
   final String userFullname;
   final List<String> userShortname;
@@ -25,6 +26,7 @@ class User {
 
   User({
     required this.userID,
+    required this.userCode,
     required this.username,
     required this.userFullname,
     required this.userShortname,
@@ -52,6 +54,7 @@ class User {
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       userID: json['userID'] ?? 0,
+      userCode: json['userCode'] ?? '',
       username: json['username'] ?? '',
       userFullname: json['userFullname'] ?? '',
       userShortname: List<String>.from(json['userShortname'] ?? []),
@@ -80,6 +83,7 @@ class User {
   Map<String, dynamic> toJson() {
     return {
       'userID': userID,
+      'userCode': userCode,
       'username': username,
       'userFullname': userFullname,
       'userShortname': userShortname,
