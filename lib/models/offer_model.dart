@@ -69,7 +69,6 @@ class OfferPrice {
   final String companyID;
   final String title;
   final String shortDesc;
-  final String? wsPriceID;
   final String image;
   final String? pdfUrl;
   final String detailUrl;
@@ -80,7 +79,6 @@ class OfferPrice {
     required this.companyID,
     required this.title,
     required this.shortDesc,
-    this.wsPriceID,
     required this.image,
     this.pdfUrl,
     required this.detailUrl,
@@ -93,7 +91,6 @@ class OfferPrice {
       companyID: json['companyID'] ?? '',
       title: json['title'] ?? '',
       shortDesc: json['shortDesc'] ?? '',
-      wsPriceID: json['wsPriceID'],
       image: json['image'] ?? '',
       pdfUrl: json['pdfUrl'],
       detailUrl: json['detailUrl'] ?? '',

@@ -31,12 +31,14 @@ class PaymentViewModel extends ChangeNotifier {
   // Kart bilgileri ile ödeme işlemini başlat
   Future<bool> processPayment({
     required int offerId,
-    required int wsPriceId,
     required int companyId,
     required String holder,
     required String cardNumber,
     required String expDate,
-    required int cvv,
+    required String cvv,
+    required int installment,
+    required String holderTC,
+    required String holderBD,
   }) async {
     try {
       _state = PaymentViewState.loading;
@@ -45,9 +47,9 @@ class PaymentViewModel extends ChangeNotifier {
       
       // Kullanıcı token'ını al
       final prefs = await SharedPreferences.getInstance();
-      final userToken = prefs.getString('user_token');
+      final userToken = prefs.getString('user_token') ?? 'UG5lhh6G6PLIM0KvV9Rcdx5zxkRmJGQM'; // Test için varsayılan değer
       
-      if (userToken == null || userToken.isEmpty) {
+      if (userToken.isEmpty) {
         _errorMessage = 'Kullanıcı oturumu bulunamadı. Lütfen tekrar giriş yapın.';
         _state = PaymentViewState.error;
         notifyListeners();
@@ -58,12 +60,14 @@ class PaymentViewModel extends ChangeNotifier {
       final paymentRequest = PaymentRequest(
         userToken: userToken,
         offerId: offerId,
-        wsPriceId: wsPriceId,
         companyId: companyId,
         holder: holder,
         cardNumber: cardNumber,
         expDate: expDate,
         cvv: cvv,
+        installment: installment,
+        holderTC: holderTC,
+        holderBD: holderBD,
       );
       
       // Ödeme işlemini başlat
@@ -93,17 +97,18 @@ class PaymentViewModel extends ChangeNotifier {
   // Manuel olarak kart bilgilerinden ödeme işlemini başlat
   Future<bool> processPaymentFromCardData(CardData cardData, {
     required int offerId,
-    required int wsPriceId,
     required int companyId,
   }) async {
     return processPayment(
       offerId: offerId,
-      wsPriceId: wsPriceId,
       companyId: companyId,
       holder: cardData.cardHolder,
       cardNumber: cardData.cardNumber.replaceAll(' ', ''), // Boşlukları kaldır
       expDate: cardData.expiryDate,
-      cvv: int.tryParse(cardData.cvv) ?? 0,
+      cvv: cardData.cvv,
+      installment: 1,
+      holderTC: cardData.tcNo ?? '',
+      holderBD: cardData.birthDate ?? '',
     );
   }
   

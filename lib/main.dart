@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'views/login_view.dart';
-import 'views/home_view.dart';
 import 'services/auth_service.dart';
 import 'viewmodels/policy_type_viewmodel.dart';
 import 'viewmodels/offer_viewmodel.dart';
+import 'viewmodels/payment_viewmodel.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +13,7 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => PolicyTypeViewModel()),
         ChangeNotifierProvider(create: (_) => OfferViewModel()),
+        ChangeNotifierProvider(create: (_) => PaymentViewModel()),
       ],
       child: const TayamerApp(),
     ),

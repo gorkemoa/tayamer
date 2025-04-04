@@ -87,8 +87,13 @@ class _ProfileViewState extends State<ProfileView> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Profil Fotoğrafı
-                  Container(
+            Image.network(
+              _user?.profilePhoto ?? 'https://via.placeholder.com/150',
+              width: 120,
+              height: 180,
+              fit: BoxFit.cover,
+            ),
+              Container(
                     width: 120,
                     height: 180,
                     decoration: BoxDecoration(

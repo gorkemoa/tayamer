@@ -8,15 +8,17 @@ import 'package:flutter/services.dart';
 class CardScanView extends StatefulWidget {
   final String detailUrl;
   final int offerId;
-  final int wsPriceId;
   final int companyId;
+  final String holderTC;
+  final String holderBD;
 
   const CardScanView({
     Key? key, 
     required this.detailUrl,
     required this.offerId,
-    required this.wsPriceId,
     required this.companyId,
+    required this.holderTC,
+    required this.holderBD, 
   }) : super(key: key);
 
   @override
@@ -88,8 +90,9 @@ class _CardScanViewState extends State<CardScanView> {
                       builder: (context) => CardManualEntryView(
                         detailUrl: widget.detailUrl,
                         offerId: widget.offerId,
-                        wsPriceId: widget.wsPriceId,
                         companyId: widget.companyId,
+                        holderTC: widget.holderTC,
+                        holderBD: widget.holderBD,
                       ),
                     ),
                   );
@@ -127,7 +130,6 @@ class _CardScanViewState extends State<CardScanView> {
         builder: (context) => PaymentConfirmationView(
           detailUrl: widget.detailUrl,
           offerId: widget.offerId,
-          wsPriceId: widget.wsPriceId,
           companyId: widget.companyId,
           cardData: parsedCardData,
         ),
@@ -197,15 +199,17 @@ class _CardScanViewState extends State<CardScanView> {
 class CardManualEntryView extends StatefulWidget {
   final String detailUrl;
   final int offerId;
-  final int wsPriceId;
   final int companyId;
+  final String holderTC;
+  final String holderBD;
 
   const CardManualEntryView({
     Key? key, 
     required this.detailUrl,
     required this.offerId,
-    required this.wsPriceId,
     required this.companyId,
+    required this.holderTC,
+    required this.holderBD,
   }) : super(key: key);
 
   @override
@@ -378,79 +382,76 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
               ),
               const SizedBox(height: 15),
               
-              // SKT, CVV ve Taksit yan yana
+              // SKT Tek satırda
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'SKT',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _expiryDateController,
+                    decoration: InputDecoration(
+                      hintText: 'AA/YY',
+                      filled: true,
+                      fillColor: Colors.white,
+                      prefixIcon: Icon(Icons.date_range_outlined, size: 20, color: Colors.grey[600]),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(4),
+                      CardExpiryInputFormatter(),
+                    ],
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'SKT gerekli';
+                      }
+                      if (!RegExp(r'^(0[1-9]|1[0-2])\/\d{2}$').hasMatch(value)) {
+                        return 'Geçersiz format (AA/YY)';
+                      }
+                      final parts = value.split('/');
+                      final month = int.tryParse(parts[0]);
+                      final year = int.tryParse('20${parts[1]}'); // YY -> YYYY
+                      if (month == null || year == null) {
+                         return 'Geçersiz tarih';
+                      }
+                      final now = DateTime.now();
+                      // Ayın son gününü kontrol et
+                      final expiryDate = DateTime(year, month + 1, 0); // Bir sonraki ayın 0. günü = bu ayın son günü
+                      if (expiryDate.isBefore(DateTime(now.year, now.month))) {
+                        return 'Kartın süresi dolmuş';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 15),
+
+              // CVV ve Taksit yan yana
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // SKT
-                  Expanded(
-                    flex: 2,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'SKT',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          controller: _expiryDateController,
-                          decoration: InputDecoration(
-                            hintText: 'AA/YY',
-                            filled: true,
-                            fillColor: Colors.white,
-                            prefixIcon: Icon(Icons.date_range_outlined, size: 20, color: Colors.grey[600]),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                          ),
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                            LengthLimitingTextInputFormatter(4),
-                            CardExpiryInputFormatter(),
-                          ],
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'SKT gerekli';
-                            }
-                            if (!RegExp(r'^(0[1-9]|1[0-2])\/\d{2}$').hasMatch(value)) {
-                              return 'Geçersiz format (AA/YY)';
-                            }
-                            final parts = value.split('/');
-                            final month = int.tryParse(parts[0]);
-                            final year = int.tryParse('20${parts[1]}'); // YY -> YYYY
-                            if (month == null || year == null) {
-                               return 'Geçersiz tarih';
-                            }
-                            final now = DateTime.now();
-                            // Ayın son gününü kontrol et
-                            final expiryDate = DateTime(year, month + 1, 0); // Bir sonraki ayın 0. günü = bu ayın son günü
-                            if (expiryDate.isBefore(DateTime(now.year, now.month))) {
-                              return 'Kartın süresi dolmuş';
-                            }
-                            return null;
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  
                   // CVV
                   Expanded(
                     flex: 2,
@@ -491,7 +492,7 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                           obscureText: true,
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
-                            LengthLimitingTextInputFormatter(3), // Genellikle 3 haneli
+                            LengthLimitingTextInputFormatter(4), // Genellikle 4 haneli
                           ],
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -768,7 +769,6 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
       paymentViewModel.processPaymentFromCardData(
         cardData,
         offerId: widget.offerId,
-        wsPriceId: widget.wsPriceId,
         companyId: widget.companyId,
       ).then((success) {
         // Dialog'u kapat
@@ -782,7 +782,6 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
               builder: (context) => PaymentConfirmationView(
                 detailUrl: widget.detailUrl,
                 offerId: widget.offerId, 
-                wsPriceId: widget.wsPriceId,
                 companyId: widget.companyId,
                 cardData: cardData,
               ),
@@ -807,14 +806,12 @@ class PaymentConfirmationView extends StatelessWidget {
   final String detailUrl;
   final CardData cardData;
   final int offerId;
-  final int wsPriceId;
   final int companyId;
 
   const PaymentConfirmationView({
     Key? key, 
     required this.detailUrl,
     required this.offerId,
-    required this.wsPriceId,
     required this.companyId,
     required this.cardData,
   }) : super(key: key);
@@ -917,7 +914,6 @@ class PaymentConfirmationView extends StatelessWidget {
     final success = await paymentViewModel.processPaymentFromCardData(
       cardData,
       offerId: offerId,
-      wsPriceId: wsPriceId,
       companyId: companyId,
     );
     
@@ -1007,6 +1003,9 @@ class CardData {
   final String? tcNo;
   final String? birthDate;
   final String? instalment;
+
+  String get holderTC => tcNo ?? '';
+  String get holderBD => birthDate ?? '';
 
   CardData({
     required this.cardNumber,

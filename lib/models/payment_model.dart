@@ -3,22 +3,26 @@ import 'dart:convert';
 class PaymentRequest {
   final String userToken;
   final int offerId;
-  final int wsPriceId;
   final int companyId;
   final String holder;
   final String cardNumber;
   final String expDate;
-  final int cvv;
+  final String cvv;
+  final int installment;
+  final String holderTC;
+  final String holderBD;
 
   PaymentRequest({
     required this.userToken,
     required this.offerId,
-    required this.wsPriceId,
     required this.companyId,
     required this.holder,
     required this.cardNumber,
     required this.expDate,
     required this.cvv,
+    this.installment = 1,
+    this.holderTC = '',
+    this.holderBD = '',
   });
 
   // JSON'a dönüştürme
@@ -26,12 +30,14 @@ class PaymentRequest {
     return {
       'userToken': userToken,
       'offerID': offerId,
-      'wsPriceID': wsPriceId,
       'companyID': companyId,
       'holder': holder,
       'cardNumber': cardNumber,
       'expDate': expDate,
       'cvv': cvv,
+      'installment': installment,
+      'holderTC': holderTC,
+      'holderBD': holderBD,
     };
   }
 

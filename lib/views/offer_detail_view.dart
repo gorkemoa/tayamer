@@ -288,8 +288,9 @@ class _OfferDetailViewState extends State<OfferDetailView> {
                       builder: (context) => CardScanView(
                         detailUrl: price.detailUrl,
                         offerId: int.parse(widget.offerId),
-                        wsPriceId: int.parse(price.wsPriceID ?? '0'),
                         companyId: int.parse(price.companyID),
+                        holderTC: '',
+                        holderBD: '',
                       ),
                     ),
                   );
