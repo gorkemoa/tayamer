@@ -6,13 +6,23 @@ import 'viewmodels/policy_type_viewmodel.dart';
 import 'viewmodels/offer_viewmodel.dart';
 import 'viewmodels/payment_viewmodel.dart';
 import 'viewmodels/notification_viewmodel.dart';
+import 'package:flutter/services.dart';
 
 void main() async {
+  // Flutter engine'in hazır olmasını sağla
   WidgetsFlutterBinding.ensureInitialized();
   
-  // NotificationViewModel'i oluştur ve bildirimleri başlat
+  // NotificationViewModel'i oluştur
   final notificationViewModel = NotificationViewModel();
-  await notificationViewModel.initializeLocalNotifications();
+  
+  try {
+    // Önce bildirimleri başlatmayı dene
+    await notificationViewModel.initializeLocalNotifications();
+  } catch (e) {
+    // Hata oluşursa console'a yaz
+    print('Bildirim servisi başlatılırken hata oluştu: $e');
+    // Uygulama çalışmaya devam etsin - bildirimleri kullanmadan
+  }
   
   runApp(
     MultiProvider(

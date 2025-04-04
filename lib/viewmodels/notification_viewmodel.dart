@@ -37,7 +37,12 @@ class NotificationViewModel extends ChangeNotifier {
   
   // LocalNotificationService'i başlat
   Future<void> initializeLocalNotifications() async {
-    await _localNotificationService.initialize();
+    try {
+      await _localNotificationService.initialize();
+    } catch (e) {
+      print('Bildirim servisini başlatma hatası: $e');
+      // Hata kullanıcıya gösterilmez, sadece log tutulur
+    }
   }
   
   // Bildirimleri getir
@@ -88,12 +93,21 @@ class NotificationViewModel extends ChangeNotifier {
   
   // Test bildirimi göster
   Future<void> showTestNotification() async {
-    await _localNotificationService.showNotification(
-      id: 9999,
-      title: 'Test Bildirimi',
-      body: 'Bu bir test bildirimidir.',
-      payload: 'test',
-    );
+    if (!_localNotificationService.isInitialized) {
+      print('Test bildirimi gösterilemiyor: Bildirim servisi başlatılmamış');
+      return;
+    }
+    
+    try {
+      await _localNotificationService.showNotification(
+        id: 9999,
+        title: 'Test Bildirimi',
+        body: 'Bu bir test bildirimidir.',
+        payload: 'test',
+      );
+    } catch (e) {
+      print('Test bildirimi gönderilirken hata: $e');
+    }
   }
   
   // Bildirimlerden SMS kodunu bul

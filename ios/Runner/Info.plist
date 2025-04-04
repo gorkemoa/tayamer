@@ -49,5 +49,14 @@
 	<string>QR kod taraması yapabilmek için kamera izni gerekiyor</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>QR kod içeren fotoğrafları yüklemek için galeri izni gerekiyor</string>
+	
+	<!-- Bildirim izinleri -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>Bildirimler aracılığıyla size önemli güncellemeler ve doğrulama kodları göndereceğiz.</string>
 </dict>
 </plist>

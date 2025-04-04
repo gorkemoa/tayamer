@@ -234,20 +234,38 @@ class _NotificationsViewState extends State<NotificationsView> {
   void _showAsRealNotifications() async {
     final viewModel = Provider.of<NotificationViewModel>(context, listen: false);
     
-    if (viewModel.notifications == null || viewModel.notifications!.isEmpty) {
-      // Önce bildirimleri getir, sonra göster
-      await viewModel.getNotifications(showAsLocalNotification: true);
-    } else {
-      // Zaten bildirimler var, doğrudan göster
+    try {
+      if (viewModel.notifications == null || viewModel.notifications!.isEmpty) {
+        // Önce bildirimleri getir, sonra göster
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Bildirimler alınıyor...'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+        await viewModel.getNotifications(showAsLocalNotification: true);
+      } else {
+        // Zaten bildirimler var, doğrudan göster
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Bildirimler gösteriliyor...'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+        
+        // Test bildirimi göster
+        await viewModel.showTestNotification();
+      }
+    } catch (e) {
+      // Hata durumunda kullanıcıya bildirme
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Bildirimler gösteriliyor...'),
-          duration: Duration(seconds: 1),
+        SnackBar(
+          content: Text('Bildirim gösterilirken hata oluştu.'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
         ),
       );
-      
-      // Test bildirimi göster
-      await viewModel.showTestNotification();
+      print('Bildirim gösterme hatası: $e');
     }
   }
 } 
