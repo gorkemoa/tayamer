@@ -24,9 +24,9 @@ class PaymentService {
     try {
       // UserId'yi SharedPreferences'tan al
       final prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getString('user_id'); 
+      final userId = prefs.getInt('user_id'); 
       
-      if (userId == null || userId.isEmpty) {
+      if (userId == null) {
         print('UserID bulunamadı');
         return PaymentResponse.error('Kullanıcı kimliği bulunamadı.');
       }

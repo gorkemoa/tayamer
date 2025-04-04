@@ -3,6 +3,7 @@ import '../models/user_model.dart';
 import '../services/user_service.dart';
 import '../services/auth_service.dart';
 import 'profile_detail_view.dart';
+import 'notifications_view.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -73,7 +74,14 @@ class _ProfileViewState extends State<ProfileView> {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_none, color: Colors.white),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationsView(),
+                ),
+              );
+            },
           ),
         ],
       ),

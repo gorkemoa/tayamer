@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../viewmodels/offer_viewmodel.dart';
 import 'offer_detail_view.dart';
 import 'webview_screen.dart';
+import 'notifications_view.dart';
 
 class OffersView extends StatefulWidget {
   const OffersView({super.key});
@@ -42,7 +43,14 @@ class _OffersViewState extends State<OffersView> {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications, color: Colors.white),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationsView(),
+                ),
+              );
+            },
           ),
         ],
       ),

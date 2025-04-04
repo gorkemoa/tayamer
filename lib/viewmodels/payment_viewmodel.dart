@@ -28,6 +28,16 @@ class PaymentViewModel extends ChangeNotifier {
   bool get isSuccess => _state == PaymentViewState.success;
   bool get isError => _state == PaymentViewState.error;
   
+  // Ödeme sonrası SMS onayı gerekiyor mu
+  bool get isSmsConfirmationRequired => _paymentResponse?.data != null && 
+      _paymentResponse!.data!.containsKey('smsConfirmationRequired') ? 
+      _paymentResponse!.data!['smsConfirmationRequired'] == true : false;
+      
+  // Ödeme ID'sini al
+  int? get paymentId => _paymentResponse?.data != null && 
+      _paymentResponse!.data!.containsKey('paymentId') ? 
+      _paymentResponse!.data!['paymentId'] : null;
+  
   // Kart bilgileri ile ödeme işlemini başlat
   Future<bool> processPayment({
     required int offerId,

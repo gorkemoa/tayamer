@@ -5,15 +5,22 @@ import 'services/auth_service.dart';
 import 'viewmodels/policy_type_viewmodel.dart';
 import 'viewmodels/offer_viewmodel.dart';
 import 'viewmodels/payment_viewmodel.dart';
+import 'viewmodels/notification_viewmodel.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // NotificationViewModel'i oluştur ve bildirimleri başlat
+  final notificationViewModel = NotificationViewModel();
+  await notificationViewModel.initializeLocalNotifications();
+  
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => PolicyTypeViewModel()),
         ChangeNotifierProvider(create: (_) => OfferViewModel()),
         ChangeNotifierProvider(create: (_) => PaymentViewModel()),
+        ChangeNotifierProvider.value(value: notificationViewModel),
       ],
       child: const TayamerApp(),
     ),

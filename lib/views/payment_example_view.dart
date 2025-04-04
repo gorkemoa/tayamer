@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/payment_viewmodel.dart';
 import '../models/payment_model.dart';
+import 'sms_confirmation_view.dart';
 
 class PaymentExampleView extends StatefulWidget {
   const PaymentExampleView({Key? key}) : super(key: key);
@@ -213,7 +214,20 @@ class _PaymentExampleViewState extends State<PaymentExampleView> {
         cardNumber: _cardNumberController.text.replaceAll(' ', ''),
         expDate: _expiryDateController.text,
         cvv: _cvvController.text,
-      );
+      ).then((success) {
+        if (success && paymentViewModel.isSmsConfirmationRequired) {
+          // SMS onayı gerekiyorsa SMS onay sayfasına yönlendir
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SmsConfirmationView(
+                offerId: _offerId,
+                companyId: _companyId,
+              ),
+            ),
+          );
+        }
+      });
     }
   }
 } 

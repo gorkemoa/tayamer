@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'notifications_view.dart';
 
 class PoliciesView extends StatefulWidget {
   const PoliciesView({super.key});
@@ -32,7 +33,14 @@ class _PoliciesViewState extends State<PoliciesView> {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationsView(),
+                ),
+              );
+            },
           ),
         ],
       ),
