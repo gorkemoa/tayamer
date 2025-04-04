@@ -8,6 +8,7 @@ enum OfferViewState {
   loading,
   loaded,
   error,
+  success,
 }
 
 class OfferViewModel extends ChangeNotifier {
@@ -17,12 +18,34 @@ class OfferViewModel extends ChangeNotifier {
   Offer? _selectedOffer;
   String _errorMessage = '';
   OfferViewState _state = OfferViewState.initial;
+  Map<String, dynamic>? _offerResponse;
   
   // Getters
   List<Offer> get offers => _offers;
   Offer? get selectedOffer => _selectedOffer;
   String get errorMessage => _errorMessage;
   OfferViewState get state => _state;
+  Map<String, dynamic>? get offerResponse => _offerResponse;
+  
+  // Yeni teklif oluştur
+  Future<bool> createOffer(Map<String, dynamic> offerData) async {
+    try {
+      _state = OfferViewState.loading;
+      _offerResponse = null;
+      notifyListeners();
+      
+      final response = await _offerService.submitOffer(offerData);
+      _offerResponse = response;
+      _state = OfferViewState.success;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _state = OfferViewState.error;
+      notifyListeners();
+      return false;
+    }
+  }
   
   // API'den tüm teklifleri yükle
   Future<void> loadOffers() async {

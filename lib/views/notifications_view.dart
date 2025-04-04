@@ -235,37 +235,69 @@ class _NotificationsViewState extends State<NotificationsView> {
     final viewModel = Provider.of<NotificationViewModel>(context, listen: false);
     
     try {
+      // Kullanıcıya bilgi verme
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bildirimler hazırlanıyor...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+      
+      print('Gerçek bildirim gösterme işlemi başlatılıyor...');
+      
+      // Öncelikle test bildirimi gönder - iOS bildirim izinlerini kontrol etmek için
+      try {
+        print('Önce test bildirimi gönderiliyor...');
+        await viewModel.showTestNotification();
+        print('Test bildirimi başarılı');
+      } catch (testError) {
+        print('Test bildirimi hatası: $testError');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Bildirim izinlerini kontrol edin: ${testError.toString()}'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+        // Test bildirimi hatası olsa bile devam et
+      }
+      
       if (viewModel.notifications == null || viewModel.notifications!.isEmpty) {
         // Önce bildirimleri getir, sonra göster
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Bildirimler alınıyor...'),
-            duration: Duration(seconds: 1),
-          ),
-        );
+        print('Bildirimler alınıyor ve gösteriliyor...');
         await viewModel.getNotifications(showAsLocalNotification: true);
       } else {
         // Zaten bildirimler var, doğrudan göster
+        print('Mevcut bildirimler gösteriliyor...');
+        for (var notification in viewModel.notifications!.take(1)) {
+          print('Bildirimi gönderiyor: ${notification.title}');
+          await viewModel.showTestNotification();
+        }
+      }
+      
+      // Başarılı ise kullanıcıya bildir
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Bildirimler gösteriliyor...'),
-            duration: Duration(seconds: 1),
+            content: Text('Bildirim başarıyla gönderildi!'),
+            backgroundColor: Colors.green,
           ),
         );
-        
-        // Test bildirimi göster
-        await viewModel.showTestNotification();
       }
     } catch (e) {
       // Hata durumunda kullanıcıya bildirme
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Bildirim gösterilirken hata oluştu.'),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 2),
-        ),
-      );
-      print('Bildirim gösterme hatası: $e');
+      print('Bildirim gösterme ana hatası: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Bildirim gösterilirken hata: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 } 

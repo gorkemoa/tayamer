@@ -13,7 +13,9 @@ class PolicyTypeService {
       
       if (response.statusCode == 200) {
         final List<dynamic> jsonData = jsonDecode(utf8.decode(response.bodyBytes));
-        return jsonData.map((data) => PolicyType.fromJson(data)).toList();
+        final policyTypes = jsonData.map((data) => PolicyType.fromJson(data)).toList();
+        print('Toplam ${policyTypes.length} poliçe tipi yüklendi');
+        return policyTypes;
       } else {
         throw Exception('API yanıtı başarısız: ${response.statusCode}');
       }
@@ -69,5 +71,30 @@ class PolicyTypeService {
       print('QR kodu işlenirken hata oluştu: $e');
       return null;
     }
+  }
+
+  // Belirli bir alanın seçenek listesini getiren metod
+  List<Option>? getFieldOptions(PolicyType policyType, String fieldKey) {
+    final field = policyType.fields.firstWhere(
+      (field) => field.key == fieldKey && field.type == 'select',
+      orElse: () => Field(
+        key: '', name: '', placeholder: '', type: '', rules: {}, options: null
+      ),
+    );
+    
+    return field.options;
+  }
+
+  // Belirli bir seçenek değerinin etiketini getiren metod
+  String? getOptionLabel(PolicyType policyType, String fieldKey, String optionValue) {
+    final options = getFieldOptions(policyType, fieldKey);
+    if (options == null || options.isEmpty) return null;
+    
+    final option = options.firstWhere(
+      (opt) => opt.value == optionValue,
+      orElse: () => Option(label: '', value: ''),
+    );
+    
+    return option.label.isNotEmpty ? option.label : null;
   }
 } 

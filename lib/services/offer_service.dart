@@ -18,6 +18,49 @@ class OfferService {
     return 'Basic $encoded';
   }
 
+  // Yeni teklif gönderme
+  Future<Map<String, dynamic>> submitOffer(Map<String, dynamic> offerData) async {
+    try {
+      // Token ve user id al
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('user_token');
+      final userId = prefs.getInt('user_id');
+      
+      if (token == null || userId == null) {
+        throw Exception('Kullanıcı girişi bulunamadı');
+      }
+      
+      // userToken ekle
+      offerData['userToken'] = token;
+      
+      print('Teklif gönderiliyor: $_baseUrl/user/offer/$userId/add');
+      print('Teklif verileri: $offerData');
+      
+      final response = await http.post(
+        Uri.parse('$_baseUrl/user/offer/$userId/add'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': _getBasicAuthHeader(),
+        },
+        body: jsonEncode(offerData),
+      );
+      
+      print('Teklif yanıtı: StatusCode=${response.statusCode}');
+      print('Teklif yanıt içeriği: ${response.body}');
+      
+      final data = jsonDecode(utf8.decode(response.bodyBytes));
+      
+      if (data['success'] == true) {
+        return data;
+      } else {
+        throw Exception('Teklif gönderilemedi: ${data['message'] ?? 'Bilinmeyen hata'}');
+      }
+    } catch (e) {
+      print('Teklif gönderme hatası: $e');
+      rethrow;
+    }
+  }
+  
   // Kullanıcının tekliflerini getir
   Future<List<Offer>> getOffers() async {
     try {

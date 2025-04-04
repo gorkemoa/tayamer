@@ -7,22 +7,27 @@ import 'viewmodels/offer_viewmodel.dart';
 import 'viewmodels/payment_viewmodel.dart';
 import 'viewmodels/notification_viewmodel.dart';
 import 'package:flutter/services.dart';
+import 'services/local_notification_service.dart';
 
 void main() async {
   // Flutter engine'in hazır olmasını sağla
   WidgetsFlutterBinding.ensureInitialized();
   
-  // NotificationViewModel'i oluştur
-  final notificationViewModel = NotificationViewModel();
+  // Bildirim servisini başlat - Singleton instance
+  final localNotificationService = LocalNotificationService();
   
   try {
-    // Önce bildirimleri başlatmayı dene
-    await notificationViewModel.initializeLocalNotifications();
+    print('Ana bildirim servisi başlatılıyor...');
+    await localNotificationService.initialize();
+    print('Ana bildirim servisi başarıyla başlatıldı');
   } catch (e) {
-    // Hata oluşursa console'a yaz
-    print('Bildirim servisi başlatılırken hata oluştu: $e');
-    // Uygulama çalışmaya devam etsin - bildirimleri kullanmadan
+    print('Ana bildirim servisi başlatılırken hata: $e');
   }
+  
+  // NotificationViewModel'i oluştur ve aynı bildirim servisini kullan
+  final notificationViewModel = NotificationViewModel(
+    localNotificationService: localNotificationService
+  );
   
   runApp(
     MultiProvider(
@@ -32,13 +37,20 @@ void main() async {
         ChangeNotifierProvider(create: (_) => PaymentViewModel()),
         ChangeNotifierProvider.value(value: notificationViewModel),
       ],
-      child: const TayamerApp(),
+      child: TayamerApp(
+        navigatorKey: localNotificationService.navigatorKey,
+      ),
     ),
   );
 }
 
 class TayamerApp extends StatefulWidget {
-  const TayamerApp({super.key});
+  final GlobalKey<NavigatorState> navigatorKey;
+  
+  const TayamerApp({
+    super.key,
+    required this.navigatorKey,
+  });
 
   @override
   State<TayamerApp> createState() => _TayamerAppState();
@@ -67,6 +79,7 @@ class _TayamerAppState extends State<TayamerApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: widget.navigatorKey,
       title: 'Tayamer',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(

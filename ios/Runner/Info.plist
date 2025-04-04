@@ -58,5 +58,19 @@
 	</array>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>Bildirimler aracılığıyla size önemli güncellemeler ve doğrulama kodları göndereceğiz.</string>
+	<key>NSUserNotificationCenterDelegate</key>
+	<string>$(PRODUCT_MODULE_NAME).AppDelegate</string>
+	
+	<!-- iOS 10+ bildirim izinleri -->
+	<key>NSBundleDisplayName</key>
+	<string>Tayamer</string>
+	<key>NSBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>NSBundleName</key>
+	<string>Tayamer</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Takvim izni gerekmemektedir</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Kişiler izni gerekmemektedir</string>
 </dict>
 </plist>

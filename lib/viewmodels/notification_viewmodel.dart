@@ -15,12 +15,17 @@ enum NotificationViewState {
 
 class NotificationViewModel extends ChangeNotifier {
   final NotificationService _notificationService = NotificationService();
-  final LocalNotificationService _localNotificationService = LocalNotificationService();
+  late final LocalNotificationService _localNotificationService;
   
   NotificationViewState _state = NotificationViewState.initial;
   String _errorMessage = '';
   List<PaymentNotification>? _notifications;
   PaymentNotification? _selectedNotification;
+  
+  // Constructor - LocalNotificationService alıyor
+  NotificationViewModel({LocalNotificationService? localNotificationService}) {
+    _localNotificationService = localNotificationService ?? LocalNotificationService();
+  }
   
   // Getter'lar
   NotificationViewState get state => _state;
@@ -38,10 +43,32 @@ class NotificationViewModel extends ChangeNotifier {
   // LocalNotificationService'i başlat
   Future<void> initializeLocalNotifications() async {
     try {
-      await _localNotificationService.initialize();
+      print('NotificationViewModel: Bildirim servisi başlatılıyor...');
+      bool isRetrying = false;
+      
+      // İlk deneme
+      try {
+        await _localNotificationService.initialize();
+      } catch (e) {
+        print('İlk başlatma denemesi başarısız: $e');
+        isRetrying = true;
+        
+        // Kısa bir bekleme ile tekrar dene
+        await Future.delayed(const Duration(milliseconds: 1000));
+        
+        // Tekrar dene
+        await _localNotificationService.initialize();
+      }
+      
+      if (isRetrying) {
+        print('Bildirim servisi ikinci denemede başlatıldı');
+      } else {
+        print('Bildirim servisi ilk denemede başlatıldı');
+      }
     } catch (e) {
       print('Bildirim servisini başlatma hatası: $e');
-      // Hata kullanıcıya gösterilmez, sadece log tutulur
+      // Hatayı yukarıya ilet
+      rethrow;
     }
   }
   
@@ -93,20 +120,37 @@ class NotificationViewModel extends ChangeNotifier {
   
   // Test bildirimi göster
   Future<void> showTestNotification() async {
-    if (!_localNotificationService.isInitialized) {
-      print('Test bildirimi gösterilemiyor: Bildirim servisi başlatılmamış');
-      return;
-    }
-    
     try {
+      print('Test bildirimi gösterme başladı');
+      
+      if (!_localNotificationService.isInitialized) {
+        print('Bildirim servisi başlatılmamış, bildirimleri gösteremiyoruz');
+        // Bildirimleri tekrar başlatmayı dene
+        try {
+          print('Bildirim servisini başlatmayı deniyorum...');
+          await _localNotificationService.initialize();
+          print('Test öncesi bildirim servisi başarıyla başlatıldı');
+        } catch (initError) {
+          print('Bildirim servisi başlatılamadı: $initError');
+          
+          // Fallback - SnackBar ile uygulama içi bildirim göster
+          throw Exception('Bildirim servisi başlatılamadı: $initError. GERÇEK BİLDİRİM OLACAK YUKARDAN İNEN GERÇEK OLAN');
+        }
+      }
+      
+      // Bildirim göster
+      print('Bildirimi göstermeyi deniyorum...');
       await _localNotificationService.showNotification(
         id: 9999,
-        title: 'Test Bildirimi',
-        body: 'Bu bir test bildirimidir.',
+        title: 'Tayamer Bildirimi',
+        body: 'Bu bir bildirim test mesajıdır.',
         payload: 'test',
       );
+      print('Bildirim başarıyla gösterildi');
     } catch (e) {
       print('Test bildirimi gönderilirken hata: $e');
+      // Hatayı yukarıya ilet ki kullanıcıya gösterilebilsin
+      rethrow;
     }
   }
   

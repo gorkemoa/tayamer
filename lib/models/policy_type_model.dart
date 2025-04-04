@@ -5,6 +5,8 @@ class PolicyType {
   final String title;
   final String colorCode;
   final String imageUrl;
+    final String desc;
+
   final int typeId;
   final bool isActive;
   final QRCode? qrCode;
@@ -14,6 +16,7 @@ class PolicyType {
     required this.title,
     required this.colorCode,
     required this.imageUrl,
+    required this.desc,   
     required this.typeId,
     required this.isActive,
     this.qrCode,
@@ -25,6 +28,7 @@ class PolicyType {
       title: json['title'] ?? '',
       colorCode: json['colorCode'] ?? '#FFFFFF',
       imageUrl: json['imageUrl'] ?? '',
+      desc: json['desc'] ?? '',
       typeId: json['typeId'] ?? 0,
       isActive: json['isActive'] ?? false,
       qrCode: json['qrCode'] != null ? QRCode.fromJson(json['qrCode']) : null,
@@ -39,6 +43,7 @@ class PolicyType {
       'title': title,
       'colorCode': colorCode,
       'imageUrl': imageUrl,
+      'desc': desc,
       'typeId': typeId,
       'isActive': isActive,
       'qrCode': qrCode?.toJson(),

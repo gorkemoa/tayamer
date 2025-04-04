@@ -17,6 +17,7 @@ class PolicyTypeViewModel extends ChangeNotifier {
   String _errorMessage = '';
   PolicyTypeViewState _state = PolicyTypeViewState.initial;
   Map<String, String>? _qrCodeData;
+  Map<String, String> _selectedOptions = {};
 
   // Getters
   List<PolicyType> get policyTypes => _policyTypes;
@@ -25,6 +26,7 @@ class PolicyTypeViewModel extends ChangeNotifier {
   PolicyTypeViewState get state => _state;
   Map<String, String>? get qrCodeData => _qrCodeData;
   List<PolicyType> get activePolicyTypes => _policyTypes.where((type) => type.isActive).toList();
+  Map<String, String> get selectedOptions => _selectedOptions;
 
   // API'den tüm poliçe tiplerini yükle
   Future<void> loadPolicyTypes() async {
@@ -42,6 +44,43 @@ class PolicyTypeViewModel extends ChangeNotifier {
     }
   }
 
+  // Belirli bir alan için seçenekleri getir
+  List<Option>? getFieldOptions(String fieldKey) {
+    if (_selectedPolicyType == null) return null;
+    return _policyTypeService.getFieldOptions(_selectedPolicyType!, fieldKey);
+  }
+
+  // Bir alan için seçenek seç
+  void selectOption(String fieldKey, String optionValue) {
+    _selectedOptions[fieldKey] = optionValue;
+    notifyListeners();
+  }
+
+  // Seçilen bir seçeneğin değerini al
+  String? getSelectedOption(String fieldKey) {
+    return _selectedOptions[fieldKey];
+  }
+
+  // Seçilen bir seçeneğin etiketini al
+  String? getSelectedOptionLabel(String fieldKey) {
+    final optionValue = _selectedOptions[fieldKey];
+    if (_selectedPolicyType == null || optionValue == null) return null;
+    
+    return _policyTypeService.getOptionLabel(_selectedPolicyType!, fieldKey, optionValue);
+  }
+
+  // Seçili poliçe tipindeki select türündeki alanları getir
+  List<Field> getSelectFields() {
+    if (_selectedPolicyType == null) return [];
+    return _selectedPolicyType!.fields.where((field) => field.type == 'select').toList();
+  }
+
+  // Seçenekleri temizle
+  void clearSelectedOptions() {
+    _selectedOptions = {};
+    notifyListeners();
+  }
+
   // ID'ye göre poliçe tipi seç
   Future<void> selectPolicyTypeById(int typeId) async {
     try {
@@ -50,6 +89,9 @@ class PolicyTypeViewModel extends ChangeNotifier {
 
       _selectedPolicyType = await _policyTypeService.getPolicyTypeById(typeId);
       _state = PolicyTypeViewState.loaded;
+      
+      // Yeni poliçe tipi seçildiğinde seçenekleri temizle
+      clearSelectedOptions();
     } catch (e) {
       _errorMessage = e.toString();
       _state = PolicyTypeViewState.error;
@@ -61,6 +103,8 @@ class PolicyTypeViewModel extends ChangeNotifier {
   // Poliçe tipini seç
   void selectPolicyType(PolicyType policyType) {
     _selectedPolicyType = policyType;
+    // Yeni poliçe tipi seçildiğinde seçenekleri temizle
+    clearSelectedOptions();
     notifyListeners();
   }
 

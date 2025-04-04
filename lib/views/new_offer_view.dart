@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:provider/provider.dart';
+import 'dart:math';
+import 'dart:io' show Platform;
+import 'package:flutter/cupertino.dart';
 import '../models/policy_type_model.dart';
 import '../viewmodels/policy_type_viewmodel.dart';
-import 'dashboard_view.dart';
+import '../viewmodels/offer_viewmodel.dart';
 import 'home_view.dart';
-import 'dart:convert';
+import 'offer_success_view.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:confetti/confetti.dart';
 
 class NewOfferView extends StatefulWidget {
   const NewOfferView({super.key});
@@ -84,6 +87,8 @@ class _NewOfferViewState extends State<NewOfferView> {
         maxChildSize: 0.9,
         minChildSize: 0.5,
         expand: false,
+        snap: true,
+        snapSizes: const [0.5, 0.85, 0.9],
         builder: (context, scrollController) {
           return Column(
             children: [
@@ -134,6 +139,9 @@ class _NewOfferViewState extends State<NewOfferView> {
                     // Aktif poliçe tiplerini göster
                     return GridView.builder(
                       controller: scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: BouncingScrollPhysics(),
+                      ),
                       padding: const EdgeInsets.all(16),
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
@@ -469,6 +477,7 @@ class ManualEntryView extends StatefulWidget {
 class _ManualEntryViewState extends State<ManualEntryView> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final Map<String, TextEditingController> _controllers = {};
+  final TextEditingController _descController = TextEditingController();
 
   @override
   void initState() {
@@ -477,6 +486,9 @@ class _ManualEntryViewState extends State<ManualEntryView> {
     for (var field in widget.policyType.fields) {
       _controllers[field.key] = TextEditingController();
     }
+    
+    // Açıklama alanı için varsayılan değer
+    _descController.text = widget.policyType.desc;
     
     // Eğer initialData varsa, controller'lara verileri yükle
     if (widget.initialData != null) {
@@ -494,6 +506,7 @@ class _ManualEntryViewState extends State<ManualEntryView> {
     for (var controller in _controllers.values) {
       controller.dispose();
     }
+    _descController.dispose();
     super.dispose();
   }
 
@@ -513,6 +526,9 @@ class _ManualEntryViewState extends State<ManualEntryView> {
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -527,26 +543,64 @@ class _ManualEntryViewState extends State<ManualEntryView> {
               // Form alanlarını oluştur
               ...widget.policyType.fields.map((field) => _buildFormField(field)).toList(),
               
+              // Açıklama alanı
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Ek Açıklama',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _descController,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        hintText: 'Eklemek istediğiniz bilgiler...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
               const SizedBox(height: 40),
               
               // Devam butonu
-              ElevatedButton(
-                onPressed: _submitForm,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1C3879),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Teklif Oluştur',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+              Consumer<OfferViewModel>(
+                builder: (context, viewModel, child) {
+                  if (viewModel.state == OfferViewState.loading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  
+                  return ElevatedButton(
+                    onPressed: () => _submitForm(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1C3879),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Teklif Oluştur',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -556,6 +610,207 @@ class _ManualEntryViewState extends State<ManualEntryView> {
   }
 
   Widget _buildFormField(Field field) {
+    if (field.type == 'select') {
+      return _buildSelectField(context, field);
+    } else if (field.type == 'date') {
+      return _buildDateField(field);
+    } else {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${field.name} ${field.rules.containsKey('required') && field.rules['required']!.value ? '(*)' : ''}',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _controllers[field.key],
+              decoration: InputDecoration(
+                hintText: 'Örn: "${field.placeholder}"',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              ),
+              // Settings özelliklerini uygula
+              keyboardType: _getKeyboardType(field),
+              textCapitalization: _getTextCapitalization(field),
+              autocorrect: _getAutocorrect(field),
+              autofocus: _getAutofocus(field),
+              // Maksimum uzunluk kuralı
+              maxLength: field.rules.containsKey('maxLength') ? 
+                (field.rules['maxLength']!.value as int?) : null,
+              // Karakter sayacını gizle
+              buildCounter: field.rules.containsKey('maxLength') ? 
+                (context, {required currentLength, required isFocused, maxLength}) => null : null,
+              // Tüm kuralları kontrol eden validator
+              validator: (value) {
+                // Zorunluluk kontrolü
+                if (field.rules.containsKey('required') && 
+                    field.rules['required']!.value && 
+                    (value == null || value.isEmpty)) {
+                  return field.rules['required']!.message ?? 'Bu alan zorunludur';
+                }
+                
+                // Minimum uzunluk kontrolü
+                if (field.rules.containsKey('minLength') && 
+                    value != null && 
+                    value.length < (field.rules['minLength']!.value as int)) {
+                  return field.rules['minLength']!.message ?? 
+                    'En az ${field.rules['minLength']!.value} karakter girilmelidir';
+                }
+                
+                // Maksimum uzunluk kontrolü (UI zaten maxLength ile sınırlıyor ama doğrulama için)
+                if (field.rules.containsKey('maxLength') && 
+                    value != null && 
+                    value.length > (field.rules['maxLength']!.value as int)) {
+                  return field.rules['maxLength']!.message ?? 
+                    'En fazla ${field.rules['maxLength']!.value} karakter girilmelidir';
+                }
+                
+                // Regex pattern kontrolü
+                if (field.rules.containsKey('pattern') && 
+                    value != null && 
+                    value.isNotEmpty) {
+                  final pattern = RegExp(field.rules['pattern']!.value as String);
+                  if (!pattern.hasMatch(value)) {
+                    return field.rules['pattern']!.message ?? 'Geçersiz format';
+                  }
+                }
+                
+                return null; // Tüm kurallar geçerli
+              },
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Widget _buildSelectField(BuildContext context, Field field) {
+    final viewModel = Provider.of<PolicyTypeViewModel>(context);
+    final options = field.options ?? [];
+    final String selectedValue = viewModel.getSelectedOption(field.key) ?? '';
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${field.name} ${field.rules.containsKey('required') && field.rules['required']!.value ? '(*)' : ''}',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            value: selectedValue.isNotEmpty ? selectedValue : null,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            ),
+            items: options.map((option) {
+              return DropdownMenuItem<String>(
+                value: option.value,
+                child: Text(option.label),
+              );
+            }).toList(),
+            onChanged: (value) {
+              if (value != null) {
+                viewModel.selectOption(field.key, value);
+              }
+            },
+            validator: (value) {
+              // Zorunluluk kuralını kontrol et
+              if (field.rules.containsKey('required') && 
+                  field.rules['required']!.value && 
+                  (value == null || value.isEmpty)) {
+                return field.rules['required']!.message ?? 'Bu alan zorunludur';
+              }
+              return null;
+            },
+            // Seçenek yoksa veya tek seçenek varsa görünümü ayarla
+            disabledHint: options.isEmpty 
+                ? const Text('Seçenek bulunamadı') 
+                : null,
+            // Placeholder
+            hint: Text(field.placeholder.isNotEmpty 
+                ? field.placeholder 
+                : 'Seçiniz'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Klavye türünü settings'ten alma
+  TextInputType _getKeyboardType(Field field) {
+    if (field.settings == null || field.settings!['keyboardType'] == null) {
+      // Varsayılan klavye türü
+      return TextInputType.text;
+    }
+    
+    switch (field.settings!['keyboardType']) {
+      case 'numeric':
+        return TextInputType.number;
+      case 'email':
+        return TextInputType.emailAddress;
+      case 'phone':
+        return TextInputType.phone;
+      default:
+        return TextInputType.text;
+    }
+  }
+
+  // Otomatik büyük harf ayarını settings'ten alma
+  TextCapitalization _getTextCapitalization(Field field) {
+    if (field.settings == null || field.settings!['autoCapitalize'] == null) {
+      // Varsayılan değer
+      return TextCapitalization.none;
+    }
+    
+    switch (field.settings!['autoCapitalize']) {
+      case 'characters':
+        return TextCapitalization.characters; // Tüm karakterleri büyük harf yap
+      case 'words':
+        return TextCapitalization.words; // Her kelimenin ilk harfini büyük yap
+      case 'sentences':
+        return TextCapitalization.sentences; // Cümlelerin ilk harfini büyük yap
+      default:
+        return TextCapitalization.none; // Hiçbir şeyi büyük harfe çevirme
+    }
+  }
+
+  // Otomatik düzeltme ayarını settings'ten alma
+  bool _getAutocorrect(Field field) {
+    if (field.settings == null || field.settings!['autoCorrect'] == null) {
+      // Varsayılan değer
+      return true;
+    }
+    
+    return field.settings!['autoCorrect'] as bool;
+  }
+
+  // Otomatik odaklanma ayarını settings'ten alma
+  bool _getAutofocus(Field field) {
+    if (field.settings == null || field.settings!['autoFocus'] == null) {
+      // Varsayılan değer
+      return false;
+    }
+    
+    return field.settings!['autoFocus'] as bool;
+  }
+
+  // Tarih seçim alanı için özel widget
+  Widget _buildDateField(Field field) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -571,6 +826,7 @@ class _ManualEntryViewState extends State<ManualEntryView> {
           const SizedBox(height: 8),
           TextFormField(
             controller: _controllers[field.key],
+            readOnly: true, // Klavye girişini devre dışı bırak
             decoration: InputDecoration(
               hintText: 'Örn: "${field.placeholder}"',
               border: OutlineInputBorder(
@@ -578,6 +834,7 @@ class _ManualEntryViewState extends State<ManualEntryView> {
                 borderSide: BorderSide(color: Colors.grey.shade300),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              suffixIcon: const Icon(Icons.calendar_today),
             ),
             validator: (value) {
               if (field.rules.containsKey('required') && 
@@ -587,47 +844,167 @@ class _ManualEntryViewState extends State<ManualEntryView> {
               }
               return null;
             },
+            onTap: () async {
+              // Platform spesifik tarih seçici göster
+              DateTime? pickedDate;
+              
+              if (Platform.isIOS) {
+                // iOS için CupertinoDatePicker kullan
+                await showCupertinoModalPopup(
+                  context: context, 
+                  builder: (BuildContext context) {
+                    DateTime tempPickedDate = DateTime.now();
+                    return Container(
+                      height: 300,
+                      color: Colors.white,
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              CupertinoButton(
+                                child: const Text('İptal'),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                              const Text(
+                                'Tarih Seçin',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              CupertinoButton(
+                                child: const Text('Tamam'),
+                                onPressed: () {
+                                  pickedDate = tempPickedDate;
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                            ],
+                          ),
+                          Expanded(
+                            child: CupertinoDatePicker(
+                              mode: CupertinoDatePickerMode.date,
+                              initialDateTime: DateTime.now(),
+                              minimumDate: DateTime(1900),
+                              maximumDate: DateTime(2100),
+                              onDateTimeChanged: (DateTime dateTime) {
+                                tempPickedDate = dateTime;
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                );
+              } else {
+                // Android için Material Design DatePicker kullan
+                pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(1900),
+                  lastDate: DateTime(2100),
+                  // Türkçe tarih formatı için yerelleştirme ayarı
+                  locale: const Locale('tr', 'TR'),
+                );
+              }
+              
+              if (pickedDate != null && mounted) {
+                // API için tarih formatı (YYYY-MM-DD)
+                final apiFormattedDate = '${pickedDate!.year}-${pickedDate!.month.toString().padLeft(2, '0')}-${pickedDate!.day.toString().padLeft(2, '0')}';
+                
+                // Türkçe görüntüleme formatı (GG.AA.YYYY)
+                final turkishFormattedDate = '${pickedDate!.day.toString().padLeft(2, '0')}.${pickedDate!.month.toString().padLeft(2, '0')}.${pickedDate!.year}';
+                
+                setState(() {
+                  // API'ye gönderilecek değer olarak controller'a atama yapıyoruz
+                  _controllers[field.key]!.text = apiFormattedDate;
+                  
+                  // Görüntüleme için Türkçe format
+                  _controllers[field.key]!.value = TextEditingValue(
+                    text: turkishFormattedDate,
+                    selection: TextSelection.collapsed(offset: turkishFormattedDate.length),
+                  );
+                });
+              }
+            },
           ),
         ],
       ),
     );
   }
 
-  void _submitForm() {
+  void _submitForm(BuildContext context) async {
+    // Tüm kuralları doğrula
     if (_formKey.currentState!.validate()) {
       // Form verilerini topla
-      Map<String, String> formData = {};
+      Map<String, dynamic> formData = {
+        'policyType': widget.policyType.typeId.toString(),
+        'desc': _descController.text,
+      };
+      
+      // Form alanlarını ekle ve özel veri tipleri için formatlama yapma
       _controllers.forEach((key, controller) {
-        formData[key] = controller.text;
+        final field = widget.policyType.fields.firstWhere(
+          (f) => f.key == key,
+          orElse: () => Field(
+            key: key, name: key, placeholder: '', type: 'text', rules: {}
+          ),
+        );
+        
+        // Alan türüne göre veri formatını ayarla
+        if (field.type == 'date') {
+          // Tarih formatı kontrolü - eğer Türkçe formatta ise API formatına çevir
+          String value = controller.text;
+          if (value.contains('.') && value.split('.').length == 3) {
+            // GG.AA.YYYY formatındaysa YYYY-MM-DD formatına çevir
+            final parts = value.split('.');
+            if (parts.length == 3) {
+              value = '${parts[2]}-${parts[1]}-${parts[0]}';
+            }
+          }
+          formData[key] = value.isNotEmpty ? value : null;
+        } else if (field.type == 'select') {
+          // Seçim değerini al
+          final viewModel = Provider.of<PolicyTypeViewModel>(context, listen: false);
+          formData[key] = viewModel.getSelectedOption(key) ?? controller.text;
+        } else {
+          formData[key] = controller.text;
+        }
       });
       
-      // Verileri göster
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('${widget.policyType.title} için Form Verileri'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: formData.entries.map((entry) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: Text('${entry.key}: ${entry.value}'),
-              );
-            }).toList(),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Dialog'u kapat
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => HomeView(), settings: RouteSettings(arguments: 0)),
-                  (route) => false,
-                );
-              },
-              child: const Text('Tamam'),
+      // OfferViewModel üzerinden formu gönder
+      final viewModel = Provider.of<OfferViewModel>(context, listen: false);
+      final success = await viewModel.createOffer(formData);
+      
+      if (success && mounted) {
+        // Başarı sayfasına yönlendir
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OfferSuccessView(
+              message: viewModel.offerResponse?['data']['message'] ?? 'Teklifiniz başarıyla oluşturuldu.',
             ),
-          ],
+          ),
+        );
+      } else if (mounted) {
+        // Hata durumunda mesaj göster
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Hata: ${viewModel.errorMessage}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } else {
+      // Formda hatalar var, kullanıcıyı bilgilendir
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Lütfen formdaki hataları düzeltin'),
+          backgroundColor: Colors.orange,
         ),
       );
     }
