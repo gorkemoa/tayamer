@@ -101,14 +101,6 @@ class _ProfileViewState extends State<ProfileView> {
               height: 180,
               fit: BoxFit.cover,
             ),
-              Container(
-                    width: 120,
-                    height: 180,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      border: Border.all(color: Colors.grey[300]!),
-                    ),
-                  ),
                   const SizedBox(width: 16),
                   // Kullanıcı Bilgileri
                   Expanded(

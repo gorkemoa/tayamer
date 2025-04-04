@@ -49,9 +49,9 @@ class ProfileDetailView extends StatelessWidget {
                     border: Border.all(color: Colors.grey[300]!),
                   ),
                   // TODO: Profil fotoğrafını göstermek için Image widget'ı eklenebilir
-                  // child: user.profilePhoto.isNotEmpty
-                  //     ? Image.network(user.profilePhoto, fit: BoxFit.cover)
-                  //     : const Icon(Icons.person, size: 60, color: Colors.grey),
+                   child: user.profilePhoto.isNotEmpty
+                  ? Image.network(user.profilePhoto, fit: BoxFit.cover)
+                  : const Icon(Icons.person, size: 60, color: Colors.grey),
                 ),
                 const SizedBox(width: 20),
                 // Ad Soyad ve Kullanıcı Adı

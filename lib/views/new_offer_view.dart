@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'dart:math';
 import 'dart:io' show Platform;
 import 'package:flutter/cupertino.dart';
 import '../models/policy_type_model.dart';
@@ -10,7 +9,6 @@ import 'home_view.dart';
 import 'offer_success_view.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:confetti/confetti.dart';
 
 class NewOfferView extends StatefulWidget {
   const NewOfferView({super.key});

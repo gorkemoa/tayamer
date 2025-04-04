@@ -72,8 +72,22 @@ class _DashboardViewState extends State<DashboardView> {
       title: Column(
         children: [
           // Logo
-          Image.network('https://www.tayamer.com/img/logo.png', height: 90),
-          const SizedBox(height: 85),
+          Image.network('https://www.tayamer.com/img/logo.png', height: 70),
+          const SizedBox(height: 10),
+          Container(
+                  width: 90, // Biraz daha küçük
+                  height: 90, // Kare şeklinde
+               
+                  // TODO: Profil fotoğrafını göstermek için Image widget'ı eklenebilir
+                   child: 
+                   
+                   _user?.profilePhoto != null && _user!.profilePhoto.isNotEmpty
+                  ? Image.network(_user!.profilePhoto, width: 60, height: 60,)
+                  : const Icon(Icons.person, size: 60, color: Colors.grey),
+           
+          ),
+                    const SizedBox(height: 10),
+
           // Kullanıcı bilgileri
           Text(
             _user?.userFullname ?? ' İsim Soyisim',
@@ -83,6 +97,8 @@ class _DashboardViewState extends State<DashboardView> {
               fontWeight: FontWeight.bold,
             ),
           ),
+                              const SizedBox(height: 5),
+
           Text(
             _user?.userEmail ?? 'email@tayamer.com',
             style: const TextStyle(
@@ -90,6 +106,8 @@ class _DashboardViewState extends State<DashboardView> {
               fontSize: 20,
             ),
           ),
+                              const SizedBox(height: 15),
+
         ],
       ),
       centerTitle: true,
