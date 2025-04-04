@@ -6,7 +6,6 @@ import 'viewmodels/policy_type_viewmodel.dart';
 import 'viewmodels/offer_viewmodel.dart';
 import 'viewmodels/payment_viewmodel.dart';
 import 'viewmodels/notification_viewmodel.dart';
-import 'viewmodels/policy_viewmodel.dart';
 import 'package:flutter/services.dart';
 import 'services/local_notification_service.dart';
 
@@ -37,7 +36,6 @@ void main() async {
         ChangeNotifierProvider(create: (_) => OfferViewModel()),
         ChangeNotifierProvider(create: (_) => PaymentViewModel()),
         ChangeNotifierProvider.value(value: notificationViewModel),
-        ChangeNotifierProvider(create: (_) => PolicyViewModel()),
       ],
       child: TayamerApp(
         navigatorKey: localNotificationService.navigatorKey,
