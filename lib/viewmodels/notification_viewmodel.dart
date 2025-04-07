@@ -118,6 +118,32 @@ class NotificationViewModel extends ChangeNotifier {
     }
   }
   
+  // Bildirime tıklandığında çağrılacak fonksiyon
+  String? handleNotificationTap(PaymentNotification notification) {
+    _selectedNotification = notification;
+    notifyListeners();
+    
+    // Bildirimin türüne göre hedef rotayı belirle
+    switch (notification.type) {
+      case 'policy_created':
+        // Poliçe detay sayfasına yönlendir
+        return '/policy/detail/${notification.typeId}';
+      case 'policy_payment_waiting':
+        // Ödeme sayfasına yönlendir
+        return '/payment/${notification.typeId}';
+      case 'policy_payment_sms_code':
+        // SMS doğrulama sayfasına yönlendir
+        return '/payment/sms-verification/${notification.typeId}';
+      case 'offer_created':
+        // Ödeme sayfasına yönlendir
+        return '/offer/${notification.typeId}';
+      default:
+        // Varsayılan olarak bildirimler sayfasına yönlendir
+        return '/notifications';
+    
+    }
+  }
+  
   // Test bildirimi göster
   Future<void> showTestNotification() async {
     try {

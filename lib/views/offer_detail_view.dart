@@ -188,6 +188,14 @@ class _OfferDetailViewState extends State<OfferDetailView> {
       // Hata durumunda 0 kullanılacak
     }
 
+    // Taksit sayısını int'e çevir, hata durumunda 1 kullan
+    int installmentCount = 1;
+    try {
+      installmentCount = int.parse(price.installment);
+    } catch (e) {
+      // Hata durumunda 1 taksit kullan
+    }
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -291,6 +299,7 @@ class _OfferDetailViewState extends State<OfferDetailView> {
                         companyId: int.parse(price.companyID),
                         holderTC: '',
                         holderBD: '',
+                        maxInstallment: installmentCount,
                       ),
                     ),
                   );

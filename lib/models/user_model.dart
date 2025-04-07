@@ -23,6 +23,7 @@ class User {
   final String androidVersion;
   final String profilePhoto;
   final UserStatistics statistics;
+  final String? version;
 
   User({
     required this.userID,
@@ -49,6 +50,7 @@ class User {
     required this.androidVersion,
     required this.profilePhoto,
     required this.statistics,
+    this.version,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -77,6 +79,7 @@ class User {
       androidVersion: json['androidVersion'] ?? '',
       profilePhoto: json['profilePhoto'] ?? '',
       statistics: UserStatistics.fromJson(json['statistics'] ?? {}),
+      version: json['version'],
     );
   }
 
@@ -106,6 +109,7 @@ class User {
       'androidVersion': androidVersion,
       'profilePhoto': profilePhoto,
       'statistics': statistics.toJson(),
+      'version': version,
     };
   }
 }

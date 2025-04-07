@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/notification_model.dart';
 import '../viewmodels/notification_viewmodel.dart';
 import 'sms_confirmation_view.dart';
@@ -17,8 +18,27 @@ class _NotificationsViewState extends State<NotificationsView> {
   @override
   void initState() {
     super.initState();
-    // Sayfa açıldıktan sonra bildirimleri getir
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Sayfa açıldıktan sonra bildirimleri getir ve bildirim servisini başlat
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final viewModel = Provider.of<NotificationViewModel>(context, listen: false);
+      
+      // Önce bildirim servisini başlat
+      try {
+        await viewModel.initializeLocalNotifications();
+        print('Bildirim servisi başarıyla başlatıldı');
+      } catch (e) {
+        print('Bildirim servisi başlatma hatası: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Bildirim sistemi başlatılamadı: ${e.toString()}'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+      
+      // Sonra bildirimleri getir
       _fetchNotifications();
     });
   }
@@ -204,29 +224,48 @@ class _NotificationsViewState extends State<NotificationsView> {
   void _handleNotificationTap(PaymentNotification notification) {
     final viewModel = Provider.of<NotificationViewModel>(context, listen: false);
     
-    // Bildirimi seç
-    viewModel.setSelectedNotification(notification);
+    // Bildirimi seç ve ViewModel'deki handleNotificationTap fonksiyonunu çağır
+    String? targetRoute = viewModel.handleNotificationTap(notification);
     
-    // Bildirim tipine göre işlem yap
-    if (notification.type == 'policy_payment_sms_code') {
-      // SMS onay sayfasına yönlendir
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => SmsConfirmationView(
-            offerId: int.tryParse(notification.typeId) ?? 0,
-            companyId: 0, // Bu bilgiyi almadığımız için varsayılan değer veriyoruz
+    if (targetRoute != null) {
+      // Hedef rotaya yönlendir
+      if (notification.type == 'policy_created') {
+        // Poliçe detay sayfasına yönlendir
+        Navigator.pushNamed(
+          context,
+          targetRoute,
+          arguments: {'policyId': notification.typeId}
+        );
+      } else if (notification.type == 'policy_payment_sms_code') {
+        // SMS onay sayfasına yönlendir
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SmsConfirmationView(
+              offerId: int.tryParse(notification.typeId) ?? 0,
+              companyId: 0, // Bu bilgiyi almadığımız için varsayılan değer veriyoruz
+            ),
           ),
-        ),
-      );
-    } else if (notification.url != null && notification.url!.isNotEmpty) {
-      // URL varsa, URL'i açmak için gerekli işlemi yapabilirsiniz
-      // Örneğin: launch(notification.url!);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('URL açılıyor: ${notification.url}'),
-        ),
-      );
+        );
+      } else if (notification.type == 'policy_payment_waiting') {
+        // Ödeme sayfasına yönlendir
+        Navigator.pushNamed(
+          context, 
+          targetRoute,
+          arguments: {'paymentId': notification.typeId}
+        );
+      } else if (notification.url != null && notification.url!.isNotEmpty) {
+        // URL varsa, URL'i açmak için gerekli işlemi yapabilirsiniz
+        launchUrl(Uri.parse(notification.url!));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('URL açılıyor: ${notification.url}'),
+          ),
+        );
+      } else {
+        // Diğer durumlarda varsayılan rotaya yönlendir
+        Navigator.pushNamed(context, targetRoute);
+      }
     }
   }
   
@@ -245,34 +284,31 @@ class _NotificationsViewState extends State<NotificationsView> {
       
       print('Gerçek bildirim gösterme işlemi başlatılıyor...');
       
-      // Öncelikle test bildirimi gönder - iOS bildirim izinlerini kontrol etmek için
-      try {
-        print('Önce test bildirimi gönderiliyor...');
-        await viewModel.showTestNotification();
-        print('Test bildirimi başarılı');
-      } catch (testError) {
-        print('Test bildirimi hatası: $testError');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Bildirim izinlerini kontrol edin: ${testError.toString()}'),
-              backgroundColor: Colors.orange,
-              duration: Duration(seconds: 3),
-            ),
-          );
-        }
-        // Test bildirimi hatası olsa bile devam et
-      }
-      
+      // Bildirimleri getir ve doğrudan göster
       if (viewModel.notifications == null || viewModel.notifications!.isEmpty) {
-        // Önce bildirimleri getir, sonra göster
         print('Bildirimler alınıyor ve gösteriliyor...');
         await viewModel.getNotifications(showAsLocalNotification: true);
       } else {
-        // Zaten bildirimler var, doğrudan göster
+        // Mevcut bildirimlerden en az bir tanesini göster
         print('Mevcut bildirimler gösteriliyor...');
-        for (var notification in viewModel.notifications!.take(1)) {
-          print('Bildirimi gönderiyor: ${notification.title}');
+        if (viewModel.notifications!.isNotEmpty) {
+          // Önce bildirim servisinin başlatıldığından emin olalım
+          try {
+            await viewModel.initializeLocalNotifications();
+            print('Bildirim servisi kontrol edildi ve hazır');
+            
+            // Test bildirimi yoluyla varolan bildirimleri gösteriyoruz
+            await viewModel.showTestNotification();
+            
+            // Sonrasında gerçek bildirimlerimizi gösterelim
+            print('Test bildirimi sonrası gerçek bildirimler gösteriliyor...');
+            await viewModel.getNotifications(showAsLocalNotification: true);
+          } catch (e) {
+            print('Bildirim hazırlığı hatası: $e');
+            throw Exception('Bildirim gösterilemedi: $e');
+          }
+        } else {
+          // Test bildirimi gönder
           await viewModel.showTestNotification();
         }
       }

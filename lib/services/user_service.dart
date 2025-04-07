@@ -1,56 +1,39 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
+import 'api_service.dart';
+import 'http_interceptor.dart';
 
 class UserService {
-  // API bağlantı adresi - düzeltildi
-  final String _baseUrl = 'https://api.tayamer.com/service';
+  late ApiService _apiService;
   
-  // Basic Authentication bilgileri
-  final String _basicAuthUsername = 'Tr1VAhW2ICWHJN2nlvp9K5ycGoyMJM';
-  final String _basicAuthPassword = 'vRP4rTJAqmjtmkI17I1EVpPH57Edl0';
+  // Singleton pattern
+  static final UserService _instance = UserService._internal();
   
-  // Basic Auth header'ı oluşturma
-  String _getBasicAuthHeader() {
-    final String credentials = '$_basicAuthUsername:$_basicAuthPassword';
-    final String encoded = base64Encode(utf8.encode(credentials));
-    return 'Basic $encoded';
+  factory UserService() {
+    return _instance;
+  }
+  
+  UserService._internal();
+  
+  // ApiService'i başlatma metodu
+  void initialize(ApiService apiService) {
+    _apiService = apiService;
   }
   
   // Kullanıcı bilgilerini çekme
   Future<User?> getUserInfo() async {
     try {
       // Token'ı SharedPreferences'dan al
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('user_token');
+      final token = await _apiService.getToken();
       
       if (token == null || token.isEmpty) {
         print('Token bulunamadı, kullanıcı bilgileri alınamıyor');
         return null;
       }
       
-      // Kullanıcı ID'sini SharedPreferences'tan al
-      int? userId = prefs.getInt('user_id');
-      
-      // Eğer user_id anahtarıyla bulunamazsa, user_data içindeki JSON'dan almayı dene
-      if (userId == null) {
-        final userData = prefs.getString('user_data');
-        if (userData != null && userData.isNotEmpty) {
-          try {
-            final Map<String, dynamic> userDataMap = jsonDecode(userData);
-            if (userDataMap.containsKey('userID')) {
-              final userIdValue = userDataMap['userID'];
-              userId = userIdValue is int ? userIdValue : int.parse(userIdValue.toString());
-              
-              // Gelecekteki istekler için user_id anahtarıyla kaydedelim
-              await prefs.setInt('user_id', userId);
-            }
-          } catch (e) {
-            print('Kullanıcı verisi JSON çözümleme hatası: $e');
-          }
-        }
-      }
+      // Kullanıcı ID'sini al
+      final userId = await _apiService.getUserId();
       
       if (userId == null) {
         print('Kullanıcı ID bulunamadı, kullanıcı bilgileri alınamıyor');
@@ -58,22 +41,20 @@ class UserService {
       }
       
       // Token ile istek yap
-      print('Kullanıcı bilgileri isteği gönderiliyor: $_baseUrl/user/id/$userId');
+      print('Kullanıcı bilgileri isteği gönderiliyor: /user/id/$userId');
       
       // PUT isteği ile userToken gönderiyoruz
-      final response = await http.put(
-        Uri.parse('$_baseUrl/user/id/$userId'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': _getBasicAuthHeader(),
-        },
-        body: jsonEncode({
+      final response = await _apiService.put(
+        '/user/id/$userId',
+        body: {
           'userToken': token,
-        }),
+        }
       );
       
       print('API yanıtı: StatusCode=${response.statusCode}');
       print('Yanıt içeriği: ${response.body}');
+      
+      // 417 hatasını interceptor yakalayacak
       
       if (response.statusCode != 200) {
         print('API hatası: ${response.statusCode}');
@@ -107,7 +88,7 @@ class UserService {
           return null;
         }
       } else {
-        print('API yanıtında kullanıcı bilgileri bulunamadı ve hata döndü');
+        print('API yanıtında kullanıcı bilgileri bulunamadı veya hata döndü');
         return null;
       }
     } catch (e) {
@@ -115,4 +96,4 @@ class UserService {
       return null;
     }
   }
-} 
+}

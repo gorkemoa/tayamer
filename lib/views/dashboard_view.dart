@@ -77,14 +77,22 @@ class _DashboardViewState extends State<DashboardView> {
           Container(
                   width: 90, // Biraz daha küçük
                   height: 90, // Kare şeklinde
-               
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                  ),
                   // TODO: Profil fotoğrafını göstermek için Image widget'ı eklenebilir
-                   child: 
-                   
-                   _user?.profilePhoto != null && _user!.profilePhoto.isNotEmpty
-                  ? Image.network(_user!.profilePhoto, width: 60, height: 60,)
-                  : const Icon(Icons.person, size: 60, color: Colors.grey),
-           
+                   child: ClipRRect(
+                    borderRadius: BorderRadius.circular(45),
+                    child: _user?.profilePhoto != null && _user!.profilePhoto.isNotEmpty
+                      ? Image.network(
+                          _user!.profilePhoto,
+                          width: 90,
+                          height: 90,
+                          fit: BoxFit.cover,
+                        )
+                      : const Icon(Icons.person, size: 60, color: Colors.grey),
+                   ),
           ),
                     const SizedBox(height: 10),
 

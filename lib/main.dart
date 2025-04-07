@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'views/login_view.dart';
+import 'views/home_view.dart';
+import 'views/offer_detail_view.dart';
+import 'views/policy_detail_view.dart';
+import 'views/sms_confirmation_view.dart';
 import 'services/auth_service.dart';
+import 'services/http_interceptor.dart';
+import 'services/api_service.dart';
+import 'services/user_service.dart';
 import 'viewmodels/policy_type_viewmodel.dart';
 import 'viewmodels/offer_viewmodel.dart';
 import 'viewmodels/payment_viewmodel.dart';
@@ -13,6 +20,9 @@ import 'services/local_notification_service.dart';
 void main() async {
   // Flutter engine'in hazır olmasını sağla
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Navigasyon için global key oluştur
+  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   
   // Bildirim servisini başlat - Singleton instance
   final localNotificationService = LocalNotificationService();
@@ -30,9 +40,28 @@ void main() async {
     localNotificationService: localNotificationService
   );
   
+  // HTTP Interceptor'ı oluştur
+  final httpInterceptor = HttpInterceptor(navigatorKey: navigatorKey);
+  
+  // ApiService'i oluştur
+  final apiService = ApiService(httpInterceptor);
+  
+  // UserService'i başlat
+  final userService = UserService();
+  userService.initialize(apiService);
+  
+  print('Servisler başlatılıyor...');
+  print('HttpInterceptor başlatıldı');
+  print('ApiService başlatıldı');
+  print('UserService başlatıldı');
+  
   runApp(
     MultiProvider(
       providers: [
+        Provider<GlobalKey<NavigatorState>>.value(value: navigatorKey),
+        Provider<HttpInterceptor>.value(value: httpInterceptor),
+        Provider<ApiService>.value(value: apiService),
+        Provider<UserService>.value(value: userService),
         ChangeNotifierProvider(create: (_) => PolicyTypeViewModel()),
         ChangeNotifierProvider(create: (_) => OfferViewModel()),
         ChangeNotifierProvider(create: (_) => PaymentViewModel()),
@@ -40,7 +69,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => PolicyViewModel()),
       ],
       child: TayamerApp(
-        navigatorKey: localNotificationService.navigatorKey,
+        navigatorKey: navigatorKey,
       ),
     ),
   );
@@ -123,7 +152,57 @@ class _TayamerAppState extends State<TayamerApp> {
         ),
       ),
       // Ana route tanımlamaları
-      home: LoginView(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => _isLoading 
+            ? const Scaffold(body: Center(child: CircularProgressIndicator()))
+            : _isLoggedIn ? const HomeView() : LoginView(),
+        '/login': (context) => LoginView(),
+        '/home': (context) => const HomeView(),
+      },
+      // Dinamik route tanımlamaları
+      onGenerateRoute: (settings) {
+        // Route adından parametreleri ayıklama
+        if (settings.name != null && settings.name!.startsWith('/policy/detail/')) {
+          final policyId = settings.name!.split('/').last;
+          return MaterialPageRoute(
+            builder: (context) => PolicyDetailView(policyId: policyId),
+            settings: settings,
+          );
+        } else if (settings.name != null && settings.name!.startsWith('/payment/sms-verification/')) {
+          final offerId = settings.name!.split('/').last;
+          return MaterialPageRoute(
+            builder: (context) => SmsConfirmationView(
+              offerId: int.tryParse(offerId) ?? 0,
+              companyId: 0,
+            ),
+            settings: settings,
+          );
+        } else if (settings.name != null && settings.name!.startsWith('/offer/')) {
+          final offerId = settings.name!.split('/').last;
+          return MaterialPageRoute(
+            builder: (context) => OfferDetailView(offerId: offerId),
+            settings: settings,
+          );
+        } else if (settings.name != null && settings.name!.startsWith('/payment/')) {
+          // Ödeme sayfası olmadığından HomeView'e yönlendir ve bildirim göster
+          return MaterialPageRoute(
+            builder: (context) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Ödeme sayfasına yönlendirilemedi'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              });
+              return const HomeView();
+            },
+            settings: settings,
+          );
+        }
+        return null;
+      },
     );
   }
 }

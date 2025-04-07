@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/user_model.dart';
 import '../services/user_service.dart';
 import '../services/auth_service.dart';
 import 'profile_detail_view.dart';
 import 'notifications_view.dart';
+import 'webview_screen.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -11,6 +13,8 @@ class ProfileView extends StatefulWidget {
   @override
   State<ProfileView> createState() => _ProfileViewState();
 }
+
+
 
 class _ProfileViewState extends State<ProfileView> {
   final UserService _userService = UserService();
@@ -23,6 +27,25 @@ class _ProfileViewState extends State<ProfileView> {
     super.initState();
     _fetchUserInfo();
   }
+
+ Future<void> _launchURL() async {
+    final Uri url = Uri.parse('https://www.fabrikasigorta.com/iletisim');
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      // TODO: Hata durumunu kullanıcıya bildir (Snackbar vb.)
+      print('Could not launch $url');
+    }
+  }
+
+
+ Future<void> _office701launchURL() async {
+    final Uri url = Uri.parse('https://www.office701.com');
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      // TODO: Hata durumunu kullanıcıya bildir (Snackbar vb.)
+      print('Could not launch $url');
+    }
+  }
+
+
 
   Future<void> _fetchUserInfo() async {
     try {
@@ -185,17 +208,25 @@ class _ProfileViewState extends State<ProfileView> {
             _buildMenuItem(
               icon: Icons.public,
               title: 'Yardım',
-              onTap: () {},
+              onTap: () {
+                _launchURL();
+              },
             ),
             
             // Alt bilgiler
             const SizedBox(height: 20),
-            const Center(
-              child: Text(
-                'Office701 Bilgi Teknolojileri © 2025',
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 14,
+            Center(
+             child: InkWell(
+               onTap: _office701launchURL,
+                child:  Text(
+                  'Office701 Bilgi Teknolojileri © 2025',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.blue,
+                    fontSize: 14,
+                    decoration: TextDecoration.underline,
+                    decorationColor: Colors.blue,
+                  ),
                 ),
               ),
             ),

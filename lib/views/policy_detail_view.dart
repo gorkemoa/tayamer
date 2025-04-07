@@ -182,11 +182,7 @@ class _PolicyDetailViewState extends State<PolicyDetailView> {
           // Müşteri ismi
           _buildDetailItem('Müşteri İsmi', policy.customer.isNotEmpty ? policy.customer[0].adiSoyadi : ''),
           // Divider kaldırıldı
-          
-          // Müşteri telefon numarası
-          _buildDetailItem('Müşteri Telefon Numarası', policy.customer.isNotEmpty ? policy.customer[0].telefon : ''),
-          // Divider kaldırıldı
-          
+      
           // Net fiyat
           _buildDetailItem('Net Fiyat', '₺${policy.netAmount}'),
           // Divider kaldırıldı

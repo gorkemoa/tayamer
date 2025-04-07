@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "439666229882",
+    "project_id": "giko-440c6",
+    "storage_bucket": "giko-440c6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:439666229882:android:31d92ecf6149c6eae1f1c3",
+        "android_client_info": {
+          "package_name": "com.example.giko"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDp1F9uoDAmKcy54nDeFQtaFSs8PCqZzyA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:439666229882:android:db91b182bfab610be1f1c3",
+        "android_client_info": {
+          "package_name": "com.example.tayamer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDp1F9uoDAmKcy54nDeFQtaFSs8PCqZzyA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -11,6 +11,7 @@ class CardScanView extends StatefulWidget {
   final int companyId;
   final String holderTC;
   final String holderBD;
+  final int maxInstallment;
 
   const CardScanView({
     Key? key, 
@@ -18,7 +19,8 @@ class CardScanView extends StatefulWidget {
     required this.offerId,
     required this.companyId,
     required this.holderTC,
-    required this.holderBD, 
+    required this.holderBD,
+    this.maxInstallment = 1,
   }) : super(key: key);
 
   @override
@@ -100,6 +102,7 @@ class _CardScanViewState extends State<CardScanView> {
                         companyId: widget.companyId,
                         holderTC: widget.holderTC,
                         holderBD: widget.holderBD,
+                        maxInstallment: widget.maxInstallment,
                       ),
                     ),
                   );
@@ -209,6 +212,7 @@ class CardManualEntryView extends StatefulWidget {
   final int companyId;
   final String holderTC;
   final String holderBD;
+  final int maxInstallment;
 
   const CardManualEntryView({
     Key? key, 
@@ -217,6 +221,7 @@ class CardManualEntryView extends StatefulWidget {
     required this.companyId,
     required this.holderTC,
     required this.holderBD,
+    this.maxInstallment = 1,
   }) : super(key: key);
 
   @override
@@ -553,7 +558,7 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                             ),
                             isExpanded: true,
                             icon: Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
-                            items: List.generate(6, (index) {
+                            items: List.generate(widget.maxInstallment, (index) {
                               final count = index + 1;
                               return DropdownMenuItem(
                                 value: count.toString(),

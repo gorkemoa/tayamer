@@ -63,6 +63,8 @@ class _PoliciesViewState extends State<PoliciesView> {
           body: Column(
             children: [
               _buildTabSelector(),
+              _buildStatusIDSelector(),
+              _buildStatusColorSelector(),
               Expanded(
                 child: _buildPoliciesContent(),
               ),
@@ -87,6 +89,7 @@ class _PoliciesViewState extends State<PoliciesView> {
             child: GestureDetector(
               onTap: () {
                 _viewModel.selectedTabIndex = 0;
+                _viewModel.selectedStatusID = null;
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -114,6 +117,7 @@ class _PoliciesViewState extends State<PoliciesView> {
             child: GestureDetector(
               onTap: () {
                 _viewModel.selectedTabIndex = 1;
+                _viewModel.selectedStatusID = null;
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -142,6 +146,36 @@ class _PoliciesViewState extends State<PoliciesView> {
     );
   }
 
+  Widget _buildStatusIDSelector() {
+    if (_viewModel.statusIDList.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+      ),
+    );
+  }
+
+  Widget _buildStatusColorSelector() {
+    if (_viewModel.uniqueStatusColors.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+      ),
+     );
+  }
+
   Widget _buildPoliciesContent() {
     return Container(
       decoration: const BoxDecoration(
@@ -155,9 +189,17 @@ class _PoliciesViewState extends State<PoliciesView> {
           ? _buildLoadingIndicator()
           : _viewModel.state == PolicyViewState.error
               ? _buildErrorView()
-              : _viewModel.isCurrentTabEmpty
-                  ? _buildEmptyPoliciesList()
-                  : _buildPoliciesList(),
+              : Column(
+                  children: [
+                    _buildStatusIDSelector(),
+                    _buildStatusColorSelector(),
+                    Expanded(
+                      child: _viewModel.isCurrentTabEmpty
+                          ? _buildEmptyPoliciesList()
+                          : _buildPoliciesList(),
+                    ),
+                  ],
+                ),
     );
   }
 
@@ -288,8 +330,8 @@ class _PoliciesViewState extends State<PoliciesView> {
   }
 
   Widget _buildCardHeader(Policy policy) {
-    final bool isActive = policy.status == 'Aktif';
-    final Color statusColor = isActive ? const Color(0xFF4CAF50) : const Color(0xFFFF7043);
+    // ViewModel'in renk metodunu kullan
+    Color statusColor = _viewModel.getStatusColorAsColor(policy.statusColor);
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),

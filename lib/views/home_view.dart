@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/user_model.dart';
 import '../services/user_service.dart';
+import '../services/api_service.dart';
 import 'dashboard_view.dart';
 import 'offers_view.dart';
 import 'new_offer_view.dart';
@@ -26,8 +28,6 @@ class _HomeViewState extends State<HomeView> {
   @override
   void initState() {
     super.initState();
-    _fetchUserInfo();
-    // Sayfaları başlangıçta null kullanıcı ile başlat, daha sonra güncelle
     _pages = [
       const DashboardView(),
       const OffersView(),
@@ -40,6 +40,16 @@ class _HomeViewState extends State<HomeView> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    
+    // ApiService'i Provider'dan al ve UserService'e enjekte et
+    final apiService = Provider.of<ApiService>(context, listen: false);
+    _userService.initialize(apiService);
+    
+    // Kullanıcı bilgilerini getir
+    if (_isLoading) {
+      _fetchUserInfo();
+    }
+    
     // Route argümanlarını kontrol et ve gerekirse seçili indeksi güncelle
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args != null && args is int && args >= 0 && args < _pages.length) {
@@ -52,10 +62,12 @@ class _HomeViewState extends State<HomeView> {
   Future<void> _fetchUserInfo() async {
     try {
       final user = await _userService.getUserInfo();
-      setState(() {
-        _user = user;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _user = user;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       print('Kullanıcı bilgileri alınırken hata: $e');
       if (mounted) {

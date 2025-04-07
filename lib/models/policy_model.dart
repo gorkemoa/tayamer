@@ -9,6 +9,9 @@ class Policy {
   final String startDate;
   final String endDate;
   final String status;
+  final String statusID;
+  final String statusColor;
+  final String customerName;
   final String paymentType;
   final String plaka;
   final String desc;
@@ -26,6 +29,8 @@ class Policy {
     required this.startDate,
     required this.endDate,
     required this.status,
+    required this.statusID,
+    required this.statusColor,
     required this.paymentType,
     required this.plaka,
     required this.desc,
@@ -33,6 +38,7 @@ class Policy {
     required this.grossAmount,
     required this.customer,
     required this.company,
+    required this.customerName,
   });
 
   factory Policy.fromJson(Map<String, dynamic> json) {
@@ -42,9 +48,12 @@ class Policy {
       policyType: json['policyType'] ?? '',
       pdfUrl: json['pdfUrl'] ?? '',
       receiptUrl: json['receiptUrl'] ?? '',
+      customerName: json['customerName'] ?? '',
       startDate: json['startDate'] ?? '',
       endDate: json['endDate'] ?? '',
       status: json['status'] ?? '',
+      statusID: json['statusID'] ?? '',
+      statusColor: json['statusColor'],
       paymentType: json['paymentType'] ?? '',
       plaka: json['plaka'] ?? '',
       desc: json['shortDesc'] ?? '',
@@ -69,6 +78,8 @@ class Policy {
       'startDate': startDate,
       'endDate': endDate,
       'status': status,
+      'statusID': statusID,
+      'statusColor': statusColor,
       'paymentType': paymentType,
       'plaka': plaka,
       'desc': desc,

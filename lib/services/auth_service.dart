@@ -13,6 +13,8 @@ class AuthService {
   // Kullanıcı token'ını saklamak için kullanılacak anahtar
   static const String _tokenKey = 'user_token';
   static const String _userDataKey = 'user_data';
+  static const String version = 'version';
+  static const String platform = 'platform';
   
   // Basic Auth header'ı oluşturma
   String _getBasicAuthHeader() {
