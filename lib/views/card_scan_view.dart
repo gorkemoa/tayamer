@@ -27,6 +27,13 @@ class CardScanView extends StatefulWidget {
 
 class _CardScanViewState extends State<CardScanView> {
   MobileScannerController cameraController = MobileScannerController();
+  late PaymentViewModel _paymentViewModel;
+
+  @override
+  void initState() {
+    super.initState();
+    _paymentViewModel = Provider.of<PaymentViewModel>(context, listen: false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -225,6 +232,13 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
   final _tcNoController = TextEditingController();
   final _birthDateController = TextEditingController();
   String _instalmentValue = "1";
+  late PaymentViewModel _paymentViewModel;
+
+  @override
+  void initState() {
+    super.initState();
+    _paymentViewModel = Provider.of<PaymentViewModel>(context, listen: false);
+  }
 
   @override
   void dispose() {
@@ -489,7 +503,6 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                           ),
                           keyboardType: TextInputType.number,
-                          obscureText: true,
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
                             LengthLimitingTextInputFormatter(4), // Genellikle 4 haneli
@@ -540,7 +553,7 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                             ),
                             isExpanded: true,
                             icon: Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
-                            items: List.generate(9, (index) {
+                            items: List.generate(6, (index) {
                               final count = index + 1;
                               return DropdownMenuItem(
                                 value: count.toString(),

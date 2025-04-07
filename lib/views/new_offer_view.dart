@@ -19,6 +19,7 @@ class NewOfferView extends StatefulWidget {
 
 class _NewOfferViewState extends State<NewOfferView> {
   bool _isBottomSheetActive = false;
+  bool _isPolicySelected = false; // Poliçe seçilip seçilmediğini takip eden bayrak
 
   @override
   void initState() {
@@ -72,6 +73,7 @@ class _NewOfferViewState extends State<NewOfferView> {
     if (_isBottomSheetActive) return;
     
     _isBottomSheetActive = true;
+    _isPolicySelected = false; // Bottom sheet açılırken bayrağı sıfırla
     
     showModalBottomSheet(
       context: context,
@@ -166,9 +168,9 @@ class _NewOfferViewState extends State<NewOfferView> {
       ),
     ).then((_) {
       _isBottomSheetActive = false;
-      // Bottom sheet kapatıldığında ana sayfaya dön
-      // Bu, kullanıcı swipe ile kapatırsa da çalışır
-      if (mounted) {
+      // Bottom sheet kapatıldığında ana sayfaya dön, ancak
+      // sadece poliçe seçilmemişse (kullanıcı manuel kapatırsa)
+      if (mounted && !_isPolicySelected) {
         _navigateToHomeIndex(0); // Ana sayfa (Dashboard) indeksi
       }
     });
@@ -247,6 +249,11 @@ class _NewOfferViewState extends State<NewOfferView> {
   }
 
   void _onPolicySelected(BuildContext context, PolicyType policyType) {
+    // Poliçenin seçildiğini belirt
+    setState(() {
+      _isPolicySelected = true;
+    });
+    
     // Seçilen poliçe tipini ViewModel'e kaydet
     final viewModel = Provider.of<PolicyTypeViewModel>(context, listen: false);
     viewModel.selectPolicyType(policyType);

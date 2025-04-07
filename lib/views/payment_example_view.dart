@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+/* import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/payment_viewmodel.dart';
 import '../models/payment_model.dart';
@@ -122,7 +122,6 @@ class _PaymentExampleViewState extends State<PaymentExampleView> {
                   border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.number,
-                obscureText: true,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'CVV giriniz';
@@ -231,3 +230,4 @@ class _PaymentExampleViewState extends State<PaymentExampleView> {
     }
   }
 } 
+*/
