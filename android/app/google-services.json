@@ -1,45 +1,81 @@
 {
   "project_info": {
-    "project_number": "439666229882",
-    "project_id": "giko-440c6",
-    "storage_bucket": "giko-440c6.firebasestorage.app"
+    "project_number": "497830435269",
+    "project_id": "fabrika-sigorta",
+    "storage_bucket": "fabrika-sigorta.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:439666229882:android:31d92ecf6149c6eae1f1c3",
+        "mobilesdk_app_id": "1:497830435269:android:24949437ee5ad7e5ea13ac",
         "android_client_info": {
-          "package_name": "com.example.giko"
+          "package_name": "com.example.tayamer"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "497830435269-f904mkjampupr1qrrl50s2n9mommradh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyDp1F9uoDAmKcy54nDeFQtaFSs8PCqZzyA"
+          "current_key": "AIzaSyBgHASvHEij-LVBnmHQ9kgZOzgNVF4u4H4"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "497830435269-f904mkjampupr1qrrl50s2n9mommradh.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "497830435269-a5q2pghoqef4dtkvutkn9role4763078.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.office701.tayamer",
+                "app_store_id": "1667550287"
+              }
+            }
+          ]
         }
       }
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:439666229882:android:db91b182bfab610be1f1c3",
+        "mobilesdk_app_id": "1:497830435269:android:53212596f427815eea13ac",
         "android_client_info": {
-          "package_name": "com.example.tayamer"
+          "package_name": "com.office701.tayamer"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "497830435269-f904mkjampupr1qrrl50s2n9mommradh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyDp1F9uoDAmKcy54nDeFQtaFSs8PCqZzyA"
+          "current_key": "AIzaSyBgHASvHEij-LVBnmHQ9kgZOzgNVF4u4H4"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "497830435269-f904mkjampupr1qrrl50s2n9mommradh.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "497830435269-a5q2pghoqef4dtkvutkn9role4763078.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.office701.tayamer",
+                "app_store_id": "1667550287"
+              }
+            }
+          ]
         }
       }
     }

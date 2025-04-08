@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'firebase_options.dart';
 import 'views/login_view.dart';
 import 'views/home_view.dart';
 import 'views/offer_detail_view.dart';
@@ -9,6 +12,7 @@ import 'services/auth_service.dart';
 import 'services/http_interceptor.dart';
 import 'services/api_service.dart';
 import 'services/user_service.dart';
+import 'services/notification_service.dart';
 import 'viewmodels/policy_type_viewmodel.dart';
 import 'viewmodels/offer_viewmodel.dart';
 import 'viewmodels/payment_viewmodel.dart';
@@ -16,29 +20,83 @@ import 'viewmodels/notification_viewmodel.dart';
 import 'viewmodels/policy_viewmodel.dart';
 import 'package:flutter/services.dart';
 import 'services/local_notification_service.dart';
+import 'dart:async';
+
+// Arka planda bildirim işleme - Uygulama tamamen kapalıyken
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  print("Arka planda bildirim alındı: ${message.notification?.title}");
+  
+  // Arka planda gelen bildirimleri kaydetmek veya işlemek için gerekli kodlar
+  // LocalNotificationService.showNotification(...) gibi işlemler yapılabilir
+}
 
 void main() async {
   // Flutter engine'in hazır olmasını sağla
   WidgetsFlutterBinding.ensureInitialized();
   
+  // Firebase'i başlat
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  
+  // Arka plan bildirim işleyicisini ayarla
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  
+  // Bildirim izinlerini iste
+  await FirebaseMessaging.instance.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+  
   // Navigasyon için global key oluştur
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   
-  // Bildirim servisini başlat - Singleton instance
+  // Bildirim servislerini başlat
   final localNotificationService = LocalNotificationService();
+  final notificationService = NotificationService();
   
   try {
-    print('Ana bildirim servisi başlatılıyor...');
+    print('Bildirim servisleri başlatılıyor...');
     await localNotificationService.initialize();
-    print('Ana bildirim servisi başarıyla başlatıldı');
+    await notificationService.initialize();
+    
+    // FCM token'ı al ve kaydet/göster
+    String? fcmToken = await FirebaseMessaging.instance.getToken();
+    print('FCM Token: $fcmToken');
+    
+    // Firebase bildirim dinleyicilerini ayarla
+    // Ön planda iken
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print('Ön planda bildirim alındı: ${message.notification?.title}');
+      localNotificationService.showNotification(
+        id: 0, // Benzersiz ID değeri
+        title: message.notification?.title ?? 'Yeni Bildirim',
+        body: message.notification?.body ?? '',
+        payload: message.data.toString(),
+      );
+    });
+    
+    // Arka planda iken ama uygulama açıkken
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('Arka planda açık uygulamada bildirime tıklandı: ${message.notification?.title}');
+      // Bildirime tıklandığında yapılacak işlemler (navigasyon vb.)
+    });
+    
+    print('Bildirim servisleri başarıyla başlatıldı');
   } catch (e) {
-    print('Ana bildirim servisi başlatılırken hata: $e');
+    print('Bildirim servisleri başlatılırken hata: $e');
   }
   
-  // NotificationViewModel'i oluştur ve aynı bildirim servisini kullan
+  // NotificationViewModel'i oluştur
   final notificationViewModel = NotificationViewModel(
     localNotificationService: localNotificationService
   );
+  
+  // Periodik bildirim kontrolünü başlat
+  _setupPeriodicNotificationCheck(notificationViewModel);
   
   // HTTP Interceptor'ı oluştur
   final httpInterceptor = HttpInterceptor(navigatorKey: navigatorKey);
@@ -62,6 +120,7 @@ void main() async {
         Provider<HttpInterceptor>.value(value: httpInterceptor),
         Provider<ApiService>.value(value: apiService),
         Provider<UserService>.value(value: userService),
+        Provider<NotificationService>.value(value: notificationService),
         ChangeNotifierProvider(create: (_) => PolicyTypeViewModel()),
         ChangeNotifierProvider(create: (_) => OfferViewModel()),
         ChangeNotifierProvider(create: (_) => PaymentViewModel()),
@@ -73,6 +132,21 @@ void main() async {
       ),
     ),
   );
+}
+
+// Periyodik bildirim kontrolü ayarla
+void _setupPeriodicNotificationCheck(NotificationViewModel viewModel) {
+  // Her 15 dakikada bir bildirimleri kontrol et
+  Future.delayed(Duration.zero, () async {
+    // İlk kontrolü hemen yap
+    await viewModel.getNotifications(showAsLocalNotification: true);
+    
+    // Periyodik kontroller için zamanlayıcı kur
+    Timer.periodic(const Duration(minutes: 15), (_) async {
+      print('Periyodik bildirim kontrolü yapılıyor...');
+      await viewModel.getNotifications(showAsLocalNotification: true);
+    });
+  });
 }
 
 class TayamerApp extends StatefulWidget {

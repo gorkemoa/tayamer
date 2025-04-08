@@ -2,8 +2,13 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/notification_model.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart' as local_notifications;
 
 class NotificationService {
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  final local_notifications.FlutterLocalNotificationsPlugin _localNotifications = local_notifications.FlutterLocalNotificationsPlugin();
+
   // API bağlantı adresi
   final String _baseUrl = 'https://api.tayamer.com/service';
   
@@ -165,6 +170,74 @@ class NotificationService {
       } else {
         return SmsCodeResponse.error('SMS kodu gönderilirken hata oluştu: ${e.toString()}');
       }
+    }
+  }
+
+  Future<void> initialize() async {
+    // Firebase izinlerini iste
+    await _firebaseMessaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    // FCM token'ı al
+    String? token = await _firebaseMessaging.getToken();
+    print('FCM Token: $token');
+
+    // Yerel bildirimleri yapılandır
+    const local_notifications.AndroidInitializationSettings initializationSettingsAndroid =
+        local_notifications.AndroidInitializationSettings('@mipmap/ic_launcher');
+    
+    const local_notifications.DarwinInitializationSettings initializationSettingsIOS =
+        local_notifications.DarwinInitializationSettings(
+      requestSoundPermission: true,
+      requestBadgePermission: true,
+      requestAlertPermission: true,
+    );
+
+    const local_notifications.InitializationSettings initializationSettings = local_notifications.InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+    );
+
+    await _localNotifications.initialize(initializationSettings);
+
+    // Ön planda bildirim gösterme ayarları
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      _showNotification(message);
+    });
+
+    // Arka planda bildirim tıklama işlemi
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      // Bildirime tıklandığında yapılacak işlemler
+    });
+  }
+
+  Future<void> _showNotification(RemoteMessage message) async {
+    RemoteNotification? notification = message.notification;
+    AndroidNotification? android = message.notification?.android;
+
+    if (notification != null && android != null) {
+      await _localNotifications.show(
+        notification.hashCode,
+        notification.title,
+        notification.body,
+        local_notifications.NotificationDetails(
+          android: local_notifications.AndroidNotificationDetails(
+            'high_importance_channel',
+            'Yüksek Öncelikli Bildirimler',
+            importance: local_notifications.Importance.max,
+            priority: local_notifications.Priority.high,
+            icon: android.smallIcon,
+          ),
+          iOS: const local_notifications.DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+      );
     }
   }
 } 

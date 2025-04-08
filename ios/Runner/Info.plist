@@ -72,5 +72,13 @@
 	<string>Takvim izni gerekmemektedir</string>
 	<key>NSContactsUsageDescription</key>
 	<string>Kişiler izni gerekmemektedir</string>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
+	<key>NSUserNotificationAlertStyle</key>
+	<string>alert</string>
+	<key>NSUserNotificationEnabled</key>
+	<true/>
+	<key>NSUserNotificationUsageDescription</key>
+	<string>Bildirimler aracılığıyla size önemli güncellemeler ve doğrulama kodları göndereceğiz.</string>
 </dict>
 </plist>

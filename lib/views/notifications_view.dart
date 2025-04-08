@@ -50,7 +50,7 @@ class _NotificationsViewState extends State<NotificationsView> {
     });
     
     final viewModel = Provider.of<NotificationViewModel>(context, listen: false);
-    await viewModel.getNotifications();
+    await viewModel.getNotifications(showAsLocalNotification: true);
     
     setState(() {
       _isLoading = false;

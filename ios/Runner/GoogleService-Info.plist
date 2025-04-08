@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyD1wx-_kJgXIZntL_WwVFZNOd_XtdV4aZY</string>
+	<string>AIzaSyAhSYJUKM0Gi1_e8Mnc-suETiewCU0aDXI</string>
 	<key>GCM_SENDER_ID</key>
-	<string>439666229882</string>
+	<string>497830435269</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.example.tayamer</string>
 	<key>PROJECT_ID</key>
-	<string>giko-440c6</string>
+	<string>fabrika-sigorta</string>
 	<key>STORAGE_BUCKET</key>
-	<string>giko-440c6.firebasestorage.app</string>
+	<string>fabrika-sigorta.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:439666229882:ios:ee4406482b126323e1f1c3</string>
+	<string>1:497830435269:ios:10112332045822dcea13ac</string>
 </dict>
 </plist>

@@ -166,12 +166,6 @@ class NotificationViewModel extends ChangeNotifier {
       
       // Bildirim göster
       print('Bildirimi göstermeyi deniyorum...');
-      await _localNotificationService.showNotification(
-        id: 9999,
-        title: 'Tayamer Bildirimi',
-        body: 'Bu bir bildirim test mesajıdır.',
-        payload: 'test',
-      );
       print('Bildirim başarıyla gösterildi');
     } catch (e) {
       print('Test bildirimi gönderilirken hata: $e');

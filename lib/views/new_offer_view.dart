@@ -296,7 +296,7 @@ class _NewOfferViewState extends State<NewOfferView> {
         }
       }
     } catch (e) {
-      // Hata durumunda
+      // Hata durumunda - mounted kontrolü önce yapılmalı
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('QR tarama sırasında hata oluştu: $e')),
@@ -311,6 +311,8 @@ class _NewOfferViewState extends State<NewOfferView> {
     // ViewModel aracılığıyla QR sonucunu işle
     final viewModel = Provider.of<PolicyTypeViewModel>(context, listen: false);
     viewModel.processQRCode(qrResult);
+    
+    if (!mounted) return;
     
     if (viewModel.state == PolicyTypeViewState.error) {
       // QR kod işlenemedi
@@ -985,7 +987,9 @@ class _ManualEntryViewState extends State<ManualEntryView> {
       final viewModel = Provider.of<OfferViewModel>(context, listen: false);
       final success = await viewModel.createOffer(formData);
       
-      if (success && mounted) {
+      if (!mounted) return;
+      
+      if (success) {
         // Başarı sayfasına yönlendir
         Navigator.pushReplacement(
           context,
@@ -995,7 +999,7 @@ class _ManualEntryViewState extends State<ManualEntryView> {
             ),
           ),
         );
-      } else if (mounted) {
+      } else {
         // Hata durumunda mesaj göster
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
