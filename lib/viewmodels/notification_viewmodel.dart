@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
 import '../models/notification_model.dart';
 import '../services/notification_service.dart';
 import '../services/local_notification_service.dart';
@@ -21,6 +22,9 @@ class NotificationViewModel extends ChangeNotifier {
   String _errorMessage = '';
   List<PaymentNotification>? _notifications;
   PaymentNotification? _selectedNotification;
+  
+  // Bildirimleri otomatik olarak yenile
+  Timer? _notificationTimer;
   
   // Constructor - LocalNotificationService alıyor
   NotificationViewModel({LocalNotificationService? localNotificationService}) {
@@ -264,5 +268,39 @@ class NotificationViewModel extends ChangeNotifier {
     _state = NotificationViewState.initial;
     _errorMessage = '';
     notifyListeners();
+  }
+  
+  // Bildirimleri otomatik olarak yenile
+  void startAutoRefresh({Duration refreshInterval = const Duration(minutes: 15)}) {
+    // Eğer zaten bir zamanlayıcı varsa, önce onu iptal et
+    stopAutoRefresh();
+    
+    print('Düzenli bildirim kontrolü başlatılıyor - Aralık: ${refreshInterval.inMinutes} dakika');
+    
+    // İlk kontrolü hemen yap
+    Future.delayed(Duration.zero, () async {
+      await getNotifications(showAsLocalNotification: true);
+    });
+    
+    // Periyodik kontroller için zamanlayıcı oluştur
+    _notificationTimer = Timer.periodic(refreshInterval, (timer) async {
+      print('Otomatik bildirim kontrolü yapılıyor...');
+      await getNotifications(showAsLocalNotification: true);
+    });
+  }
+  
+  // Düzenli bildirim yenilemeyi durdur
+  void stopAutoRefresh() {
+    if (_notificationTimer != null && _notificationTimer!.isActive) {
+      _notificationTimer!.cancel();
+      _notificationTimer = null;
+      print('Düzenli bildirim kontrolü durduruldu');
+    }
+  }
+  
+  @override
+  void dispose() {
+    stopAutoRefresh();
+    super.dispose();
   }
 } 

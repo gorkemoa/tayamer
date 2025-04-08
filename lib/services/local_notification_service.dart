@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/notification_model.dart' as app_models;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 /// Gerçek sistem bildirimleri oluşturan servis
 class LocalNotificationService {
@@ -20,6 +24,100 @@ class LocalNotificationService {
   
   // Bildirim servisi başlatıldı mı?
   bool get isInitialized => _isInitialized;
+  
+  // Statik global instance - arka plan bildirimleri için
+  static final LocalNotificationService _staticInstance = LocalNotificationService._internal();
+  static LocalNotificationService get instance => _staticInstance;
+  
+  // Statik bildirim gösterme metodu - Arka plan handler için
+  static Future<void> showStaticNotification({
+    required int id,
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    try {
+      // Instance'ın başlatıldığından emin ol
+      if (!_staticInstance._isInitialized) {
+        await _staticInstance.initialize();
+      }
+      
+      // Android ve iOS için bildirim detayları
+      const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+        'tayamer_high_importance_channel',
+        'Tayamer Bildirimleri',
+        channelDescription: 'Tayamer uygulaması bildirimleri',
+        importance: Importance.max,
+        priority: Priority.high,
+        ticker: 'ticker',
+        enableLights: true,
+        color: Color(0xFF1E3A8A),
+        ledColor: Color(0xFF1E3A8A),
+        playSound: true,
+      );
+      
+      const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+        sound: 'default',
+        interruptionLevel: InterruptionLevel.active,
+      );
+      
+      const NotificationDetails notificationDetails = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
+      
+      // Bildirimi göster
+      await _staticInstance.flutterLocalNotificationsPlugin.show(
+        id,
+        title,
+        body,
+        notificationDetails,
+        payload: payload,
+      );
+      
+      print('Statik bildirim başarıyla gösterildi: $title');
+    } catch (e) {
+      print('Statik bildirim gösterilirken hata: $e');
+    }
+  }
+  
+  // Uygulama açıldığında arka planda kaydedilmiş bildirimleri işle
+  Future<List<Map<String, dynamic>>> processBackgroundNotifications() async {
+    try {
+      // SharedPreferences'ten kaydedilmiş bildirimleri al
+      final prefs = await SharedPreferences.getInstance();
+      final List<String> savedNotifications = prefs.getStringList('background_notifications') ?? [];
+      
+      if (savedNotifications.isEmpty) {
+        print('İşlenecek arka plan bildirimi bulunamadı');
+        return [];
+      }
+      
+      print('İşlenecek ${savedNotifications.length} arka plan bildirimi bulundu');
+      
+      List<Map<String, dynamic>> processedNotifications = [];
+      
+      for (String notificationJson in savedNotifications) {
+        try {
+          Map<String, dynamic> notification = jsonDecode(notificationJson);
+          processedNotifications.add(notification);
+        } catch (e) {
+          print('Bildirim işlenirken hata: $e');
+        }
+      }
+      
+      // İşlenen bildirimleri temizle
+      await prefs.setStringList('background_notifications', []);
+      
+      return processedNotifications;
+    } catch (e) {
+      print('Arka plan bildirimleri işlenirken hata: $e');
+      return [];
+    }
+  }
   
   // Bildirimleri başlat
   Future<void> initialize() async {
@@ -95,6 +193,19 @@ class LocalNotificationService {
         print('Bildirim servisi başlatılamadı: flutter_local_notifications başlatma hatası');
         throw Exception('Bildirim servisi başlatılamadı');
       }
+      
+      // Bildirim kanalları oluştur
+      if (Platform.isAndroid) {
+        await _createAndroidNotificationChannels();
+      }
+      
+      // Arka planda kaydedilmiş bildirimleri işle
+      Future.delayed(const Duration(seconds: 2), () async {
+        final processedNotifications = await processBackgroundNotifications();
+        if (processedNotifications.isNotEmpty) {
+          print('${processedNotifications.length} arka plan bildirimi işlendi');
+        }
+      });
       
       return;
     } catch (e) {
@@ -326,5 +437,45 @@ class LocalNotificationService {
     } catch (e) {
       print('Bildirim iptal edilirken hata: $e');
     }
+  }
+  
+  // Android için özel bildirim kanalları oluştur
+  Future<void> _createAndroidNotificationChannels() async {
+    // Yüksek öncelikli bildirimler için kanal
+    const AndroidNotificationChannel highChannel = AndroidNotificationChannel(
+      'tayamer_high_importance_channel',
+      'Tayamer Bildirimleri',
+      description: 'Tayamer uygulaması önemli bildirimleri',
+      importance: Importance.high,
+      enableLights: true,
+      enableVibration: true,
+      ledColor: Color(0xFF1E3A8A),
+      playSound: true,
+      showBadge: true,
+    );
+    
+    // Normal öncelikli bildirimler için kanal
+    const AndroidNotificationChannel normalChannel = AndroidNotificationChannel(
+      'tayamer_normal_channel',
+      'Tayamer Güncellemeleri',
+      description: 'Tayamer uygulaması normal bildirimleri',
+      importance: Importance.defaultImportance,
+      enableLights: true,
+      ledColor: Color(0xFF1E3A8A),
+    );
+    
+    // Kanalları kaydet
+    final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = 
+        FlutterLocalNotificationsPlugin();
+    
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(highChannel);
+        
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(normalChannel);
+        
+    print('Android bildirim kanalları oluşturuldu');
   }
 } 

@@ -7,7 +7,7 @@ import '../viewmodels/policy_type_viewmodel.dart';
 import '../viewmodels/offer_viewmodel.dart';
 import 'home_view.dart';
 import 'offer_success_view.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
+import 'qr_scanner_view.dart';
 import 'package:image_picker/image_picker.dart';
 
 class NewOfferView extends StatefulWidget {
@@ -275,20 +275,41 @@ class _NewOfferViewState extends State<NewOfferView> {
   }
   
   void _startQRScan(BuildContext context, PolicyType policyType) async {
+    // Önce context'in hala geçerli olup olmadığını kontrol et
+    if (!mounted) return;
+    
+    // ScaffoldMessenger'a erişim için BuildContext'i saklayalım
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    
     // Yardım mesajını göstermeden doğrudan QR tarayıcı görünümünü başlat
     try {
-      final result = await Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const QRScannerView()),
+      final result = await navigator.push(
+        MaterialPageRoute(
+          builder: (context) => QRScannerView(
+            onManualEntry: () {
+              // Manuel giriş formuna yönlendir
+              if (!mounted) return; // Eğer widget artık aktif değilse, işlemi durdur
+              
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ManualEntryView(policyType: policyType)),
+              );
+            },
+          ),
+        ),
       );
+      
+      // Mounted kontrolü - eğer widget artık aktif değilse, işlemi durdur
+      if (!mounted) return;
       
       if (result != null) {
         // QR kod başarıyla tarandı, sonucu işle
         _processQRResult(context, policyType, result);
       } else {
-        // Kullanıcı taramadan vazgeçti
+        // Kullanıcı taramadan vazgeçti - mounted kontrolü yapılmış durumda
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          scaffoldMessenger.showSnackBar(
             const SnackBar(content: Text('QR tarama iptal edildi')),
           );
           // QR tarama iptal edildiğinde ana sayfaya dön
@@ -296,9 +317,14 @@ class _NewOfferViewState extends State<NewOfferView> {
         }
       }
     } catch (e) {
-      // Hata durumunda - mounted kontrolü önce yapılmalı
+      // Hata durumunda - mounted kontrolü
+      if (!mounted) return;
+      
+      print('QR tarama hatası: $e');
+      
+      // Bu noktada widget dispose edilmiş olabilir, tekrar kontrol et
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        scaffoldMessenger.showSnackBar(
           SnackBar(content: Text('QR tarama sırasında hata oluştu: $e')),
         );
         // Hata durumunda ana sayfaya dön
@@ -307,166 +333,228 @@ class _NewOfferViewState extends State<NewOfferView> {
     }
   }
   
-  void _processQRResult(BuildContext context, PolicyType policyType, String qrResult) {
-    // ViewModel aracılığıyla QR sonucunu işle
-    final viewModel = Provider.of<PolicyTypeViewModel>(context, listen: false);
-    viewModel.processQRCode(qrResult);
-    
+  void _processQRResult(BuildContext context, PolicyType policyType, dynamic qrResult) {
+    // Önce widget'ın hala aktif olup olmadığını kontrol et
     if (!mounted) return;
     
-    if (viewModel.state == PolicyTypeViewState.error) {
-      // QR kod işlenemedi
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Hata: ${viewModel.errorMessage}')),
-      );
-      // Hata durumunda manuel giriş formunu aç
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => ManualEntryView(policyType: policyType)),
-      );
-    } else if (viewModel.qrCodeData != null) {
-      // QR kod başarıyla işlendi
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('QR kod başarıyla işlendi.'),
-          backgroundColor: Colors.green,
-        ),
-      );
+    // ScaffoldMessenger'a erişim için BuildContext'i saklayalım
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    
+    try {
+      // Boş sonuç kontrolü
+      if (qrResult == null) {
+        print("QR sonucu boş");
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('QR kod okunamadı.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        
+        // Manuel giriş formunu aç
+        navigator.push(
+          MaterialPageRoute(builder: (context) => ManualEntryView(policyType: policyType)),
+        );
+        return;
+      }
       
-      // QR koddan elde edilen verilerle form sayfasına yönlendir
-      Navigator.push(
-        context,
+      // QR sonuç tipini kontrol et (String veya Map)
+      Map<String, String> formData = {};
+      
+      if (qrResult is Map<String, dynamic>) {
+        // JSON veri direkt kullanıma hazır
+        print('QR veri map olarak alındı: $qrResult');
+        
+        // Plaka bilgisini al
+        if (qrResult.containsKey('plaka')) {
+          formData['plaka'] = qrResult['plaka'].toString();
+          print('Plaka bilgisi alındı: ${formData['plaka']}');
+        }
+        
+        // TC kimlik numarasını al
+        if (qrResult.containsKey('tc')) {
+          formData['tc'] = qrResult['tc'].toString();
+          print('TC bilgisi alındı: ${formData['tc']}');
+        }
+        
+        // Ruhsat numarasını al
+        if (qrResult.containsKey('ruhsatNo')) {
+          formData['ruhsatNo'] = qrResult['ruhsatNo'].toString();
+          print('Ruhsat no bilgisi alındı: ${formData['ruhsatNo']}');
+        }
+        
+        // Ham veri içeriyorsa (JSON dönüşümü yapılamayan QR kodlar için)
+        if (qrResult.containsKey('rawData')) {
+          String rawData = qrResult['rawData'].toString();
+          formData['rawData'] = rawData;
+          
+          // Ham veriyi analiz et - anahtar=değer formatında olabilir
+          if (rawData.contains('=') && rawData.contains('&')) {
+            List<String> pairs = rawData.split('&');
+            for (String pair in pairs) {
+              List<String> keyValue = pair.split('=');
+              if (keyValue.length == 2) {
+                String key = keyValue[0].trim().toLowerCase();
+                String value = keyValue[1].trim();
+                
+                // Anahtar değere göre doğru alana atama yap
+                if (key.contains('plaka')) {
+                  formData['plaka'] = value;
+                } else if (key.contains('tc')) {
+                  formData['tc'] = value;
+                } else if (key.contains('ruhsat')) {
+                  formData['ruhsatNo'] = value;
+                }
+              }
+            }
+          }
+          
+          // Mounted kontrolü
+          if (!mounted) return;
+          
+          // Ham QR kodu içeriğini göster
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text('QR İçeriği: $rawData'),
+              backgroundColor: Colors.blue,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+        
+        // Galeri modu kontrolü
+        bool isGalleryMode = qrResult.containsKey('galleryMode') && qrResult['galleryMode'] == true;
+        
+        // Diğer değerleri de ekle
+        qrResult.forEach((key, value) {
+          if (key != 'galleryMode' && key != 'rawData') {
+            formData[key] = value.toString();
+          }
+        });
+        
+        // QR kod sonuçlarını konsola yazdır
+        print('QR verisi form verilerine dönüştürüldü: $formData');
+        
+        // Mounted kontrolü
+        if (!mounted) return;
+        
+        // Galeri modunda veya başarılı QR tarama mesajı göster
+        if (isGalleryMode) {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(
+              content: Text('Manuel giriş formuna yönlendiriliyorsunuz.'),
+              backgroundColor: Colors.blue,
+            ),
+          );
+        } else {
+          // Başarı mesajı göster
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(
+              content: Text('QR kod başarıyla işlendi.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else if (qrResult is String) {
+        // Eski yöntem - metin tabanlı QR sonucu
+        print('QR veri string olarak alındı: $qrResult');
+        
+        String rawData = qrResult;
+        formData['rawData'] = rawData;
+        
+        // Metin verisini analiz et - anahtar=değer formatında olabilir
+        if (rawData.contains('=') && rawData.contains('&')) {
+          List<String> pairs = rawData.split('&');
+          for (String pair in pairs) {
+            List<String> keyValue = pair.split('=');
+            if (keyValue.length == 2) {
+              String key = keyValue[0].trim().toLowerCase();
+              String value = keyValue[1].trim();
+              
+              // Anahtar değere göre doğru alana atama yap
+              if (key.contains('plaka')) {
+                formData['plaka'] = value;
+              } else if (key.contains('tc')) {
+                formData['tc'] = value;
+              } else if (key.contains('ruhsat')) {
+                formData['ruhsatNo'] = value;
+              }
+            }
+          }
+        }
+        
+        // Mounted kontrolü
+        if (!mounted) return;
+        
+        // Ham QR kodu içeriğini göster
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text('QR İçeriği: $rawData'),
+            backgroundColor: Colors.blue,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } else {
+        // Bilinmeyen tür
+        print("QR sonuç tipi bilinmiyor: ${qrResult.runtimeType}");
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('QR kod formatı tanınamadı.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        
+        // Manuel giriş formunu aç
+        navigator.push(
+          MaterialPageRoute(builder: (context) => ManualEntryView(policyType: policyType)),
+        );
+        return;
+      }
+      
+      // Son kontroller
+      if (formData.isEmpty) {
+        if (!mounted) return;
+        
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('QR kodda kullanılabilir veri bulunamadı.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      
+      // Mounted kontrolü
+      if (!mounted) return;
+      
+      // Form sayfasına yönlendir
+      navigator.push(
         MaterialPageRoute(
           builder: (context) => ManualEntryView(
             policyType: policyType,
-            initialData: viewModel.qrCodeData,
+            initialData: formData,
           ),
         ),
       );
+    } catch (e) {
+      print("QR işleme hatası: $e");
+      
+      // Mounted kontrolü
+      if (!mounted) return;
+      
+      // Hata durumunda
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('QR kod işlenirken hata oluştu: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      
+      // Hata durumunda manuel giriş formunu aç
+      navigator.push(
+        MaterialPageRoute(builder: (context) => ManualEntryView(policyType: policyType)),
+      );
     }
-  }
-}
-
-class QRScannerView extends StatefulWidget {
-  const QRScannerView({Key? key}) : super(key: key);
-
-  @override
-  State<QRScannerView> createState() => _QRScannerViewState();
-}
-
-class _QRScannerViewState extends State<QRScannerView> {
-  MobileScannerController controller = MobileScannerController();
-  
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          MobileScanner(
-            controller: controller,
-            onDetect: (capture) {
-              final List<Barcode> barcodes = capture.barcodes;
-              if (barcodes.isNotEmpty) {
-                // QR kod algılandığında yapılacak işlemler
-                final String code = barcodes.first.rawValue ?? '';
-                // İşlem tamamlandıktan sonra önceki sayfaya dön
-                Navigator.pop(context, code);
-              }
-            },
-          ),
-          SafeArea(
-            child: Column(
-              children: [
-                // Mavi başlık çubuğu
-                Container(
-                  color: Color(0xFF1C3879),
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.close, color: Colors.white),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                      Expanded(
-                        child: Text(
-                          'QR Kodunuzu Okutun',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.help_outline, color: Colors.white),
-                        onPressed: () {
-                          // Yardım bilgisi göster
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                
-                Spacer(), // Kamera alanı için boşluk
-                
-                // Alt butonlar
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                        ),
-                        onPressed: () {
-                          // Manuel giriş için sayfaya yönlendir
-                          final policyType = Provider.of<PolicyTypeViewModel>(context, listen: false).selectedPolicyType;
-                          if (policyType != null) {
-                            Navigator.pop(context); // QR tarayıcıyı kapat
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => ManualEntryView(policyType: policyType)),
-                            );
-                          }
-                        },
-                        child: Text('Manuel Giriş'),
-                      ),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                        ),
-                        onPressed: () async {
-                          // Galeriden fotoğraf seçme
-                          final ImagePicker picker = ImagePicker();
-                          final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-                          if (image != null) {
-                            // Seçilen fotoğraftan QR okuma işlemi
-                          }
-                        },
-                        child: Text('Fotoğraf Yükle'),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 24),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -485,6 +573,8 @@ class _ManualEntryViewState extends State<ManualEntryView> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final Map<String, TextEditingController> _controllers = {};
   final TextEditingController _descController = TextEditingController();
+  bool isGalleryMode = false;  // Galeri modunda mıyız?
+  List<String> focusFields = [];  // Galeri modunda odaklanılacak alanlar
 
   @override
   void initState() {
@@ -499,9 +589,81 @@ class _ManualEntryViewState extends State<ManualEntryView> {
     
     // Eğer initialData varsa, controller'lara verileri yükle
     if (widget.initialData != null) {
-      widget.initialData!.forEach((key, value) {
-        if (_controllers.containsKey(key)) {
-          _controllers[key]!.text = value;
+      print('Initial data geldi: ${widget.initialData}');
+      
+      // Galeri modunda mıyız kontrol et 
+      isGalleryMode = widget.initialData!.containsKey('galleryMode');
+      
+      // Galeri modunda odaklanılacak alanları belirle
+      focusFields = [];
+      
+      // Özellikle plaka, tc ve ruhsat bilgilerini kontrol et
+      bool hasTCField = false;
+      bool hasPlateField = false;
+      bool hasRegNoField = false;
+      
+      // Form alanlarının hangi tür bilgi içerdiğini tespit et
+      widget.policyType.fields.forEach((field) {
+        // TC alanı bulundu mu?
+        if (field.name.toLowerCase().contains('tc') || 
+            field.key.toLowerCase().contains('tc') || 
+            field.key.toLowerCase().contains('kimlik')) {
+          hasTCField = true;
+        }
+        
+        // Plaka alanı bulundu mu?
+        if (field.name.toLowerCase().contains('plaka') || 
+            field.key.toLowerCase().contains('plaka')) {
+          hasPlateField = true;
+        }
+        
+        // Ruhsat alanı bulundu mu?
+        if (field.name.toLowerCase().contains('ruhsat') || 
+            field.key.toLowerCase().contains('ruhsat')) {
+          hasRegNoField = true;
+        }
+      });
+      
+      // Form alanlarına QR kod verilerini yerleştir
+      widget.policyType.fields.forEach((field) {
+        // Alan anahtarına göre direkt eşleştirme yap
+        if (widget.initialData!.containsKey(field.key)) {
+          _controllers[field.key]?.text = widget.initialData![field.key]!;
+          print('${field.key} direkt eşleşti: ${widget.initialData![field.key]}');
+        } 
+        // TC Kimlik için eşleştirme
+        else if ((field.name.toLowerCase().contains('tc') || 
+                 field.key.toLowerCase().contains('tc') || 
+                 field.key.toLowerCase().contains('kimlik')) && 
+                 widget.initialData!.containsKey('tc') && hasTCField) {
+          _controllers[field.key]?.text = widget.initialData!['tc']!;
+          print('TC alanı eşleşti: ${widget.initialData!['tc']}');
+          // Galeri modunda odaklanılacak alan
+          if (isGalleryMode) {
+            focusFields.add(field.key);
+          }
+        }
+        // Plaka için eşleştirme
+        else if ((field.name.toLowerCase().contains('plaka') || 
+                 field.key.toLowerCase().contains('plaka')) && 
+                 widget.initialData!.containsKey('plaka') && hasPlateField) {
+          _controllers[field.key]?.text = widget.initialData!['plaka']!;
+          print('Plaka alanı eşleşti: ${widget.initialData!['plaka']}');
+          // Galeri modunda odaklanılacak alan
+          if (isGalleryMode) {
+            focusFields.add(field.key);
+          }
+        }
+        // Ruhsat için eşleştirme
+        else if ((field.name.toLowerCase().contains('ruhsat') || 
+                 field.key.toLowerCase().contains('ruhsat')) && 
+                 widget.initialData!.containsKey('ruhsatNo') && hasRegNoField) {
+          _controllers[field.key]?.text = widget.initialData!['ruhsatNo']!;
+          print('Ruhsat alanı eşleşti: ${widget.initialData!['ruhsatNo']}');
+          // Galeri modunda odaklanılacak alan
+          if (isGalleryMode) {
+            focusFields.add(field.key);
+          }
         }
       });
     }
@@ -524,7 +686,17 @@ class _ManualEntryViewState extends State<ManualEntryView> {
         centerTitle: true,
         backgroundColor: const Color(0xFF1C3879),
         foregroundColor: Colors.white,
-        title: Text('${widget.policyType.title} Bilgileri'),
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('${widget.policyType.title} Bilgileri'),
+            if (isGalleryMode) 
+              const Text(
+                'Fotoğraftan QR Okuma', 
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+              ),
+          ],
+        ),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(),
@@ -545,6 +717,44 @@ class _ManualEntryViewState extends State<ManualEntryView> {
                 style: TextStyle(fontSize: 16),
                 textAlign: TextAlign.center,
               ),
+              
+              // Galeri modu için özel bilgilendirme
+              if (isGalleryMode && focusFields.isNotEmpty)
+                Container(
+                  margin: const EdgeInsets.only(top: 16, bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue.shade200),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.info_outline, color: Colors.blue.shade700),
+                          const SizedBox(width: 8),
+                          const Expanded(
+                            child: Text(
+                              'QR Kod Bilgilerini Doldurun',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Lütfen öne çıkarılan alanlara (plaka, TC kimlik, ruhsat numarası) doğru bilgileri girerek devam edin.',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
+              
               const SizedBox(height: 24),
               
               // Form alanlarını oluştur
@@ -617,22 +827,36 @@ class _ManualEntryViewState extends State<ManualEntryView> {
   }
 
   Widget _buildFormField(Field field) {
+    // Galeri modunda bu alan odaklanılması gereken bir alan mı?
+    bool isHighlightField = isGalleryMode && focusFields.contains(field.key);
+    
     if (field.type == 'select') {
-      return _buildSelectField(context, field);
+      return _buildSelectField(context, field, isHighlightField);
     } else if (field.type == 'date') {
-      return _buildDateField(field);
+      return _buildDateField(field, isHighlightField);
     } else {
       return Padding(
         padding: const EdgeInsets.only(bottom: 16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
               '${field.name} ${field.rules.containsKey('required') && field.rules['required']!.value ? '(*)' : ''}',
-              style: const TextStyle(
+                    style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
-              ),
+                      // Galeri modunda vurgulama - önemli alanlar için renk değiştir
+                      color: isHighlightField ? Colors.blue.shade800 : null,
+                    ),
+                  ),
+                ),
+                // Galeri modunda vurgulama - önemli alanlar için ikon ekle
+                if (isHighlightField)
+                  const Icon(Icons.edit, color: Colors.blue, size: 18),
+              ],
             ),
             const SizedBox(height: 8),
             TextFormField(
@@ -643,13 +867,24 @@ class _ManualEntryViewState extends State<ManualEntryView> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(color: Colors.grey.shade300),
                 ),
+                // Galeri modunda vurgulama - önemli alanlar için renk değiştir
+                enabledBorder: isHighlightField ? OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.blue.shade400, width: 2),
+                ) : null,
+                focusedBorder: isHighlightField ? OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.blue.shade700, width: 2),
+                ) : null,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                // Galeri modunda bilgi ikonu ekle
+                suffixIcon: isHighlightField ? const Icon(Icons.info_outline, color: Colors.blue) : null,
               ),
               // Settings özelliklerini uygula
               keyboardType: _getKeyboardType(field),
               textCapitalization: _getTextCapitalization(field),
               autocorrect: _getAutocorrect(field),
-              autofocus: _getAutofocus(field),
+              autofocus: _getAutofocus(field) || isHighlightField, // Galeri modunda otomatik odaklan
               // Maksimum uzunluk kuralı
               maxLength: field.rules.containsKey('maxLength') ? 
                 (field.rules['maxLength']!.value as int?) : null,
@@ -700,7 +935,7 @@ class _ManualEntryViewState extends State<ManualEntryView> {
     }
   }
 
-  Widget _buildSelectField(BuildContext context, Field field) {
+  Widget _buildSelectField(BuildContext context, Field field, bool isHighlightField) {
     final viewModel = Provider.of<PolicyTypeViewModel>(context);
     final options = field.options ?? [];
     final String selectedValue = viewModel.getSelectedOption(field.key) ?? '';
@@ -710,9 +945,23 @@ class _ManualEntryViewState extends State<ManualEntryView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          Row(
+            children: [
+              Expanded(
+                child: Text(
             '${field.name} ${field.rules.containsKey('required') && field.rules['required']!.value ? '(*)' : ''}',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    fontSize: 16, 
+                    fontWeight: FontWeight.w500,
+                    // Galeri modunda vurgulama
+                    color: isHighlightField ? Colors.blue.shade800 : null,
+                  ),
+                ),
+              ),
+              // Galeri modunda vurgulama - önemli alanlar için ikon ekle
+              if (isHighlightField)
+                const Icon(Icons.edit, color: Colors.blue, size: 18),
+            ],
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
@@ -722,6 +971,15 @@ class _ManualEntryViewState extends State<ManualEntryView> {
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: Colors.grey.shade300),
               ),
+              // Galeri modunda vurgulama
+              enabledBorder: isHighlightField ? OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.blue.shade400, width: 2),
+              ) : null,
+              focusedBorder: isHighlightField ? OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.blue.shade700, width: 2),
+              ) : null,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             ),
             items: options.map((option) {
@@ -817,18 +1075,29 @@ class _ManualEntryViewState extends State<ManualEntryView> {
   }
 
   // Tarih seçim alanı için özel widget
-  Widget _buildDateField(Field field) {
+  Widget _buildDateField(Field field, bool isHighlightField) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          Row(
+            children: [
+              Expanded(
+                child: Text(
             '${field.name} ${field.rules.containsKey('required') && field.rules['required']!.value ? '(*)' : ''}',
-            style: const TextStyle(
+                  style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
-            ),
+                    // Galeri modunda vurgulama
+                    color: isHighlightField ? Colors.blue.shade800 : null,
+                  ),
+                ),
+              ),
+              // Galeri modunda vurgulama - önemli alanlar için ikon ekle
+              if (isHighlightField)
+                const Icon(Icons.edit, color: Colors.blue, size: 18),
+            ],
           ),
           const SizedBox(height: 8),
           TextFormField(
@@ -840,6 +1109,15 @@ class _ManualEntryViewState extends State<ManualEntryView> {
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: Colors.grey.shade300),
               ),
+              // Galeri modunda vurgulama
+              enabledBorder: isHighlightField ? OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.blue.shade400, width: 2),
+              ) : null,
+              focusedBorder: isHighlightField ? OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.blue.shade700, width: 2),
+              ) : null,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               suffixIcon: const Icon(Icons.calendar_today),
             ),

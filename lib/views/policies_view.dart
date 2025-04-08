@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../viewmodels/offer_viewmodel.dart';
 import '../viewmodels/policy_viewmodel.dart';
 import '../models/policy_model.dart';
 import 'notifications_view.dart';
 import 'policy_detail_view.dart';
+import 'webview_screen.dart';
 
 class PoliciesView extends StatefulWidget {
   const PoliciesView({super.key});
@@ -43,9 +45,40 @@ class _PoliciesViewState extends State<PoliciesView> {
               ),
             ),
             leading: IconButton(
-              icon: const Icon(Icons.chat_outlined, color: Colors.white),
-              onPressed: () {},
-            ),
+          icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+          onPressed: () {
+            final viewModel = context.read<OfferViewModel>();
+            // Genel sohbet teklifini (id: -1) bul
+            // Teklif listesi boşsa veya id -1 içermiyorsa try-catch kullan
+            try {
+              final generalChatOffer = viewModel.offers.firstWhere(
+                (offer) => offer.id.toString() == '-1',
+              );
+
+              if (generalChatOffer.chatUrl.isNotEmpty) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => WebViewScreen(
+                      url: generalChatOffer.chatUrl,
+                      title: 'Genel Sohbet',
+                    ),
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Genel sohbet bağlantısı bulunamadı.')),
+                );
+              }
+            } catch (e) {
+              // Teklifin bulunamadığı durumları ele al
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Genel sohbet şu anda mevcut değil.')),
+              );
+              debugPrint("Genel sohbet offer bulunamadı: $e");
+            }
+          },
+        ),
             actions: [
               IconButton(
                 icon: const Icon(Icons.notifications_outlined, color: Colors.white),

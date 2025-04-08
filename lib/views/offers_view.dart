@@ -38,7 +38,38 @@ class _OffersViewState extends State<OffersView> {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
-          onPressed: () {},
+          onPressed: () {
+            final viewModel = context.read<OfferViewModel>();
+            // Genel sohbet teklifini (id: -1) bul
+            // Teklif listesi boşsa veya id -1 içermiyorsa try-catch kullan
+            try {
+              final generalChatOffer = viewModel.offers.firstWhere(
+                (offer) => offer.id.toString() == '-1',
+              );
+
+              if (generalChatOffer.chatUrl.isNotEmpty) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => WebViewScreen(
+                      url: generalChatOffer.chatUrl,
+                      title: 'Genel Sohbet',
+                    ),
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Genel sohbet bağlantısı bulunamadı.')),
+                );
+              }
+            } catch (e) {
+              // Teklifin bulunamadığı durumları ele al
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Genel sohbet şu anda mevcut değil.')),
+              );
+              debugPrint("Genel sohbet offer bulunamadı: $e");
+            }
+          },
         ),
         actions: [
           IconButton(
@@ -112,7 +143,7 @@ class _OffersViewState extends State<OffersView> {
                             )
                           : offer.chatUrl.isNotEmpty // Eğer chat URL varsa ikonu göster
                             ? IconButton(
-                                icon: const Icon(Icons.chat_bubble_outline),
+                                icon: const Icon(Icons.chat),
                                 tooltip: 'Sohbeti Başlat',
                                 color: Theme.of(context).primaryColor,
                                 onPressed: () {

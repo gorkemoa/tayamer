@@ -21,15 +21,53 @@ import 'viewmodels/policy_viewmodel.dart';
 import 'package:flutter/services.dart';
 import 'services/local_notification_service.dart';
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 // Arka planda bildirim işleme - Uygulama tamamen kapalıyken
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Arka plan işlemi olduğu için minimal başlatma
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   print("Arka planda bildirim alındı: ${message.notification?.title}");
   
-  // Arka planda gelen bildirimleri kaydetmek veya işlemek için gerekli kodlar
-  // LocalNotificationService.showNotification(...) gibi işlemler yapılabilir
+  // Bildirim verilerini yazdır
+  print("Bildirim içeriği: ${message.data}");
+  
+  // Bildirimi göstermek için statik metodu kullan
+  try {
+    await LocalNotificationService.showStaticNotification(
+      id: message.hashCode,
+      title: message.notification?.title ?? "Yeni Bildirim",
+      body: message.notification?.body ?? "",
+      payload: jsonEncode(message.data),
+    );
+  } catch (e) {
+    print("Arka planda bildirim gösterilirken hata: $e");
+  }
+  
+  // Bildirim verilerini SharedPreferences'e kaydedebilirsiniz
+  // Bu sayede uygulama açıldığında işlenebilir
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> savedNotifications = prefs.getStringList('background_notifications') ?? [];
+    savedNotifications.add(jsonEncode({
+      'title': message.notification?.title,
+      'body': message.notification?.body,
+      'data': message.data,
+      'timestamp': DateTime.now().toIso8601String(),
+    }));
+    
+    // Son 10 bildirimi sakla
+    if (savedNotifications.length > 10) {
+      savedNotifications.removeAt(0);
+    }
+    
+    await prefs.setStringList('background_notifications', savedNotifications);
+    print("Arka plan bildirimi kaydedildi. Toplam: ${savedNotifications.length}");
+  } catch (e) {
+    print("Arka plan bildirimi kaydedilirken hata: $e");
+  }
 }
 
 void main() async {
@@ -44,12 +82,32 @@ void main() async {
   // Arka plan bildirim işleyicisini ayarla
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   
-  // Bildirim izinlerini iste
-  await FirebaseMessaging.instance.requestPermission(
+  // Bildirim izinlerini iste - iOS için kritik
+  NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+    provisional: false, 
+    criticalAlert: true,  // Kritik bildirimler için (iOS)
+    announcement: true,   // Bildirim duyuruları için (iOS)
+  );
+  
+  print('Kullanıcı izin durumu: ${settings.authorizationStatus}');
+  
+  // iOS için ön plan bildirimleri yapılandır
+  await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
     alert: true,
     badge: true,
     sound: true,
   );
+  
+  // Başlatma mesajını kontrol et (uygulama bildirime tıklanarak açıldıysa)
+  RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+  if (initialMessage != null) {
+    print("Uygulama bildirime tıklanarak açıldı: ${initialMessage.notification?.title}");
+    // Burada bildirim verilerini işleyebilir ve ilgili ekrana yönlendirebilirsiniz
+    // Bu genellikle uygulama başladıktan sonra yapılır
+  }
   
   // Navigasyon için global key oluştur
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -63,9 +121,35 @@ void main() async {
     await localNotificationService.initialize();
     await notificationService.initialize();
     
+    // Arka planda kaydedilmiş bildirimleri işle ve göster
+    final backgroundNotifications = await localNotificationService.processBackgroundNotifications();
+    if (backgroundNotifications.isNotEmpty) {
+      print('${backgroundNotifications.length} arka plan bildirimi işlendi');
+      
+      // En son gelen bildirimi göster
+      if (backgroundNotifications.isNotEmpty) {
+        final latestNotification = backgroundNotifications.last;
+        localNotificationService.showNotification(
+          id: DateTime.now().millisecondsSinceEpoch.remainder(100000),
+          title: latestNotification['title'] ?? 'Yeni Bildirim',
+          body: latestNotification['body'] ?? '',
+          payload: jsonEncode(latestNotification['data'] ?? {}),
+        );
+      }
+    }
+    
     // FCM token'ı al ve kaydet/göster
     String? fcmToken = await FirebaseMessaging.instance.getToken();
     print('FCM Token: $fcmToken');
+    
+    // Token'ı her uygulama açılışında sunucuya kaydet
+    notificationService.updateFcmToken();
+    
+    // Token değişikliğini dinle
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+      print('FCM token yenilendi: $newToken');
+      notificationService.updateFcmToken();
+    });
     
     // Firebase bildirim dinleyicilerini ayarla
     // Ön planda iken
@@ -95,8 +179,8 @@ void main() async {
     localNotificationService: localNotificationService
   );
   
-  // Periodik bildirim kontrolünü başlat
-  _setupPeriodicNotificationCheck(notificationViewModel);
+  // Otomatik bildirim yenileme sistemini başlat
+  notificationViewModel.startAutoRefresh();
   
   // HTTP Interceptor'ı oluştur
   final httpInterceptor = HttpInterceptor(navigatorKey: navigatorKey);
@@ -132,21 +216,6 @@ void main() async {
       ),
     ),
   );
-}
-
-// Periyodik bildirim kontrolü ayarla
-void _setupPeriodicNotificationCheck(NotificationViewModel viewModel) {
-  // Her 15 dakikada bir bildirimleri kontrol et
-  Future.delayed(Duration.zero, () async {
-    // İlk kontrolü hemen yap
-    await viewModel.getNotifications(showAsLocalNotification: true);
-    
-    // Periyodik kontroller için zamanlayıcı kur
-    Timer.periodic(const Duration(minutes: 15), (_) async {
-      print('Periyodik bildirim kontrolü yapılıyor...');
-      await viewModel.getNotifications(showAsLocalNotification: true);
-    });
-  });
 }
 
 class TayamerApp extends StatefulWidget {
