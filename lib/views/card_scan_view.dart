@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/offer_viewmodel.dart';
 import '../viewmodels/payment_viewmodel.dart';
 import 'package:flutter/services.dart';
+import 'package:card_scanner/card_scanner.dart';
 
 class CardScanView extends StatefulWidget {
   final String detailUrl;
@@ -28,13 +28,59 @@ class CardScanView extends StatefulWidget {
 }
 
 class _CardScanViewState extends State<CardScanView> {
-  MobileScannerController cameraController = MobileScannerController();
   late PaymentViewModel _paymentViewModel;
+  bool _isProcessing = false;
 
   @override
   void initState() {
     super.initState();
     _paymentViewModel = Provider.of<PaymentViewModel>(context, listen: false);
+    // Kamera direkt açılsın
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startCardScan();
+    });
+  }
+
+  Future<void> _startCardScan() async {
+    if (_isProcessing) return;
+    
+    try {
+      _isProcessing = true;
+      
+      final CardDetails? result = await CardScanner.scanCard();
+      
+      if (result != null) {
+        // Kart bilgilerini forma aktar
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CardManualEntryView(
+              detailUrl: widget.detailUrl,
+              offerId: widget.offerId,
+              companyId: widget.companyId,
+              holderTC: widget.holderTC,
+              holderBD: widget.holderBD,
+              maxInstallment: widget.maxInstallment,
+              scannedCardData: CardData(
+                cardNumber: result.cardNumber,
+                cardHolder: result.cardHolderName ?? '',
+                expiryDate: result.expiryDate,
+                cvv: '', // CVV genellikle kart taramasından alınamaz
+              ),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Kart tarama hatası: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      _isProcessing = false;
+    }
   }
 
   @override
@@ -57,31 +103,33 @@ class _CardScanViewState extends State<CardScanView> {
       ),
       body: Stack(
         children: [
-          // Kamera görüntüsü
-          MobileScanner(
-            controller: cameraController,
-            onDetect: (capture) {
-              final List<Barcode> barcodes = capture.barcodes;
-              if (barcodes.isNotEmpty) {
-                // Kart bilgisi algılandığında yapılacak işlemler
-                final String cardData = barcodes.first.rawValue ?? '';
-                processCardData(cardData);
-              }
-            },
-          ),
-          
-          // Kart alanını belirten çerçeve
+          // Kart tarama alanı
           Center(
-            child: Container(
-              width: MediaQuery.of(context).size.width * 0.8,
-              height: MediaQuery.of(context).size.width * 0.5,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: Colors.blue,
-                  width: 3.0,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  height: MediaQuery.of(context).size.width * 0.5,
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Colors.blue,
+                      width: 3.0,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                borderRadius: BorderRadius.circular(12),
-              ),
+                const SizedBox(height: 20),
+                if (_isProcessing)
+                  const Text(
+                    'Kartınız taranıyor...',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1E3A8A),
+                    ),
+                  ),
+              ],
             ),
           ),
           
@@ -120,89 +168,6 @@ class _CardScanViewState extends State<CardScanView> {
       ),
     );
   }
-
-  void processCardData(String cardData) {
-    // Taranmış kart verisini ayrıştır
-    Map<String, String> cardInfo = _parseCardData(cardData);
-    
-    // Ayrıştırılmış verileri kullanarak CardData objesi oluştur
-    CardData parsedCardData = CardData(
-      cardNumber: cardInfo['cardNumber'] ?? '',
-      cardHolder: cardInfo['cardHolder'] ?? '',
-      expiryDate: cardInfo['expiryDate'] ?? '',
-      cvv: '', // CVV genellikle kart taramasından alınamaz
-    );
-    
-    // İşlem sonrası ödeme sayfasına yönlendir
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PaymentConfirmationView(
-          detailUrl: widget.detailUrl,
-          offerId: widget.offerId,
-          companyId: widget.companyId,
-          cardData: parsedCardData,
-        ),
-      ),
-    );
-  }
-  
-  Map<String, String> _parseCardData(String cardData) {
-    // Kart verisini analiz eden metot
-    Map<String, String> result = {};
-    
-    try {
-      // Genellikle kart tarayıcıları tarafından döndürülen format:
-      // Kart numarası ve son kullanma tarihi arasında bir ayırıcı olabilir (^ = veya diğer karakterler)
-      // Örnek: 4111111111111111=2212...
-      
-      // Kart numarası: Genellikle ilk 16-19 haneli sayıdır
-      RegExp cardNumberRegex = RegExp(r'(\d{15,19})');
-      var cardNumberMatch = cardNumberRegex.firstMatch(cardData);
-      if (cardNumberMatch != null) {
-        String number = cardNumberMatch.group(1) ?? '';
-        // 4 haneli gruplar halinde ayır
-        number = number.replaceAllMapped(
-          RegExp(r'.{4}'), (match) => '${match.group(0)} '
-        ).trim();
-        result['cardNumber'] = number;
-      }
-      
-      // Son kullanma tarihi: Genellikle YYMM veya MMYY formatında
-      RegExp expiryRegex = RegExp(r'=(\d{4})');
-      var expiryMatch = expiryRegex.firstMatch(cardData);
-      if (expiryMatch != null) {
-        String expiry = expiryMatch.group(1) ?? '';
-        // YYMM formatını MM/YY formatına çevir
-        if (expiry.length == 4) {
-          result['expiryDate'] = '${expiry.substring(2, 4)}/${expiry.substring(0, 2)}';
-        }
-      }
-      
-      // Kart sahibi adı: Büyük harflerle yazılmış olan kısım olabilir
-      RegExp nameRegex = RegExp(r'[A-Z]+(?: [A-Z]+)+');
-      var nameMatch = nameRegex.firstMatch(cardData);
-      if (nameMatch != null) {
-        result['cardHolder'] = nameMatch.group(0) ?? '';
-      }
-      
-    } catch (e) {
-      print('Kart verisi ayrıştırma hatası: $e');
-    }
-    
-    // Eğer bazı alanlar eksikse varsayılan değerler ata
-    if (!result.containsKey('cardNumber') || result['cardNumber']!.isEmpty) {
-      result['cardNumber'] = '';
-    }
-    if (!result.containsKey('expiryDate') || result['expiryDate']!.isEmpty) {
-      result['expiryDate'] = '';
-    }
-    if (!result.containsKey('cardHolder') || result['cardHolder']!.isEmpty) {
-      result['cardHolder'] = '';
-    }
-    
-    return result;
-  }
 }
 
 // Manuel kart bilgileri giriş ekranı
@@ -213,6 +178,7 @@ class CardManualEntryView extends StatefulWidget {
   final String holderTC;
   final String holderBD;
   final int maxInstallment;
+  final CardData? scannedCardData; // Ekstra parametre - taranan kart bilgisi
 
   const CardManualEntryView({
     Key? key, 
@@ -222,6 +188,7 @@ class CardManualEntryView extends StatefulWidget {
     required this.holderTC,
     required this.holderBD,
     this.maxInstallment = 1,
+    this.scannedCardData, // Opsiyonel parametre
   }) : super(key: key);
 
   @override
@@ -243,6 +210,17 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
   void initState() {
     super.initState();
     _paymentViewModel = Provider.of<PaymentViewModel>(context, listen: false);
+    
+    // Eğer taranan kart bilgileri varsa, formu doldur
+    if (widget.scannedCardData != null) {
+      _cardNumberController.text = widget.scannedCardData!.cardNumber;
+      _cardHolderController.text = widget.scannedCardData!.cardHolder;
+      _expiryDateController.text = widget.scannedCardData!.expiryDate;
+      
+      // TC ve doğum tarihi bilgilerini widget parametrelerinden al
+      _tcNoController.text = widget.holderTC;
+      _birthDateController.text = widget.holderBD;
+    }
   }
 
   @override

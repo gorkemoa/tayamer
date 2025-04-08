@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/user_model.dart';
 import '../services/user_service.dart';
 import '../services/auth_service.dart';
+import '../viewmodels/offer_viewmodel.dart';
 import 'profile_detail_view.dart';
 import 'notifications_view.dart';
 import 'webview_screen.dart';
@@ -90,9 +92,40 @@ class _ProfileViewState extends State<ProfileView> {
           style: TextStyle(color: Colors.white),
         ),
         centerTitle: true,
-        leading: IconButton(
+        leading:  IconButton(
           icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
-          onPressed: () {},
+          onPressed: () {
+            final viewModel = context.read<OfferViewModel>();
+            // Genel sohbet teklifini (id: -1) bul
+            // Teklif listesi boşsa veya id -1 içermiyorsa try-catch kullan
+            try {
+              final generalChatOffer = viewModel.offers.firstWhere(
+                (offer) => offer.id.toString() == '-1',
+              );
+
+              if (generalChatOffer.chatUrl.isNotEmpty) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => WebViewScreen(
+                      url: generalChatOffer.chatUrl,
+                      title: 'Genel Sohbet',
+                    ),
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Genel sohbet bağlantısı bulunamadı.')),
+                );
+              }
+            } catch (e) {
+              // Teklifin bulunamadığı durumları ele al
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Genel sohbet şu anda mevcut değil.')),
+              );
+              debugPrint("Genel sohbet offer bulunamadı: $e");
+            }
+          },
         ),
         actions: [
           IconButton(

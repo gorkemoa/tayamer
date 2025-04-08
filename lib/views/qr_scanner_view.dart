@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:image_picker/image_picker.dart';
 import '../viewmodels/policy_type_viewmodel.dart';
 import 'dart:convert';
@@ -16,7 +16,8 @@ class QRScannerView extends StatefulWidget {
 }
 
 class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserver {
-  late MobileScannerController controller;
+  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
+  QRViewController? controller;
   bool _isProcessing = false; // QR kodu işleniyor mu?
   bool _isDisposed = false; // Widget dispose edildi mi?
   
@@ -24,26 +25,43 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    controller = MobileScannerController();
   }
   
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _isDisposed = true;
-    controller.dispose();
+    controller?.dispose();
     super.dispose();
+  }
+
+  @override
+  void reassemble() {
+    super.reassemble();
+    if (controller != null) {
+      controller!.pauseCamera();
+      controller!.resumeCamera();
+    }
+  }
+
+  void _onQRViewCreated(QRViewController controller) {
+    this.controller = controller;
+    controller.scannedDataStream.listen((scanData) {
+      if (scanData.code != null) {
+        _handleQRDetection(context, scanData);
+      }
+    });
   }
   
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Uygulama arka plana gittiğinde veya öne çıktığında kamera durumunu ayarla
     if (state == AppLifecycleState.resumed) {
-      controller.start();
+      controller?.resumeCamera();
     } else if (state == AppLifecycleState.inactive || 
               state == AppLifecycleState.paused || 
               state == AppLifecycleState.detached) {
-      controller.stop();
+      controller?.pauseCamera();
     }
   }
   
@@ -52,21 +70,28 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
     return Scaffold(
       body: Stack(
         children: [
-          MobileScanner(
-            controller: controller,
-            onDetect: (capture) => _handleQRDetection(context, capture),
+          QRView(
+            key: qrKey,
+            onQRViewCreated: _onQRViewCreated,
+            overlay: QrScannerOverlayShape(
+              borderColor: const Color(0xFF1C3879),
+              borderRadius: 10,
+              borderLength: 30,
+              borderWidth: 10,
+              cutOutSize: MediaQuery.of(context).size.width * 0.8,
+            ),
           ),
           SafeArea(
             child: Column(
               children: [
                 // Mavi başlık çubuğu
                 Container(
-                  color: Color(0xFF1C3879),
-                  padding: EdgeInsets.symmetric(vertical: 16),
+                  color: const Color(0xFF1C3879),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Row(
                     children: [
                       IconButton(
-                        icon: Icon(Icons.close, color: Colors.white),
+                        icon: const Icon(Icons.close, color: Colors.white),
                         onPressed: () {
                           if (!_isDisposed) {
                             Navigator.of(context).pop();
@@ -77,7 +102,7 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
                         child: Text(
                           'QR Kodunuzu Okutun',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -85,18 +110,18 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
                         ),
                       ),
                       IconButton(
-                        icon: Icon(Icons.help_outline, color: Colors.white),
+                        icon: const Icon(Icons.help_outline, color: Colors.white),
                         onPressed: () {
                           if (_isDisposed) return;
                           // Yardım bilgisi göster
                           showDialog(
                             context: context,
                             builder: (context) => AlertDialog(
-                              title: Text('QR Kod Okutma Hakkında'),
+                              title: const Text('QR Kod Okutma Hakkında'),
                               content: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
+                                children: const [
                                   Text('QR kodunuzu kameranın görüş alanında tutun.'),
                                   SizedBox(height: 8),
                                   Text('Otomatik olarak aşağıdaki bilgilerinizi algılayabilir:'),
@@ -111,7 +136,7 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(context),
-                                  child: Text('Anladım'),
+                                  child: const Text('Anladım'),
                                 ),
                               ],
                             ),
@@ -122,7 +147,7 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
                   ),
                 ),
                 
-                Spacer(), // Kamera alanı için boşluk
+                const Spacer(), // Kamera alanı için boşluk
                 
                 // Alt butonlar
                 Padding(
@@ -134,7 +159,7 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                           foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(25),
                           ),
@@ -148,13 +173,13 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
                             widget.onManualEntry!();
                           }
                         },
-                        child: Text('Manuel Giriş'),
+                        child: const Text('Manuel Giriş'),
                       ),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                           foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(25),
                           ),
@@ -179,7 +204,7 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
                             );
                             
                             // Controller'a özel bir durumda olduğumuzu belirtelim
-                            await controller.stop();
+                            controller?.pauseCamera();
                             
                             // Widget hala aktif mi kontrol et
                             if (_isDisposed) return;
@@ -193,12 +218,12 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
                             });
                           }
                         },
-                        child: Text('Fotoğraf Yükle'),
+                        child: const Text('Fotoğraf Yükle'),
                       ),
                     ],
                   ),
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
               ],
             ),
           ),
@@ -207,21 +232,15 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
     );
   }
 
-  void _handleQRDetection(BuildContext context, BarcodeCapture capture) {
+  void _handleQRDetection(BuildContext context, Barcode scanData) {
     // Eğer zaten işleme devam ediyorsa veya widget dispose olduysa işlem yapma
     if (_isProcessing || _isDisposed) return;
     
     try {
       _isProcessing = true; // İşleme başladı
       
-      final List<Barcode> barcodes = capture.barcodes;
-      if (barcodes.isEmpty) {
-        _isProcessing = false;
-        return;
-      }
-      
       // QR kod algılandığında yapılacak işlemler
-      final String code = barcodes.first.rawValue ?? '';
+      final String code = scanData.code ?? '';
       
       // Boş kod kontrolü
       if (code.isEmpty) {
@@ -229,6 +248,9 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
         _isProcessing = false;
         return;
       }
+      
+      // *** EKLENDİ: Okunan ham QR kod verisini logla ***
+      print('[QRScannerView] Raw QR Code: $code');
       
       // Widget hala aktif mi? Mounted kontrolü
       if (_isDisposed) {
@@ -245,7 +267,7 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
       );
       
       // QR tarayıcıyı durdur
-      controller.stop();
+      controller?.pauseCamera();
       
       Map<String, dynamic> qrData = {};
       
@@ -254,6 +276,8 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
         // JSON dönüşüm hatalarını yakala
         if (code.trim().startsWith('{') && code.trim().endsWith('}')) {
           qrData = jsonDecode(code);
+          // *** EKLENDİ: JSON olarak ayrıştırılan veriyi logla ***
+          print('[QRScannerView] Parsed JSON data: $qrData');
         } else {
           // JSON formatında değilse, ham veriyi analiz et
           // QR kod içeriğinde anahtar=değer formatı olup olmadığını kontrol et
@@ -266,21 +290,29 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
                 qrData[keyValue[0].trim()] = keyValue[1].trim();
               }
             }
+            // *** EKLENDİ: Anahtar=Değer olarak ayrıştırılan veriyi logla ***
+            print('[QRScannerView] Parsed Key-Value data: $qrData');
           }
           
           // Eğer veri ayrıştırılamadıysa, ham veriyi ekle
           if (qrData.isEmpty) {
             qrData['rawData'] = code;
+            // *** EKLENDİ: Ham veri olarak işaretlenen veriyi logla ***
+            print('[QRScannerView] Marked as rawData: $qrData');
           }
         }
       } catch(e) {
         print('QR kod işleme hatası: $e');
         qrData['rawData'] = code;
+        // *** EKLENDİ: Hata durumunda ham veriyi logla ***
+        print('[QRScannerView] Error parsing, marked as rawData: $qrData');
       }
       
       // Future.microtask kullanarak navigator pop işlemini UI thread'inden sonraya ertele
       Future.microtask(() {
         if (!_isDisposed && mounted) {
+          // *** EKLENDİ: Geri gönderilecek veriyi logla ***
+          print('[QRScannerView] Popping with data: $qrData');
           // Navigator.pop ile veriyi geri döndür
           Navigator.of(context).pop(qrData);
         }
