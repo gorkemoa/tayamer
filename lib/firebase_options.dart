@@ -63,6 +63,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '497830435269',
     projectId: 'fabrika-sigorta',
     storageBucket: 'fabrika-sigorta.firebasestorage.app',
-    iosBundleId: 'com.example.tayamer',
+    iosBundleId: 'com.office701.tayamer',
   );
+
 }

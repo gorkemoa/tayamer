@@ -626,16 +626,11 @@ class _ManualEntryViewState extends State<ManualEntryView> {
       
       // Form alanlarına QR kod verilerini yerleştir
       widget.policyType.fields.forEach((field) {
-        // Alan anahtarına göre direkt eşleştirme yap
-        if (widget.initialData!.containsKey(field.key)) {
-          _controllers[field.key]?.text = widget.initialData![field.key]!;
-          print('${field.key} direkt eşleşti: ${widget.initialData![field.key]}');
-        } 
         // TC Kimlik için eşleştirme
-        else if ((field.name.toLowerCase().contains('tc') || 
-                 field.key.toLowerCase().contains('tc') || 
-                 field.key.toLowerCase().contains('kimlik')) && 
-                 widget.initialData!.containsKey('tc') && hasTCField) {
+        if ((field.name.toLowerCase().contains('tc') || 
+             field.key.toLowerCase().contains('tc') || 
+             field.key.toLowerCase().contains('kimlik')) && 
+             widget.initialData!.containsKey('tc')) {
           _controllers[field.key]?.text = widget.initialData!['tc']!;
           print('TC alanı eşleşti: ${widget.initialData!['tc']}');
           // Galeri modunda odaklanılacak alan

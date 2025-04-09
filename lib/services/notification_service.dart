@@ -5,8 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/notification_model.dart' as app_models;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import '../firebase_options.dart';
 
 class NotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
@@ -27,76 +28,88 @@ class NotificationService {
     return 'Basic $encoded';
   }
 
+  // APNS token kontrolü
+  Future<String?> getAPNSToken() async {
+    if (Platform.isIOS) {
+      try {
+        final apnsToken = await _firebaseMessaging.getAPNSToken();
+        print('APNS token alındı: $apnsToken');
+        return apnsToken;
+      } catch (e) {
+        print('APNS token alınırken hata: $e');
+        return null;
+      }
+    }
+    return null;
+  }
+
   // Bildirimleri getir
   Future<app_models.NotificationResponse> getNotifications(String userToken) async {
     try {
+      print('Bildirimler getiriliyor...');
+      
       // UserId'yi SharedPreferences'tan al
       final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getInt('user_id');
       
       if (userId == null) {
         print('UserID bulunamadı');
-        return app_models.NotificationResponse.error('Kullanıcı kimliği bulunamadı.');
+        return app_models.NotificationResponse(
+          error: true,
+          success: false,
+          notifications: [],
+        );
       }
-
-      final apiUrl = '$_baseUrl/user/account/$userId/natifications';
-      print('Bildirimler isteği gönderiliyor: $apiUrl');
       
-      final request = app_models.NotificationRequest(userToken: userToken);
+      // API endpoint
+      final apiUrl = '$_baseUrl/user/account/$userId/natifications';
+      
+      // İstek başlıklarını ve gövdesini oluştur
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': _getBasicAuthHeader(),
+      };
+      final body = jsonEncode({
+        'userToken': userToken,
+      });
+      
+      // İstek detaylarını logla
+      print('API İsteği: URL=$apiUrl');
+      print('API İsteği: Method=POST');
+      print('API İsteği: Headers=$headers');
+      print('API İsteği: Body=$body');
       
       final response = await http.put(
         Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': _getBasicAuthHeader(),
-        },
-        body: request.toJsonString(),
+        headers: headers,
+        body: body,
       );
       
-      print('Bildirimler yanıtı alındı: StatusCode=${response.statusCode}');
+      // Yanıt kodunu ve ham yanıtı logla
+      print('API yanıt kodu: ${response.statusCode}');
+      print('API Ham Yanıt Gövdesi: ${response.body}');
       
-      // Yanıt içeriğini al
-      final responseBody = utf8.decode(response.bodyBytes);
-      print('Başarılı yanıt içeriği: $responseBody');
-      
-      // Yanıtın HTML veya PHP hatası içerip içermediğini kontrol et
-      if (responseBody.contains('<br />') || responseBody.contains('<b>') || 
-          responseBody.contains('Fatal error') || responseBody.contains('Warning')) {
-        // Sunucu taraflı hata
-        return app_models.NotificationResponse.error('Sunucu hatası: Lütfen daha sonra tekrar deneyiniz.');
-      }
-      
-      // JSON formatını kontrol et
-      try {
-        if (response.statusCode == 200) {
-          final data = jsonDecode(responseBody);
-          return app_models.NotificationResponse.fromJson(data);
-        }
+      if (response.statusCode == 200) {
+        final responseBody = utf8.decode(response.bodyBytes);
+        final data = jsonDecode(responseBody);
+        print('Bildirimler başarıyla alındı: ${data.toString()}');
         
-        if (response.statusCode >= 400) {
-          try {
-            final errorData = jsonDecode(responseBody);
-            return app_models.NotificationResponse.error(
-              errorData['message'] ?? 'Bildirimler alınamadı: HTTP ${response.statusCode}'
-            );
-          } catch (e) {
-            return app_models.NotificationResponse.error('Bildirimler alınamadı: HTTP ${response.statusCode}');
-          }
-        }
-        
-        return app_models.NotificationResponse.error('Beklenmeyen yanıt: HTTP ${response.statusCode}');
-      } catch (e) {
-        print('Yanıt JSON formatında değil: $e');
-        return app_models.NotificationResponse.error('Sunucu yanıtı işlenemedi. Lütfen daha sonra tekrar deneyiniz.');
-      }
-      
-    } catch (e) {
-      print('Bildirimler API hatası: $e');
-      if (e is http.ClientException) {
-        return app_models.NotificationResponse.error('Ağ hatası: ${e.message}');
+        return app_models.NotificationResponse.fromJson(data);
       } else {
-        return app_models.NotificationResponse.error('Bildirimler alınırken hata oluştu: ${e.toString()}');
+        print('Bildirimler alınamadı: HTTP ${response.statusCode}');
+        return app_models.NotificationResponse(
+          error: true,
+          success: false,
+          notifications: [],
+        );
       }
+    } catch (e) {
+      print('Bildirimler alınırken hata oluştu: $e');
+      return app_models.NotificationResponse(
+        error: true,
+        success: false,
+        notifications: [],
+      );
     }
   }
 
@@ -251,52 +264,111 @@ class NotificationService {
   }
 
   Future<void> initialize() async {
-    // Firebase izinlerini iste
-    await _firebaseMessaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    try {
+      // Firebase App'in başlatıldığından emin ol
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
+      }
 
-    // FCM token'ı al
-    String? token = await _firebaseMessaging.getToken();
-    print('FCM Token: $token');
-    
-    // Token'ı sunucuya kaydetmeyi dene
-    await updateFcmToken();
+      // Bildirim izinlerini kontrol et
+      NotificationSettings settings = await _firebaseMessaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      print('Bildirim izinleri durumu: ${settings.authorizationStatus}');
 
-    // Yerel bildirimleri yapılandır
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-    
-    const DarwinInitializationSettings initializationSettingsIOS =
-        DarwinInitializationSettings(
-      requestSoundPermission: true,
-      requestBadgePermission: true,
-      requestAlertPermission: true,
-    );
+      if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+        print('Bildirim izinleri reddedildi');
+        return;
+      }
 
-    const InitializationSettings initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
-    );
+      // iOS için özel ayarlar
+      if (Platform.isIOS) {
+        await _firebaseMessaging.setForegroundNotificationPresentationOptions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+        
+        try {
+          String? apnsToken = await _firebaseMessaging.getAPNSToken();
+          print('APNS token alındı: $apnsToken');
+        } catch (e) {
+          print('APNS token kontrolü sırasında hata: $e');
+        }
+      }
 
-    await _localNotifications.initialize(initializationSettings);
+      // FCM token alma işlemi
+      try {
+        String? token = await _firebaseMessaging.getToken();
+        if (token != null) {
+          print('FCM Token başarıyla alındı: $token');
+          await updateFcmToken();
+        } else {
+          print('FCM token null, 5 saniye sonra tekrar denenecek...');
+          await Future.delayed(const Duration(seconds: 5));
+          token = await _firebaseMessaging.getToken();
+          if (token != null) {
+            print('İkinci denemede FCM Token alındı: $token');
+            await updateFcmToken();
+          } else {
+            throw Exception('FCM token alınamadı');
+          }
+        }
+      } catch (e) {
+        print('FCM token alma işlemi başarısız: $e');
+        // Token alınamasa bile diğer işlemlere devam et
+      }
 
-    // Ön planda bildirim gösterme ayarları
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      _showNotification(message);
-    });
+      // Yerel bildirimleri yapılandır
+      const AndroidInitializationSettings initializationSettingsAndroid =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
+      
+      const DarwinInitializationSettings initializationSettingsIOS =
+          DarwinInitializationSettings(
+        requestSoundPermission: true,
+        requestBadgePermission: true,
+        requestAlertPermission: true,
+      );
 
-    // Arka planda bildirim tıklama işlemi
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      // Bildirime tıklandığında yapılacak işlemler
-      _handleBackgroundNotificationTap(message);
-    });
-    
-    // Android için bildirim kanalını oluştur
-    if (Platform.isAndroid) {
-      await _createAndroidNotificationChannel();
+      const InitializationSettings initializationSettings = InitializationSettings(
+        android: initializationSettingsAndroid,
+        iOS: initializationSettingsIOS,
+      );
+
+      await _localNotifications.initialize(initializationSettings);
+
+      // Ön planda bildirim gösterme ayarları
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        _showNotification(message);
+      });
+
+      // Arka planda bildirim tıklama işlemi
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        _handleBackgroundNotificationTap(message);
+      });
+      
+      // Android için bildirim kanalını oluştur
+      if (Platform.isAndroid) {
+        await _createAndroidNotificationChannel();
+      }
+      
+      print('Bildirim servisi başarıyla başlatıldı');
+    } catch (e, stackTrace) {
+      print('Bildirim servisi başlatılırken hata: $e');
+      print('Hata detayı: $stackTrace');
+      
+      // Hata durumunda yeniden deneme
+      try {
+        print('Bildirim servisi yeniden başlatılıyor...');
+        await Future.delayed(const Duration(seconds: 3));
+        await initialize();
+      } catch (retryError) {
+        print('Bildirim servisi yeniden başlatılamadı: $retryError');
+      }
     }
   }
   

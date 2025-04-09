@@ -33,21 +33,27 @@ class _WebViewScreenState extends State<WebViewScreen> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (String url) {
-            setState(() {
-              isLoading = true;
-              hasError = false;
-            });
+            if (mounted) {
+              setState(() {
+                isLoading = true;
+                hasError = false;
+              });
+            }
             print('WebView sayfası yükleniyor: $url');
           },
           onPageFinished: (String url) {
-            setState(() => isLoading = false);
+            if (mounted) {
+              setState(() => isLoading = false);
+            }
             print('WebView sayfası yüklendi: $url');
           },
           onWebResourceError: (WebResourceError error) {
-            setState(() {
-              isLoading = false;
-              hasError = true;
-            });
+            if (mounted) {
+              setState(() {
+                isLoading = false;
+                hasError = true;
+              });
+            }
             print('WebView yükleme hatası: ${error.description}');
           },
           onNavigationRequest: (NavigationRequest request) {

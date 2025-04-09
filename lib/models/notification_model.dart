@@ -64,15 +64,74 @@ class NotificationResponse {
   factory NotificationResponse.fromJson(Map<String, dynamic> json) {
     List<PaymentNotification>? notificationList;
     
+    // Debugging
+    print('natificationsResponse.fromJson json içeriği: $json');
+    
+    // API yanıtında bildirim verisi var mı kontrol et
     if (json['data'] != null && json['data']['natifications'] != null) {
-      notificationList = (json['data']['natifications'] as List)
-          .map((item) => PaymentNotification.fromJson(item))
-          .toList();
+      // 1. durum: data.notifications şeklinde
+      try {
+        notificationList = (json['data']['natifications'] as List)
+            .map((item) => PaymentNotification.fromJson(item))
+            .toList();
+        print('data.natifications içinden ${notificationList.length} bildirim işlendi');
+      } catch (e) {
+        print('data.natifications işlenirken hata: $e');
+        notificationList = [];
+      }
+    } else if (json['data'] != null && json['data']['natifications'] != null) {
+      // Alternatif yazım: data.natifications şeklinde
+      try {
+        notificationList = (json['data']['natifications'] as List)
+            .map((item) => PaymentNotification.fromJson(item))
+            .toList();
+        print('data.natifications içinden ${notificationList.length} bildirim işlendi');
+      } catch (e) {
+        print('data.natifications işlenirken hata: $e');
+        notificationList = [];
+      }
+    } else if (json['natifications'] != null) {
+      // 2. durum: doğrudan notifications şeklinde
+      try {
+        notificationList = (json['natifications'] as List)
+            .map((item) => PaymentNotification.fromJson(item))
+            .toList();
+        print('natifications içinden ${notificationList.length} bildirim işlendi');
+      } catch (e) {
+        print('natifications işlenirken hata: $e');
+        notificationList = [];
+      }
+    } else if (json['natifications'] != null) {
+      // Alternatif yazım: doğrudan natifications şeklinde
+      try {
+        notificationList = (json['natifications'] as List)
+            .map((item) => PaymentNotification.fromJson(item))
+            .toList();
+        print('natifications içinden ${notificationList.length} bildirim işlendi');
+      } catch (e) {
+        print('natifications işlenirken hata: $e');
+        notificationList = [];
+      }
+    } else if (json['data'] != null && json['data'] is List) {
+      // 3. durum: data doğrudan liste olabilir
+      try {
+        notificationList = (json['data'] as List)
+            .map((item) => PaymentNotification.fromJson(item))
+            .toList();
+        print('data listesinden ${notificationList.length} bildirim işlendi');
+      } catch (e) {
+        print('data listesi işlenirken hata: $e');
+        notificationList = [];
+      }
+    } else {
+      // Bildirim bulunamadı
+      print('JSON içerisinde bildirim verisi bulunamadı: $json');
+      notificationList = [];
     }
 
     return NotificationResponse(
       error: json['error'] ?? true,
-      success: json['success'] ?? false,
+      success: json['success'] ?? (json['error'] == false || json['200'] == 'OK'), // '200: OK' durumunu başarılı kabul et
       notifications: notificationList,
     );
   }

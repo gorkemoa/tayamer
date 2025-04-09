@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'dart:io';
 import 'firebase_options.dart';
 import 'views/login_view.dart';
 import 'views/home_view.dart';
@@ -18,184 +19,101 @@ import 'viewmodels/offer_viewmodel.dart';
 import 'viewmodels/payment_viewmodel.dart';
 import 'viewmodels/notification_viewmodel.dart';
 import 'viewmodels/policy_viewmodel.dart';
-import 'package:flutter/services.dart';
-import 'services/local_notification_service.dart';
 import 'dart:async';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 // Arka planda bildirim işleme - Uygulama tamamen kapalıyken
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Arka plan işlemi olduğu için minimal başlatma
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  print("Arka planda bildirim alındı: ${message.notification?.title}");
-  
-  // Bildirim verilerini yazdır
-  print("Bildirim içeriği: ${message.data}");
-  
-  // Bildirimi göstermek için statik metodu kullan
-  try {
-    await LocalNotificationService.showStaticNotification(
-      id: message.hashCode,
-      title: message.notification?.title ?? "Yeni Bildirim",
-      body: message.notification?.body ?? "",
-      payload: jsonEncode(message.data),
-    );
-  } catch (e) {
-    print("Arka planda bildirim gösterilirken hata: $e");
-  }
-  
-  // Bildirim verilerini SharedPreferences'e kaydedebilirsiniz
-  // Bu sayede uygulama açıldığında işlenebilir
-  try {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String> savedNotifications = prefs.getStringList('background_notifications') ?? [];
-    savedNotifications.add(jsonEncode({
-      'title': message.notification?.title,
-      'body': message.notification?.body,
-      'data': message.data,
-      'timestamp': DateTime.now().toIso8601String(),
-    }));
-    
-    // Son 10 bildirimi sakla
-    if (savedNotifications.length > 10) {
-      savedNotifications.removeAt(0);
-    }
-    
-    await prefs.setStringList('background_notifications', savedNotifications);
-    print("Arka plan bildirimi kaydedildi. Toplam: ${savedNotifications.length}");
-  } catch (e) {
-    print("Arka plan bildirimi kaydedilirken hata: $e");
-  }
+  print("📬 Arka planda bildirim alındı: ${message.notification?.title} - ID: ${message.messageId}");
 }
 
 void main() async {
-  // Flutter engine'in hazır olmasını sağla
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Firebase'i başlat
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // Firebase'i firebase_options ile başlatıyoruz.
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   
-  // Arka plan bildirim işleyicisini ayarla
+  // Arka plan mesaj işleyicisini ayarla
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   
-  // Bildirim izinlerini iste - iOS için kritik
+  // Bildirim izinlerini iste
   NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
     alert: true,
     badge: true,
     sound: true,
-    provisional: false, 
-    criticalAlert: true,  // Kritik bildirimler için (iOS)
-    announcement: true,   // Bildirim duyuruları için (iOS)
   );
-  
   print('Kullanıcı izin durumu: ${settings.authorizationStatus}');
   
-  // iOS için ön plan bildirimleri yapılandır
+  // iOS ön plan bildirim ayarları
   await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
     alert: true,
     badge: true,
     sound: true,
   );
   
-  // Başlatma mesajını kontrol et (uygulama bildirime tıklanarak açıldıysa)
-  RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
-  if (initialMessage != null) {
-    print("Uygulama bildirime tıklanarak açıldı: ${initialMessage.notification?.title}");
-    // Burada bildirim verilerini işleyebilir ve ilgili ekrana yönlendirebilirsiniz
-    // Bu genellikle uygulama başladıktan sonra yapılır
-  }
-  
   // Navigasyon için global key oluştur
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   
-  // Bildirim servislerini başlat
-  final localNotificationService = LocalNotificationService();
+  // Bildirim servislerini oluştur
   final notificationService = NotificationService();
   
   try {
-    print('Bildirim servisleri başlatılıyor...');
-    await localNotificationService.initialize();
-    await notificationService.initialize();
+    // FCM token'ı al ve sunucuya gönder
+    String? fcmToken = await FirebaseMessaging.instance.getToken();
+    print('🔑 FCM Token: $fcmToken');
     
-    // Arka planda kaydedilmiş bildirimleri işle ve göster
-    final backgroundNotifications = await localNotificationService.processBackgroundNotifications();
-    if (backgroundNotifications.isNotEmpty) {
-      print('${backgroundNotifications.length} arka plan bildirimi işlendi');
+    if (fcmToken != null) {
+      await notificationService.updateFcmToken();
       
-      // En son gelen bildirimi göster
-      if (backgroundNotifications.isNotEmpty) {
-        final latestNotification = backgroundNotifications.last;
-        localNotificationService.showNotification(
-          id: DateTime.now().millisecondsSinceEpoch.remainder(100000),
-          title: latestNotification['title'] ?? 'Yeni Bildirim',
-          body: latestNotification['body'] ?? '',
-          payload: jsonEncode(latestNotification['data'] ?? {}),
-        );
-      }
+      // Token değişikliklerini dinle
+      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+        print('🔄 FCM token yenilendi: $newToken');
+        notificationService.updateFcmToken();
+      });
     }
     
-    // FCM token'ı al ve kaydet/göster
-    String? fcmToken = await FirebaseMessaging.instance.getToken();
-    print('FCM Token: $fcmToken');
+    // Basit debounce mantığı için global değişken
+    DateTime? lastNotificationTime;
+    const debounceSeconds = 5;
     
-    // Token'ı her uygulama açılışında sunucuya kaydet
-    notificationService.updateFcmToken();
-    
-    // Token değişikliğini dinle
-    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
-      print('FCM token yenilendi: $newToken');
-      notificationService.updateFcmToken();
-    });
-    
-    // Firebase bildirim dinleyicilerini ayarla
-    // Ön planda iken
+    // Gelen bildirimleri dinle - ön planda
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('Ön planda bildirim alındı: ${message.notification?.title}');
-      localNotificationService.showNotification(
-        id: 0, // Benzersiz ID değeri
-        title: message.notification?.title ?? 'Yeni Bildirim',
-        body: message.notification?.body ?? '',
-        payload: message.data.toString(),
-      );
+      final now = DateTime.now();
+      if (lastNotificationTime != null &&
+          now.difference(lastNotificationTime!).inSeconds < debounceSeconds) {
+        // Eğer son bildirimin üzerinden çok kısa süre geçtiyse gösterme
+        print('⏱️ Debounce: Bildirim tekrar geldi, gösterilmiyor.');
+        return;
+      }
+      lastNotificationTime = now;
+      
+      print('📩 Yeni bildirim geldi!');
+      print('Başlık: ${message.notification?.title}');
+      print('İçerik: ${message.notification?.body}');
+      // Firebase'den gelen bildirimleri sistem bildirimlerinde göster
+      // Firebase bildirimler doğrudan sistem tarafından gösteriliyor
     });
     
-    // Arka planda iken ama uygulama açıkken
+    // Arka planda iken, ama uygulama açıkken bildirime tıklanırsa
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('Arka planda açık uygulamada bildirime tıklandı: ${message.notification?.title}');
-      // Bildirime tıklandığında yapılacak işlemler (navigasyon vb.)
+      print('👆 Bildirime tıklandı: ${message.notification?.title}');
+      // Gerekirse bildirime özel yönlendirme yapılabilir.
     });
     
-    print('Bildirim servisleri başarıyla başlatıldı');
   } catch (e) {
-    print('Bildirim servisleri başlatılırken hata: $e');
+    print('❌ Bildirim servisleri başlatılırken hata: $e');
   }
   
-  // NotificationViewModel'i oluştur
-  final notificationViewModel = NotificationViewModel(
-    localNotificationService: localNotificationService
-  );
+  // NotificationViewModel oluşturuluyor
+  final notificationViewModel = NotificationViewModel();
   
-  // Otomatik bildirim yenileme sistemini başlat
-  notificationViewModel.startAutoRefresh();
-  
-  // HTTP Interceptor'ı oluştur
+  // HTTP Interceptor, ApiService, UserService kurulumu
   final httpInterceptor = HttpInterceptor(navigatorKey: navigatorKey);
-  
-  // ApiService'i oluştur
   final apiService = ApiService(httpInterceptor);
-  
-  // UserService'i başlat
   final userService = UserService();
   userService.initialize(apiService);
-  
-  print('Servisler başlatılıyor...');
-  print('HttpInterceptor başlatıldı');
-  print('ApiService başlatıldı');
-  print('UserService başlatıldı');
   
   runApp(
     MultiProvider(
@@ -211,9 +129,7 @@ void main() async {
         ChangeNotifierProvider.value(value: notificationViewModel),
         ChangeNotifierProvider(create: (_) => PolicyViewModel()),
       ],
-      child: TayamerApp(
-        navigatorKey: navigatorKey,
-      ),
+      child: TayamerApp(navigatorKey: navigatorKey),
     ),
   );
 }
@@ -258,8 +174,8 @@ class _TayamerAppState extends State<TayamerApp> {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1E3A73), // Ana renk - koyu mavi
-          secondary: const Color(0xFFE0622C), // İkincil renk - turuncu
+          seedColor: const Color(0xFF1E3A73), // Ana renk: koyu mavi
+          secondary: const Color(0xFFE0622C),   // İkincil renk: turuncu
         ),
         useMaterial3: true,
         appBarTheme: AppBarTheme(
@@ -294,7 +210,6 @@ class _TayamerAppState extends State<TayamerApp> {
           ),
         ),
       ),
-      // Ana route tanımlamaları
       initialRoute: '/',
       routes: {
         '/': (context) => _isLoading 
@@ -303,9 +218,7 @@ class _TayamerAppState extends State<TayamerApp> {
         '/login': (context) => LoginView(),
         '/home': (context) => const HomeView(),
       },
-      // Dinamik route tanımlamaları
       onGenerateRoute: (settings) {
-        // Route adından parametreleri ayıklama
         if (settings.name != null && settings.name!.startsWith('/policy/detail/')) {
           final policyId = settings.name!.split('/').last;
           return MaterialPageRoute(
@@ -328,7 +241,6 @@ class _TayamerAppState extends State<TayamerApp> {
             settings: settings,
           );
         } else if (settings.name != null && settings.name!.startsWith('/payment/')) {
-          // Ödeme sayfası olmadığından HomeView'e yönlendir ve bildirim göster
           return MaterialPageRoute(
             builder: (context) {
               WidgetsBinding.instance.addPostFrameCallback((_) {

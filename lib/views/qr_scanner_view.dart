@@ -18,8 +18,16 @@ class QRScannerView extends StatefulWidget {
 class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserver {
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
   QRViewController? controller;
-  bool _isProcessing = false; // QR kodu işleniyor mu?
-  bool _isDisposed = false; // Widget dispose edildi mi?
+  bool _isProcessing = false;
+  bool _isDisposed = false;
+  bool _isPaused = false;
+  BuildContext? _storedContext;
+  
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _storedContext = context;
+  }
   
   @override
   void initState() {
@@ -29,8 +37,9 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
   
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     _isDisposed = true;
+    WidgetsBinding.instance.removeObserver(this);
+    controller?.stopCamera();
     controller?.dispose();
     super.dispose();
   }
@@ -45,28 +54,46 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
   }
 
   void _onQRViewCreated(QRViewController controller) {
-    this.controller = controller;
-    controller.scannedDataStream.listen((scanData) {
-      if (scanData.code != null) {
-        _handleQRDetection(context, scanData);
-      }
+    if (_isDisposed) return;
+
+    setState(() {
+      this.controller = controller;
     });
+
+    controller.scannedDataStream.listen(
+      (scanData) {
+        if (!_isDisposed && scanData.code != null) {
+          _handleQRDetection(scanData);
+        }
+      },
+      onError: (error) {
+        print('QR tarama hatası: $error');
+        _showError('QR tarama hatası: $error');
+      },
+      cancelOnError: false,
+    );
   }
   
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Uygulama arka plana gittiğinde veya öne çıktığında kamera durumunu ayarla
-    if (state == AppLifecycleState.resumed) {
+    if (_isDisposed) return;
+
+    if (state == AppLifecycleState.resumed && _isPaused) {
+      _isPaused = false;
       controller?.resumeCamera();
     } else if (state == AppLifecycleState.inactive || 
               state == AppLifecycleState.paused || 
               state == AppLifecycleState.detached) {
+      _isPaused = true;
       controller?.pauseCamera();
     }
   }
   
   @override
   Widget build(BuildContext context) {
+    if (_isDisposed) {
+      return const SizedBox.shrink();
+    }
     return Scaffold(
       body: Stack(
         children: [
@@ -196,12 +223,7 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
                           
                           if (image != null && mounted) {
                             // Kullanıcıya bilgi ver
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Fotoğraftan QR kod taranıyor...'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
+                            _showMessage('Fotoğraftan QR kod taranıyor...');
                             
                             // Controller'a özel bir durumda olduğumuzu belirtelim
                             controller?.pauseCamera();
@@ -232,106 +254,88 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
     );
   }
 
-  void _handleQRDetection(BuildContext context, Barcode scanData) {
-    // Eğer zaten işleme devam ediyorsa veya widget dispose olduysa işlem yapma
-    if (_isProcessing || _isDisposed) return;
+  void _showError(String message) {
+    if (_isDisposed || !mounted || _storedContext == null) return;
     
-    try {
-      _isProcessing = true; // İşleme başladı
-      
-      // QR kod algılandığında yapılacak işlemler
-      final String code = scanData.code ?? '';
-      
-      // Boş kod kontrolü
-      if (code.isEmpty) {
-        print('Boş QR kod içeriği');
-        _isProcessing = false;
-        return;
-      }
-      
-      // *** EKLENDİ: Okunan ham QR kod verisini logla ***
-      print('[QRScannerView] Raw QR Code: $code');
-      
-      // Widget hala aktif mi? Mounted kontrolü
-      if (_isDisposed) {
-        _isProcessing = false;
-        return;
-      }
-      
-      // Okuma başarılı olduğunda bildirim göster
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('QR kod okundu, işleniyor...'),
-          duration: Duration(seconds: 1),
+    final scaffoldMessenger = ScaffoldMessenger.of(_storedContext!);
+    if (scaffoldMessenger.mounted) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
         ),
       );
-      
-      // QR tarayıcıyı durdur
-      controller?.pauseCamera();
-      
-      Map<String, dynamic> qrData = {};
-      
-      // JSON formatında veri geldiğini varsayıyoruz
+    }
+  }
+
+  void _showMessage(String message) {
+    if (_isDisposed || !mounted || _storedContext == null) return;
+    
+    final scaffoldMessenger = ScaffoldMessenger.of(_storedContext!);
+    if (scaffoldMessenger.mounted) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text(message),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
+  }
+
+  void _handleQRDetection(Barcode scanData) async {
+    if (_isProcessing || _isDisposed || !mounted) return;
+
+    try {
+      _isProcessing = true;
+      final String code = scanData.code ?? '';
+
+      if (code.isEmpty) {
+        _isProcessing = false;
+        return;
+      }
+
+      if (!mounted || _isDisposed) {
+        _isProcessing = false;
+        return;
+      }
+
+      await controller?.pauseCamera();
+
+      if (!mounted || _isDisposed) {
+        _isProcessing = false;
+        return;
+      }
+
+      _showMessage('QR kod okundu, işleniyor...');
+
+      Map<String, String> qrData = {};
+
       try {
-        // JSON dönüşüm hatalarını yakala
-        if (code.trim().startsWith('{') && code.trim().endsWith('}')) {
-          qrData = jsonDecode(code);
-          // *** EKLENDİ: JSON olarak ayrıştırılan veriyi logla ***
-          print('[QRScannerView] Parsed JSON data: $qrData');
-        } else {
-          // JSON formatında değilse, ham veriyi analiz et
-          // QR kod içeriğinde anahtar=değer formatı olup olmadığını kontrol et
-          if (code.contains('=')) {
-            // Anahtar=değer çiftlerini ayır
-            List<String> pairs = code.split('&');
-            for (String pair in pairs) {
-              List<String> keyValue = pair.split('=');
-              if (keyValue.length == 2) {
-                qrData[keyValue[0].trim()] = keyValue[1].trim();
-              }
-            }
-            // *** EKLENDİ: Anahtar=Değer olarak ayrıştırılan veriyi logla ***
-            print('[QRScannerView] Parsed Key-Value data: $qrData');
-          }
+        final parts = code.split('-');
+        if (parts.length == 3) {
+          qrData['plaka'] = parts[0].trim();
+          qrData['ruhsatNo'] = parts[1].trim();
+          qrData['tc'] = parts[2].trim();
           
-          // Eğer veri ayrıştırılamadıysa, ham veriyi ekle
-          if (qrData.isEmpty) {
-            qrData['rawData'] = code;
-            // *** EKLENDİ: Ham veri olarak işaretlenen veriyi logla ***
-            print('[QRScannerView] Marked as rawData: $qrData');
-          }
+          print('QR verisi ayrıştırıldı: Plaka=${qrData['plaka']}, Ruhsat=${qrData['ruhsatNo']}, TC=${qrData['tc']}');
         }
-      } catch(e) {
-        print('QR kod işleme hatası: $e');
-        qrData['rawData'] = code;
-        // *** EKLENDİ: Hata durumunda ham veriyi logla ***
-        print('[QRScannerView] Error parsing, marked as rawData: $qrData');
+      } catch (e) {
+        print('QR kod ayrıştırma hatası: $e');
       }
-      
-      // Future.microtask kullanarak navigator pop işlemini UI thread'inden sonraya ertele
-      Future.microtask(() {
-        if (!_isDisposed && mounted) {
-          // *** EKLENDİ: Geri gönderilecek veriyi logla ***
-          print('[QRScannerView] Popping with data: $qrData');
-          // Navigator.pop ile veriyi geri döndür
-          Navigator.of(context).pop(qrData);
-        }
-      });
-      
+
+      if (!mounted || _isDisposed || _storedContext == null) {
+        _isProcessing = false;
+        return;
+      }
+
+      Navigator.of(_storedContext!).pop(qrData);
     } catch (e) {
-      print('QR tarama genel hatası: $e');
+      print('QR işleme genel hatası: $e');
       
-      // Hata durumunda - mounted kontrolü
       if (!_isDisposed && mounted) {
-        // Kullanıcıya bilgi ver
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('QR kod taranırken hata oluştu: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showError('QR kod işlenirken hata oluştu: $e');
       }
-      
+    } finally {
       _isProcessing = false;
     }
   }

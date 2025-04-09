@@ -44,7 +44,7 @@ class _PoliciesViewState extends State<PoliciesView> {
                 color: Colors.white,
               ),
             ),
-            leading: IconButton(
+            leading:  IconButton(
           icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
           onPressed: () {
             final viewModel = context.read<OfferViewModel>();

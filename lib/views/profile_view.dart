@@ -126,8 +126,7 @@ class _ProfileViewState extends State<ProfileView> {
               debugPrint("Genel sohbet offer bulunamadı: $e");
             }
           },
-        ),
-        actions: [
+        ),   actions: [
           IconButton(
             icon: const Icon(Icons.notifications_none, color: Colors.white),
             onPressed: () {

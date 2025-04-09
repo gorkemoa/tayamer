@@ -18,27 +18,9 @@ class _NotificationsViewState extends State<NotificationsView> {
   @override
   void initState() {
     super.initState();
-    // Sayfa açıldıktan sonra bildirimleri getir ve bildirim servisini başlat
+    // Sayfa açıldıktan sonra bildirimleri getir
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final viewModel = Provider.of<NotificationViewModel>(context, listen: false);
-      
-      // Önce bildirim servisini başlat
-      try {
-        await viewModel.initializeLocalNotifications();
-        print('Bildirim servisi başarıyla başlatıldı');
-      } catch (e) {
-        print('Bildirim servisi başlatma hatası: $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Bildirim sistemi başlatılamadı: ${e.toString()}'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        }
-      }
-      
-      // Sonra bildirimleri getir
+      // Bildirimleri getir
       _fetchNotifications();
     });
   }
@@ -50,7 +32,7 @@ class _NotificationsViewState extends State<NotificationsView> {
     });
     
     final viewModel = Provider.of<NotificationViewModel>(context, listen: false);
-    await viewModel.getNotifications(showAsLocalNotification: true);
+    await viewModel.getNotifications();
     
     setState(() {
       _isLoading = false;
@@ -65,12 +47,6 @@ class _NotificationsViewState extends State<NotificationsView> {
         backgroundColor: const Color(0xFF1E3A8A),
         foregroundColor: Colors.white,
         actions: [
-          // Gerçek bildirim gönder butonu
-          IconButton(
-            icon: const Icon(Icons.notifications_active),
-            tooltip: 'Gerçek bildirim olarak göster',
-            onPressed: _showAsRealNotifications,
-          ),
           // Bildirimleri yenile butonu
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -265,74 +241,6 @@ class _NotificationsViewState extends State<NotificationsView> {
       } else {
         // Diğer durumlarda varsayılan rotaya yönlendir
         Navigator.pushNamed(context, targetRoute);
-      }
-    }
-  }
-  
-  // Bildirimleri gerçek bildirimler olarak göster
-  void _showAsRealNotifications() async {
-    final viewModel = Provider.of<NotificationViewModel>(context, listen: false);
-    
-    try {
-      // Kullanıcıya bilgi verme
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Bildirimler hazırlanıyor...'),
-          duration: Duration(seconds: 1),
-        ),
-      );
-      
-      print('Gerçek bildirim gösterme işlemi başlatılıyor...');
-      
-      // Bildirimleri getir ve doğrudan göster
-      if (viewModel.notifications == null || viewModel.notifications!.isEmpty) {
-        print('Bildirimler alınıyor ve gösteriliyor...');
-        await viewModel.getNotifications(showAsLocalNotification: true);
-      } else {
-        // Mevcut bildirimlerden en az bir tanesini göster
-        print('Mevcut bildirimler gösteriliyor...');
-        if (viewModel.notifications!.isNotEmpty) {
-          // Önce bildirim servisinin başlatıldığından emin olalım
-          try {
-            await viewModel.initializeLocalNotifications();
-            print('Bildirim servisi kontrol edildi ve hazır');
-            
-            // Test bildirimi yoluyla varolan bildirimleri gösteriyoruz
-            await viewModel.showTestNotification();
-            
-            // Sonrasında gerçek bildirimlerimizi gösterelim
-            print('Test bildirimi sonrası gerçek bildirimler gösteriliyor...');
-            await viewModel.getNotifications(showAsLocalNotification: true);
-          } catch (e) {
-            print('Bildirim hazırlığı hatası: $e');
-            throw Exception('Bildirim gösterilemedi: $e');
-          }
-        } else {
-          // Test bildirimi gönder
-          await viewModel.showTestNotification();
-        }
-      }
-      
-      // Başarılı ise kullanıcıya bildir
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Bildirim başarıyla gönderildi!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      // Hata durumunda kullanıcıya bildirme
-      print('Bildirim gösterme ana hatası: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Bildirim gösterilirken hata: ${e.toString()}'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-          ),
-        );
       }
     }
   }

@@ -5,170 +5,7 @@ import '../viewmodels/payment_viewmodel.dart';
 import 'package:flutter/services.dart';
 import 'package:card_scanner/card_scanner.dart';
 
-class CardScanView extends StatefulWidget {
-  final String detailUrl;
-  final int offerId;
-  final int companyId;
-  final String holderTC;
-  final String holderBD;
-  final int maxInstallment;
-
-  const CardScanView({
-    Key? key, 
-    required this.detailUrl,
-    required this.offerId,
-    required this.companyId,
-    required this.holderTC,
-    required this.holderBD,
-    this.maxInstallment = 1,
-  }) : super(key: key);
-
-  @override
-  State<CardScanView> createState() => _CardScanViewState();
-}
-
-class _CardScanViewState extends State<CardScanView> {
-  late PaymentViewModel _paymentViewModel;
-  bool _isProcessing = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _paymentViewModel = Provider.of<PaymentViewModel>(context, listen: false);
-    // Kamera direkt açılsın
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _startCardScan();
-    });
-  }
-
-  Future<void> _startCardScan() async {
-    if (_isProcessing) return;
-    
-    try {
-      _isProcessing = true;
-      
-      final CardDetails? result = await CardScanner.scanCard();
-      
-      if (result != null) {
-        // Kart bilgilerini forma aktar
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CardManualEntryView(
-              detailUrl: widget.detailUrl,
-              offerId: widget.offerId,
-              companyId: widget.companyId,
-              holderTC: widget.holderTC,
-              holderBD: widget.holderBD,
-              maxInstallment: widget.maxInstallment,
-              scannedCardData: CardData(
-                cardNumber: result.cardNumber,
-                cardHolder: result.cardHolderName ?? '',
-                expiryDate: result.expiryDate,
-                cvv: '', // CVV genellikle kart taramasından alınamaz
-              ),
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Kart tarama hatası: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      _isProcessing = false;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF1E3A8A),
-        title: const Text(
-          'Kartınızı Okutun',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-          ),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: Stack(
-        children: [
-          // Kart tarama alanı
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  height: MediaQuery.of(context).size.width * 0.5,
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Colors.blue,
-                      width: 3.0,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                if (_isProcessing)
-                  const Text(
-                    'Kartınız taranıyor...',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E3A8A),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          
-          // Manuel giriş butonu
-          Positioned(
-            bottom: 50,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context, 
-                    MaterialPageRoute(
-                      builder: (context) => CardManualEntryView(
-                        detailUrl: widget.detailUrl,
-                        offerId: widget.offerId,
-                        companyId: widget.companyId,
-                        holderTC: widget.holderTC,
-                        holderBD: widget.holderBD,
-                        maxInstallment: widget.maxInstallment,
-                      ),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF1E3A8A),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                ),
-                child: const Text('Manuel Giriş'),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// CardScanView ve _CardScanViewState sınıfları kaldırıldı.
 
 // Manuel kart bilgileri giriş ekranı
 class CardManualEntryView extends StatefulWidget {
@@ -178,17 +15,17 @@ class CardManualEntryView extends StatefulWidget {
   final String holderTC;
   final String holderBD;
   final int maxInstallment;
-  final CardData? scannedCardData; // Ekstra parametre - taranan kart bilgisi
+  // scannedCardData parametresi kaldırıldı.
 
   const CardManualEntryView({
-    Key? key, 
+    Key? key,
     required this.detailUrl,
     required this.offerId,
     required this.companyId,
     required this.holderTC,
     required this.holderBD,
     this.maxInstallment = 1,
-    this.scannedCardData, // Opsiyonel parametre
+    // scannedCardData parametresi kaldırıldı.
   }) : super(key: key);
 
   @override
@@ -205,22 +42,17 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
   final _birthDateController = TextEditingController();
   String _instalmentValue = "1";
   late PaymentViewModel _paymentViewModel;
+  bool _isScanning = false; // Tarama durumu için flag
 
   @override
   void initState() {
     super.initState();
     _paymentViewModel = Provider.of<PaymentViewModel>(context, listen: false);
-    
-    // Eğer taranan kart bilgileri varsa, formu doldur
-    if (widget.scannedCardData != null) {
-      _cardNumberController.text = widget.scannedCardData!.cardNumber;
-      _cardHolderController.text = widget.scannedCardData!.cardHolder;
-      _expiryDateController.text = widget.scannedCardData!.expiryDate;
-      
-      // TC ve doğum tarihi bilgilerini widget parametrelerinden al
-      _tcNoController.text = widget.holderTC;
-      _birthDateController.text = widget.holderBD;
-    }
+
+    // scannedCardData kontrolü kaldırıldı.
+    // TC ve doğum tarihi bilgilerini widget parametrelerinden al
+    _tcNoController.text = widget.holderTC;
+    _birthDateController.text = widget.holderBD;
   }
 
   @override
@@ -232,6 +64,57 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
     _tcNoController.dispose();
     _birthDateController.dispose();
     super.dispose();
+  }
+
+  // Kart tarama fonksiyonu eklendi
+  Future<void> _scanCard() async {
+    if (_isScanning) return;
+
+    setState(() {
+      _isScanning = true;
+    });
+
+    try {
+      final CardDetails? result = await CardScanner.scanCard();
+
+      if (result != null && mounted) {
+        // Kart bilgilerini forma aktar
+        setState(() {
+          _cardNumberController.text = result.cardNumber;
+          _cardHolderController.text = result.cardHolderName ?? '';
+          _expiryDateController.text = result.expiryDate;
+          // CVV genellikle taranamadığı için temizlenir veya kullanıcıya sorulur.
+          _cvvController.clear(); 
+        });
+        // Formatlayıcıları tetiklemek için manuel olarak metni yeniden ayarlayabiliriz
+        // veya kullanıcı zaten alana odaklandığında formatlamanın çalışmasını bekleyebiliriz.
+        // Örneğin:
+        _cardNumberController.text = CardNumberInputFormatter().formatEditUpdate(
+          TextEditingValue.empty,
+          TextEditingValue(text: _cardNumberController.text),
+        ).text;
+         _expiryDateController.text = CardExpiryInputFormatter().formatEditUpdate(
+          TextEditingValue.empty,
+          TextEditingValue(text: _expiryDateController.text),
+        ).text;
+
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Kart tarama hatası: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+       if (mounted) {
+          setState(() {
+            _isScanning = false;
+          });
+       }
+    }
   }
 
   @override
@@ -251,6 +134,29 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
+        // AppBar'a tarama butonu eklendi
+        actions: [
+          if (!_isScanning) // Tarama sırasında butonu gizle/devre dışı bırak
+            IconButton(
+              icon: const Icon(Icons.camera_alt_outlined, color: Colors.white),
+              tooltip: 'Kartı Tara',
+              onPressed: _scanCard,
+            )
+          else // Tarama sırasında yükleme göstergesi göster
+            const Padding(
+              padding: EdgeInsets.only(right: 12.0),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(15.0),

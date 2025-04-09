@@ -3,7 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import '../models/notification_model.dart';
 import '../services/notification_service.dart';
-import '../services/local_notification_service.dart';
 
 enum NotificationViewState {
   initial,
@@ -16,7 +15,6 @@ enum NotificationViewState {
 
 class NotificationViewModel extends ChangeNotifier {
   final NotificationService _notificationService = NotificationService();
-  late final LocalNotificationService _localNotificationService;
   
   NotificationViewState _state = NotificationViewState.initial;
   String _errorMessage = '';
@@ -26,10 +24,8 @@ class NotificationViewModel extends ChangeNotifier {
   // Bildirimleri otomatik olarak yenile
   Timer? _notificationTimer;
   
-  // Constructor - LocalNotificationService alıyor
-  NotificationViewModel({LocalNotificationService? localNotificationService}) {
-    _localNotificationService = localNotificationService ?? LocalNotificationService();
-  }
+  // Constructor
+  NotificationViewModel() {}
   
   // Getter'lar
   NotificationViewState get state => _state;
@@ -44,40 +40,8 @@ class NotificationViewModel extends ChangeNotifier {
   bool get isSmsCodeSuccess => _state == NotificationViewState.smsCodeSuccess;
   bool get isSmsCodeError => _state == NotificationViewState.smsCodeError;
   
-  // LocalNotificationService'i başlat
-  Future<void> initializeLocalNotifications() async {
-    try {
-      print('NotificationViewModel: Bildirim servisi başlatılıyor...');
-      bool isRetrying = false;
-      
-      // İlk deneme
-      try {
-        await _localNotificationService.initialize();
-      } catch (e) {
-        print('İlk başlatma denemesi başarısız: $e');
-        isRetrying = true;
-        
-        // Kısa bir bekleme ile tekrar dene
-        await Future.delayed(const Duration(milliseconds: 1000));
-        
-        // Tekrar dene
-        await _localNotificationService.initialize();
-      }
-      
-      if (isRetrying) {
-        print('Bildirim servisi ikinci denemede başlatıldı');
-      } else {
-        print('Bildirim servisi ilk denemede başlatıldı');
-      }
-    } catch (e) {
-      print('Bildirim servisini başlatma hatası: $e');
-      // Hatayı yukarıya ilet
-      rethrow;
-    }
-  }
-  
   // Bildirimleri getir
-  Future<bool> getNotifications({bool showAsLocalNotification = false}) async {
+  Future<bool> getNotifications() async {
     try {
       _state = NotificationViewState.loading;
       _errorMessage = '';
@@ -94,18 +58,31 @@ class NotificationViewModel extends ChangeNotifier {
         return false;
       }
       
+      print('API isteği yapılıyor: userToken=${userToken.substring(0, 10)}...');
+      
       final response = await _notificationService.getNotifications(userToken);
       
+      // API yanıtının detaylı analizi
+      print('API yanıtı alındı: success=${response.success}, error=${response.error}');
+      print('Gelen bildirimler: ${response.notifications?.length ?? 0} adet');
+      
       if (response.success) {
-        _notifications = response.notifications;
+        _notifications = response.notifications ?? [];
         _state = NotificationViewState.success;
-        notifyListeners();
         
-        // Eğer istenirse, bildirimleri gerçek bildirim olarak göster
-        if (showAsLocalNotification && _notifications != null && _notifications!.isNotEmpty) {
-          await _localNotificationService.showApiNotifications(_notifications!);
+        // Gelen bildirimlerin içeriğini kontrol et
+        if (_notifications!.isEmpty) {
+          print('Bildirim listesi boş geldi!');
+        } else {
+          print('Bildirimler başarıyla alındı: ${_notifications!.length} adet bildirim');
+          // İlk birkaç bildirimin içeriğini göster
+          final sampleSize = _notifications!.length > 3 ? 3 : _notifications!.length;
+          for (int i = 0; i < sampleSize; i++) {
+            print('Bildirim $i: ${_notifications![i].title} - ${_notifications![i].body.substring(0, _notifications![i].body.length > 30 ? 30 : _notifications![i].body.length)}...');
+          }
         }
         
+        notifyListeners();
         return true;
       } else {
         _errorMessage = 'Bildirimler alınamadı.';
@@ -145,36 +122,6 @@ class NotificationViewModel extends ChangeNotifier {
         // Varsayılan olarak bildirimler sayfasına yönlendir
         return '/notifications';
     
-    }
-  }
-  
-  // Test bildirimi göster
-  Future<void> showTestNotification() async {
-    try {
-      print('Test bildirimi gösterme başladı');
-      
-      if (!_localNotificationService.isInitialized) {
-        print('Bildirim servisi başlatılmamış, bildirimleri gösteremiyoruz');
-        // Bildirimleri tekrar başlatmayı dene
-        try {
-          print('Bildirim servisini başlatmayı deniyorum...');
-          await _localNotificationService.initialize();
-          print('Test öncesi bildirim servisi başarıyla başlatıldı');
-        } catch (initError) {
-          print('Bildirim servisi başlatılamadı: $initError');
-          
-          // Fallback - SnackBar ile uygulama içi bildirim göster
-          throw Exception('Bildirim servisi başlatılamadı: $initError. GERÇEK BİLDİRİM OLACAK YUKARDAN İNEN GERÇEK OLAN');
-        }
-      }
-      
-      // Bildirim göster
-      print('Bildirimi göstermeyi deniyorum...');
-      print('Bildirim başarıyla gösterildi');
-    } catch (e) {
-      print('Test bildirimi gönderilirken hata: $e');
-      // Hatayı yukarıya ilet ki kullanıcıya gösterilebilsin
-      rethrow;
     }
   }
   
@@ -279,13 +226,13 @@ class NotificationViewModel extends ChangeNotifier {
     
     // İlk kontrolü hemen yap
     Future.delayed(Duration.zero, () async {
-      await getNotifications(showAsLocalNotification: true);
+      await getNotifications();
     });
     
     // Periyodik kontroller için zamanlayıcı oluştur
     _notificationTimer = Timer.periodic(refreshInterval, (timer) async {
       print('Otomatik bildirim kontrolü yapılıyor...');
-      await getNotifications(showAsLocalNotification: true);
+      await getNotifications();
     });
   }
   

@@ -293,7 +293,7 @@ class _OfferDetailViewState extends State<OfferDetailView> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => CardScanView(
+                      builder: (context) => CardManualEntryView(
                         detailUrl: price.detailUrl,
                         offerId: int.parse(widget.offerId),
                         companyId: int.parse(price.companyID),
