@@ -72,7 +72,7 @@ class _DashboardViewState extends State<DashboardView> {
         backgroundColor: Theme.of(context).primaryColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(FontAwesomeIcons.comments),
+          icon: const Icon(FontAwesomeIcons.comments , color: Colors.white),
           onPressed: () {
             final viewModel = context.read<OfferViewModel>();
             try {
@@ -107,7 +107,7 @@ class _DashboardViewState extends State<DashboardView> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none, color: Colors.white),
+            icon: const Icon(FontAwesomeIcons.bell, color: Colors.white),
             onPressed: () {
               Navigator.push(
                 context,

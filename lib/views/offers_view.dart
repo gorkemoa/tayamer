@@ -73,7 +73,7 @@ class _OffersViewState extends State<OffersView> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications, color: Colors.white),
+            icon: const Icon(FontAwesomeIcons.bell, color: Colors.white),
             onPressed: () {
               Navigator.push(
                 context,
@@ -133,38 +133,51 @@ class _OffersViewState extends State<OffersView> {
                     ),
                     child: ListTile(
                       contentPadding: const EdgeInsets.all(16),
-                      leading: isGeneralChat
-                          ? CircleAvatar(
-                              backgroundColor: Colors.grey[300],
-                              child: const Icon(
-                                Icons.chat,
-                                color: Colors.grey,
-                              ),
-                            )
-                          : offer.chatUrl.isNotEmpty // Eğer chat URL varsa ikonu göster
-                            ? IconButton(
-                                icon: const Icon(Icons.chat),
-                                tooltip: 'Sohbeti Başlat',
-                                color: Theme.of(context).primaryColor,
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => WebViewScreen(
-                                        url: offer.chatUrl,
-                                        title: 'Sohbet - ${offer.plaka}',
-                                      ),
+                      leading: Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: Center(
+                            child: isGeneralChat 
+                              ? const Icon(
+                                    FontAwesomeIcons.comments,
+                                    color: Colors.black,
+                                    size: 22,
+                                  )
+                              : offer.chatUrl.isNotEmpty // Eğer chat URL varsa ikonu göster
+                                ? IconButton(
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    icon: Icon(
+                                      FontAwesomeIcons.comments,
+                                      color: Theme.of(context).primaryColor,
+                                      size: 22,
                                     ),
-                                  );
-                                },
-                              )
-                            : CircleAvatar( // Chat URL yoksa varsayılan araba ikonu
-                                backgroundColor: const Color(0xFF1E3A8A).withOpacity(0.8),
-                                child: const Icon(
-                                  Icons.directions_car,
-                                  color: Colors.white,
-                                ),
-                              ),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => WebViewScreen(
+                                            url: offer.chatUrl,
+                                            title: 'Sohbet - ${offer.plaka}',
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : CircleAvatar( // Chat URL yoksa varsayılan araba ikonu
+                                    backgroundColor: Theme.of(context).primaryColor.withOpacity(0.8),
+                                    radius: 18,
+                                    child: const Icon(
+                                      Icons.directions_car,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ),
                       title: Text(
                         isGeneralChat ? offer.tcNo : offer.plaka,
                         style: const TextStyle(
