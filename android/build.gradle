@@ -1,3 +1,34 @@
+// Ana build klasörü
+rootProject.buildDir = "../build"
+
+// Alt projeler için build klasörleri
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+
+// App projesini değerlendirmeye al
+subprojects {
+    project.evaluationDependsOn(":app")
+}
+
+// Clean task'i
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}
+
+// Buildscript bloğu
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.2.2'
+        classpath 'com.google.gms:google-services:4.4.2'
+    }
+}
+
+// Tüm projeler için repository tanımı
 allprojects {
     repositories {
         google()
@@ -5,21 +36,14 @@ allprojects {
     }
 }
 
-rootProject.buildDir = "../build"
+// 💡 Eksik namespace'ler için varsayılan olarak com.office701.tayamer ile başlayan bir yapı atanır
 subprojects {
-    project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
-subprojects {
-    project.evaluationDependsOn(":app")
-}
-
-tasks.register("clean", Delete) {
-    delete rootProject.buildDir
-}
-
-buildscript {
-    dependencies {
-        classpath 'com.google.gms:google-services:4.4.1'
+    project.plugins.withId("com.android.library") {
+        project.android {
+            if (!project.android.hasProperty("namespace")) {
+                namespace = "com.office701.tayamer.${project.name.replace('-', '_')}"
+            }
+        }
     }
-
 }
+

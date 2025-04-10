@@ -20,7 +20,7 @@ class ProfileDetailView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1F3567), // Ana AppBar rengiyle aynı
+        backgroundColor: Theme.of(context).primaryColor, // Ana AppBar rengiyle aynı
         title: const Text(
           'Profilim',
           style: TextStyle(color: Colors.white),

@@ -37,7 +37,7 @@
 	<key>NSCalendarsUsageDescription</key>
 	<string>Takvim izni gerekmemektedir</string>
 	<key>NSCameraUsageDescription</key>
-	<string>QR kod tarama işlemi için kamera izni gereklidir.</string>
+	<string>Bu uygulama QR kodları taramak için kameranıza erişmek istiyor</string>
 	<key>NSContactsUsageDescription</key>
 	<string>Kişiler izni gerekmemektedir</string>
 	<key>NSPhotoLibraryUsageDescription</key>
@@ -52,6 +52,10 @@
 	<string>Bildirimler aracılığıyla size önemli güncellemeler ve doğrulama kodları göndereceğiz.</string>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>Bildirimler aracılığıyla size önemli güncellemeler ve doğrulama kodları göndereceğiz.</string>
+	<key>NSFileProviderDomainUsageDescription</key>
+	<string>Uygulama QR kod işlemek için dosya erişimine ihtiyaç duyar</string>
+	<key>NSFileProviderPresenceUsageDescription</key>
+	<string>Uygulama QR kod işlemek için dosya erişimine ihtiyaç duyar</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>
@@ -78,5 +82,7 @@
 	</array>
 	<key>io.flutter.embedded_views_preview</key>
 	<true/>
+	<key>FLTEnableImpeller</key>
+	<false/>
 </dict>
 </plist>

@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
 import 'http_interceptor.dart';
 
 class ApiService {
@@ -122,5 +124,29 @@ class ApiService {
       headers: headers,
       body: body != null ? jsonEncode(body) : null,
     );
+  }
+  
+  // Platform bilgisini al (iOS veya Android)
+  String getPlatform() {
+    return Platform.isIOS ? 'ios' : 'android';
+  }
+  // TEKRARDAN BAKILACAK
+  // Uygulama sürüm bilgisini al
+  Future<Map<String, String>> getPackageInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Varsayılan sürüm bilgisi
+    String version = '2.3.4'; // Test için düşürüldü
+    // iOS kullanıcıları için güncel sürüm
+    if (Platform.isIOS) {
+      version = '2.3.4'; // Test için düşürüldü (2.3.7'den)
+    } 
+    // Android kullanıcıları için güncel sürüm
+    else if (Platform.isAndroid) {
+      version = '2.3.4'; // Test için düşürüldü (2.3.5'ten)
+    }
+    
+    return {
+      'version': version
+    };
   }
 } 

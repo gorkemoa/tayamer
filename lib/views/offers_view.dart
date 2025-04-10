@@ -4,7 +4,7 @@ import '../viewmodels/offer_viewmodel.dart';
 import 'offer_detail_view.dart';
 import 'webview_screen.dart';
 import 'notifications_view.dart';
-
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 class OffersView extends StatefulWidget {
   const OffersView({super.key});
 
@@ -27,7 +27,7 @@ class _OffersViewState extends State<OffersView> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E3A8A),
+        backgroundColor: Theme.of(context).primaryColor,
         title: const Text(
           'Teklifler',
           style: TextStyle(
@@ -37,7 +37,7 @@ class _OffersViewState extends State<OffersView> {
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+          icon: const Icon(FontAwesomeIcons.comments, color: Colors.white),
           onPressed: () {
             final viewModel = context.read<OfferViewModel>();
             // Genel sohbet teklifini (id: -1) bul

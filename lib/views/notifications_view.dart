@@ -44,7 +44,7 @@ class _NotificationsViewState extends State<NotificationsView> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Bildirimler'),
-        backgroundColor: const Color(0xFF1E3A8A),
+        backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
         actions: [
           // Bildirimleri yenile butonu

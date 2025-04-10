@@ -40,139 +40,181 @@ class _NewOfferViewState extends State<NewOfferView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
       bottomNavigationBar: BottomAppBar(
         elevation: 8,
         color: Colors.white,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: ElevatedButton(
-            onPressed: () => _showPolicyTypeBottomSheet(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1C3879),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text(
-              'Yeni Teklif Oluştur',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ),
+        child: Container(),
       ),
     );
   }
   
   void _showPolicyTypeBottomSheet(BuildContext context) {
-    if (_isBottomSheetActive) return;
+    // Poliçe zaten seçilmişse veya bottom sheet aktifse, tekrar gösterme
+    if (_isBottomSheetActive || _isPolicySelected) return;
     
     _isBottomSheetActive = true;
-    _isPolicySelected = false; // Bottom sheet açılırken bayrağı sıfırla
     
-    showModalBottomSheet(
-      context: context,
-      isDismissible: true,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.85,
-        maxChildSize: 0.9,
-        minChildSize: 0.5,
-        expand: false,
-        snap: true,
-        snapSizes: const [0.5, 0.85, 0.9],
-        builder: (context, scrollController) {
-          return Column(
-            children: [
-              AppBar(
-                centerTitle: true,
-                backgroundColor: const Color(0xFF1C3879),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                title: const Text('Poliçe Tipi Seç'),
-                leading: IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () {
-                    // Bottom sheet'i kapat ve ana sayfaya dön
-                    Navigator.pop(context);
-                    _navigateToHomeIndex(0); // Ana sayfa (Dashboard) indeksi
-                  },
-                ),
-              ),
-              Expanded(
-                child: Consumer<PolicyTypeViewModel>(
-                  builder: (context, viewModel, child) {
-                    if (viewModel.state == PolicyTypeViewState.loading) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (viewModel.state == PolicyTypeViewState.error) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Hata: ${viewModel.errorMessage}',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.red),
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: () => viewModel.loadPolicyTypes(),
-                              child: const Text('Tekrar Dene'),
-                            ),
-                          ],
-                        ),
-                      );
-                    } else if (viewModel.activePolicyTypes.isEmpty) {
-                      return const Center(
-                        child: Text('Aktif poliçe tipi bulunamadı'),
-                      );
-                    }
-
-                    // Aktif poliçe tiplerini göster
-                    return GridView.builder(
-                      controller: scrollController,
-                      physics: const AlwaysScrollableScrollPhysics(
-                        parent: BouncingScrollPhysics(),
-                      ),
-                      padding: const EdgeInsets.all(16),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 1.0,
-                      ),
-                      itemCount: viewModel.activePolicyTypes.length,
-                      itemBuilder: (context, index) {
-                        final policyType = viewModel.activePolicyTypes[index];
-                        return _buildPolicyTypeItem(
-                          context,
-                          policyType: policyType,
-                          onTap: () => _onPolicySelected(context, policyType),
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    ).then((_) {
-      _isBottomSheetActive = false;
-      // Bottom sheet kapatıldığında ana sayfaya dön, ancak
-      // sadece poliçe seçilmemişse (kullanıcı manuel kapatırsa)
-      if (mounted && !_isPolicySelected) {
-        _navigateToHomeIndex(0); // Ana sayfa (Dashboard) indeksi
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (!mounted) {
+        _isBottomSheetActive = false;
+        return;
       }
+      
+      showModalBottomSheet(
+        context: context,
+        isDismissible: true,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (context) => WillPopScope(
+          onWillPop: () async {
+            // Bottom sheet kapatılmadan önce _isPolicySelected durumunu kontrol et
+            if (!_isPolicySelected) {
+              Future.microtask(() => _navigateToHomeIndex(0));
+            }
+            return true;
+          },
+          child: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setModalState) {
+              return DraggableScrollableSheet(
+                initialChildSize: 0.85,
+                maxChildSize: 0.9,
+                minChildSize: 0.5,
+                expand: true,
+                snap: true,
+                snapSizes: const [0.5, 0.85, 0.9],
+                builder: (context, scrollController) {
+                  return Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                    ),
+                    child: Column(
+                      children: [
+                        AppBar(
+                          centerTitle: true,
+                          backgroundColor: const Color(0xFF1C3879),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          title: const Text('Poliçe Tipi Seç'),
+                          leading: IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () {
+                              // Bottom sheet'i kapat
+                              Navigator.pop(context);
+                              
+                              // X'e basıldığında ana sayfaya dön
+                              if (mounted && !_isPolicySelected) {
+                                Future.microtask(() => _navigateToHomeIndex(0));
+                              }
+                            },
+                          ),
+                        ),
+                        Expanded(
+                          child: Consumer<PolicyTypeViewModel>(
+                            builder: (context, viewModel, child) {
+                              if (viewModel.state == PolicyTypeViewState.loading) {
+                                return const Center(child: CircularProgressIndicator());
+                              } else if (viewModel.state == PolicyTypeViewState.error) {
+                                return Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'Hata: ${viewModel.errorMessage}',
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(color: Colors.red),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      ElevatedButton(
+                                        onPressed: () => viewModel.loadPolicyTypes(),
+                                        child: const Text('Tekrar Dene'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              } else if (viewModel.activePolicyTypes.isEmpty) {
+                                return const Center(
+                                  child: Text('Aktif poliçe tipi bulunamadı'),
+                                );
+                              }
+
+                              // Aktif poliçe tiplerini göster
+                              return GridView.builder(
+                                controller: scrollController,
+                                physics: const AlwaysScrollableScrollPhysics(
+                                  parent: BouncingScrollPhysics(),
+                                ),
+                                padding: const EdgeInsets.all(16),
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                  childAspectRatio: 1.0,
+                                ),
+                                itemCount: viewModel.activePolicyTypes.length,
+                                itemBuilder: (context, index) {
+                                  final policyType = viewModel.activePolicyTypes[index];
+                                  return _buildPolicyTypeItem(
+                                    context,
+                                    policyType: policyType,
+                                    onTap: () { 
+                                      // Poliçenin seçildiğini setModalState içinde belirt
+                                      setModalState(() {
+                                        _isPolicySelected = true;
+                                      });
+                                      
+                                      // Ana state'te de güncelle
+                                      if (mounted) {
+                                        setState(() {
+                                          _isPolicySelected = true;
+                                        });
+                                      }
+                                      
+                                      // Seçilen poliçe tipini ViewModel'e kaydet
+                                      viewModel.selectPolicyType(policyType);
+                                      
+                                      // Önce bottom sheet'i kapat
+                                      Navigator.pop(context);
+                                      
+                                      // QR özelliği varsa tarama başlat, yoksa doğrudan manuel giriş formuna git
+                                      Future.microtask(() {
+                                        if (!mounted) return;
+                                        
+                                        if (policyType.qrCode != null) {
+                                          // QR tarama işlemini başlat
+                                          _startQRScan(context, policyType);
+                                        } else {
+                                          // Doğrudan manuel form sayfasına yönlendir
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(builder: (context) => ManualEntryView(policyType: policyType)),
+                                          );
+                                        }
+                                      });
+                                    },
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ).then((_) {
+        // Kapanış handler'ını çağır
+        _handleBottomSheetClosed();
+      });
     });
   }
 
@@ -180,13 +222,35 @@ class _NewOfferViewState extends State<NewOfferView> {
     if (!mounted) return;
     
     // Ana sayfaya geri dön ve belirli bir indekse git
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (context) => HomeView(), 
-        settings: RouteSettings(arguments: index)
-      ),
-      (route) => false, // Tüm route'ları temizle
-    );
+    try {
+      // Future.microtask ile UI thread'inin tamamlanmasını bekleyerek navigasyon yap
+      Future.microtask(() {
+        if (mounted) {
+          // Navigasyon hatasını önlemek için pushReplacement yerine pushAndRemoveUntil kullanıyoruz
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(
+              builder: (context) => HomeView(initialIndex: index),
+              settings: RouteSettings(arguments: index)
+            ),
+            (route) => false, // Tüm route'ları temizle
+          );
+        }
+      });
+    } catch (e) {
+      print('DEBUG: Ana sayfaya dönüş hatası: $e');
+      // Navigasyon hatası durumunda son çare olarak yeni navigator oluştur
+      try {
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => HomeView(initialIndex: 0)),
+            (route) => false,
+          );
+        }
+      } catch (e2) {
+        print('DEBUG: Kritik navigasyon hatası: $e2');
+      }
+    }
   }
 
   Widget _buildPolicyTypeItem(
@@ -248,312 +312,135 @@ class _NewOfferViewState extends State<NewOfferView> {
     );
   }
 
-  void _onPolicySelected(BuildContext context, PolicyType policyType) {
-    // Poliçenin seçildiğini belirt
-    setState(() {
-      _isPolicySelected = true;
-    });
-    
-    // Seçilen poliçe tipini ViewModel'e kaydet
-    final viewModel = Provider.of<PolicyTypeViewModel>(context, listen: false);
-    viewModel.selectPolicyType(policyType);
-    
-    // Önce bottom sheet'i kapat
-    Navigator.pop(context);
-    
-    // QR özelliği varsa tarama başlat, yoksa doğrudan manuel giriş formuna git
-    if (policyType.qrCode != null) {
-      // QR tarama işlemini başlat
-      _startQRScan(context, policyType);
-    } else {
-      // Doğrudan manuel form sayfasına yönlendir
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => ManualEntryView(policyType: policyType)),
-      );
-    }
-  }
-  
   void _startQRScan(BuildContext context, PolicyType policyType) async {
     // Önce context'in hala geçerli olup olmadığını kontrol et
     if (!mounted) return;
     
-    // ScaffoldMessenger'a erişim için BuildContext'i saklayalım
+    // Global context'i kullanarak SnackBar göstermek için - daha sonra kullanmak üzere sakla
     final scaffoldMessenger = ScaffoldMessenger.of(context);
-    final navigator = Navigator.of(context);
     
-    // Yardım mesajını göstermeden doğrudan QR tarayıcı görünümünü başlat
     try {
-      final result = await navigator.push(
+      print('DEBUG: QR tarama başlatılıyor...');
+      // QR tarayıcıyı başlat
+      final result = await Navigator.push(
+        context,
         MaterialPageRoute(
           builder: (context) => QRScannerView(
             onManualEntry: () {
               // Manuel giriş formuna yönlendir
-              if (!mounted) return; // Eğer widget artık aktif değilse, işlemi durdur
+              Navigator.pop(context); // Önce tarayıcıyı kapat
+            },
+            onResult: (data) {
+              // QR sonucunu al
+              print('DEBUG: QR sonucu alındı: $data');
               
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ManualEntryView(policyType: policyType)),
-              );
+              // Form sayfasına geçiş yap - Navigator.pop ile veriyi döndür
+              Navigator.pop(context, data);
             },
           ),
         ),
       );
       
-      // Mounted kontrolü - eğer widget artık aktif değilse, işlemi durdur
+      // QR tarayıcıdan geri dönüldü, hala bağlı mı kontrol et
       if (!mounted) return;
       
-      if (result != null) {
-        // QR kod başarıyla tarandı, sonucu işle
-        _processQRResult(context, policyType, result);
-      } else {
-        // Kullanıcı taramadan vazgeçti - mounted kontrolü yapılmış durumda
-        if (mounted) {
-          scaffoldMessenger.showSnackBar(
-            const SnackBar(content: Text('QR tarama iptal edildi')),
-          );
-          // QR tarama iptal edildiğinde ana sayfaya dön
-          _navigateToHomeIndex(0); 
-        }
-      }
-    } catch (e) {
-      // Hata durumunda - mounted kontrolü
-      if (!mounted) return;
+      print('DEBUG: QR tarayıcıdan geri dönüldü, sonuç: ${result != null ? "Veri alındı" : "Veri yok"}');
       
-      print('QR tarama hatası: $e');
-      
-      // Bu noktada widget dispose edilmiş olabilir, tekrar kontrol et
-      if (mounted) {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text('QR tarama sırasında hata oluştu: $e')),
-        );
-        // Hata durumunda ana sayfaya dön
-        _navigateToHomeIndex(0);
-      }
-    }
-  }
-  
-  void _processQRResult(BuildContext context, PolicyType policyType, dynamic qrResult) {
-    // Önce widget'ın hala aktif olup olmadığını kontrol et
-    if (!mounted) return;
-    
-    // ScaffoldMessenger'a erişim için BuildContext'i saklayalım
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-    final navigator = Navigator.of(context);
-    
-    try {
-      // Boş sonuç kontrolü
-      if (qrResult == null) {
-        print("QR sonucu boş");
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Text('QR kod okunamadı.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+      // Manuel giriş seçildi veya iptal edildi
+      if (result == null) {
+        // Context kontrolü 
+        if (!mounted) return;
         
-        // Manuel giriş formunu aç
-        navigator.push(
-          MaterialPageRoute(builder: (context) => ManualEntryView(policyType: policyType)),
-        );
-        return;
-      }
-      
-      // QR sonuç tipini kontrol et (String veya Map)
-      Map<String, String> formData = {};
-      
-      if (qrResult is Map<String, dynamic>) {
-        // JSON veri direkt kullanıma hazır
-        print('QR veri map olarak alındı: $qrResult');
-        
-        // Plaka bilgisini al
-        if (qrResult.containsKey('plaka')) {
-          formData['plaka'] = qrResult['plaka'].toString();
-          print('Plaka bilgisi alındı: ${formData['plaka']}');
-        }
-        
-        // TC kimlik numarasını al
-        if (qrResult.containsKey('tc')) {
-          formData['tc'] = qrResult['tc'].toString();
-          print('TC bilgisi alındı: ${formData['tc']}');
-        }
-        
-        // Ruhsat numarasını al
-        if (qrResult.containsKey('ruhsatNo')) {
-          formData['ruhsatNo'] = qrResult['ruhsatNo'].toString();
-          print('Ruhsat no bilgisi alındı: ${formData['ruhsatNo']}');
-        }
-        
-        // Ham veri içeriyorsa (JSON dönüşümü yapılamayan QR kodlar için)
-        if (qrResult.containsKey('rawData')) {
-          String rawData = qrResult['rawData'].toString();
-          formData['rawData'] = rawData;
-          
-          // Ham veriyi analiz et - anahtar=değer formatında olabilir
-          if (rawData.contains('=') && rawData.contains('&')) {
-            List<String> pairs = rawData.split('&');
-            for (String pair in pairs) {
-              List<String> keyValue = pair.split('=');
-              if (keyValue.length == 2) {
-                String key = keyValue[0].trim().toLowerCase();
-                String value = keyValue[1].trim();
-                
-                // Anahtar değere göre doğru alana atama yap
-                if (key.contains('plaka')) {
-                  formData['plaka'] = value;
-                } else if (key.contains('tc')) {
-                  formData['tc'] = value;
-                } else if (key.contains('ruhsat')) {
-                  formData['ruhsatNo'] = value;
-                }
-              }
-            }
-          }
-          
-          // Mounted kontrolü
-          if (!mounted) return;
-          
-          // Ham QR kodu içeriğini göster
-          scaffoldMessenger.showSnackBar(
-            SnackBar(
-              content: Text('QR İçeriği: $rawData'),
-              backgroundColor: Colors.blue,
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        }
-        
-        // Galeri modu kontrolü
-        bool isGalleryMode = qrResult.containsKey('galleryMode') && qrResult['galleryMode'] == true;
-        
-        // Diğer değerleri de ekle
-        qrResult.forEach((key, value) {
-          if (key != 'galleryMode' && key != 'rawData') {
-            formData[key] = value.toString();
+        print('DEBUG: Manuel giriş sayfasına yönlendiriliyor');
+        // Doğrudan manuel form sayfasına yönlendir
+        Future.microtask(() {
+          if (mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ManualEntryView(policyType: policyType)),
+            );
           }
         });
-        
-        // QR kod sonuçlarını konsola yazdır
-        print('QR verisi form verilerine dönüştürüldü: $formData');
-        
-        // Mounted kontrolü
+      } 
+      // QR sonucu ile döndü
+      else if (result is Map<String, String>) {
+        // Context kontrolü
         if (!mounted) return;
         
-        // Galeri modunda veya başarılı QR tarama mesajı göster
-        if (isGalleryMode) {
-          scaffoldMessenger.showSnackBar(
-            const SnackBar(
-              content: Text('Manuel giriş formuna yönlendiriliyorsunuz.'),
-              backgroundColor: Colors.blue,
-            ),
-          );
-        } else {
-          // Başarı mesajı göster
-          scaffoldMessenger.showSnackBar(
-            const SnackBar(
-              content: Text('QR kod başarıyla işlendi.'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } else if (qrResult is String) {
-        // Eski yöntem - metin tabanlı QR sonucu
-        print('QR veri string olarak alındı: $qrResult');
-        
-        String rawData = qrResult;
-        formData['rawData'] = rawData;
-        
-        // Metin verisini analiz et - anahtar=değer formatında olabilir
-        if (rawData.contains('=') && rawData.contains('&')) {
-          List<String> pairs = rawData.split('&');
-          for (String pair in pairs) {
-            List<String> keyValue = pair.split('=');
-            if (keyValue.length == 2) {
-              String key = keyValue[0].trim().toLowerCase();
-              String value = keyValue[1].trim();
-              
-              // Anahtar değere göre doğru alana atama yap
-              if (key.contains('plaka')) {
-                formData['plaka'] = value;
-              } else if (key.contains('tc')) {
-                formData['tc'] = value;
-              } else if (key.contains('ruhsat')) {
-                formData['ruhsatNo'] = value;
-              }
-            }
+        print('DEBUG: QR sonucu ile form sayfasına yönlendiriliyor: $result');
+        // Future.microtask kullanarak UI thread'inin tamamlanmasını bekleyerek navigasyon yap
+        Future.microtask(() {
+          if (mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ManualEntryView(
+                  policyType: policyType,
+                  initialData: result,
+                ),
+              ),
+            );
           }
-        }
-        
-        // Mounted kontrolü
+        });
+      }
+    } catch (e) {
+      print('QR tarama hatası: $e');
+      
+      if (!mounted) return;
+      
+      // Hata mesajını göster
+      try {
+        // SnackBar göstermeden önce kontrol
         if (!mounted) return;
-        
-        // Ham QR kodu içeriğini göster
         scaffoldMessenger.showSnackBar(
           SnackBar(
-            content: Text('QR İçeriği: $rawData'),
-            backgroundColor: Colors.blue,
+            content: Text('QR tarama sırasında bir hata oluştu: ${e.toString().substring(0, e.toString().length > 100 ? 100 : e.toString().length)}...'),
+            backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
         );
-      } else {
-        // Bilinmeyen tür
-        print("QR sonuç tipi bilinmiyor: ${qrResult.runtimeType}");
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Text('QR kod formatı tanınamadı.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        
-        // Manuel giriş formunu aç
-        navigator.push(
-          MaterialPageRoute(builder: (context) => ManualEntryView(policyType: policyType)),
-        );
-        return;
+      } catch (snackbarError) {
+        print('DEBUG: SnackBar gösterme hatası: $snackbarError');
       }
       
-      // Son kontroller
-      if (formData.isEmpty) {
-        if (!mounted) return;
-        
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Text('QR kodda kullanılabilir veri bulunamadı.'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
+      print('DEBUG: Hata sonrası manuel girişe yönlendiriliyor');
       
-      // Mounted kontrolü
-      if (!mounted) return;
-      
-      // Form sayfasına yönlendir
-      navigator.push(
-        MaterialPageRoute(
-          builder: (context) => ManualEntryView(
-            policyType: policyType,
-            initialData: formData,
-          ),
-        ),
-      );
-    } catch (e) {
-      print("QR işleme hatası: $e");
-      
-      // Mounted kontrolü
-      if (!mounted) return;
-      
-      // Hata durumunda
-      scaffoldMessenger.showSnackBar(
-        SnackBar(
-          content: Text('QR kod işlenirken hata oluştu: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      
-      // Hata durumunda manuel giriş formunu aç
-      navigator.push(
-        MaterialPageRoute(builder: (context) => ManualEntryView(policyType: policyType)),
-      );
+      // Hata durumunda manuel girişe yönlendirme - Future.microtask ile güvenli navigasyon
+      Future.microtask(() {
+        if (mounted) {
+          try {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ManualEntryView(
+                  policyType: policyType,
+                ),
+              ),
+            );
+          } catch (navigationError) {
+            print('DEBUG: Navigation hatası: $navigationError');
+            // Eğer navigasyon hatası varsa, ana sayfaya dön
+            if (mounted) {
+              _navigateToHomeIndex(0);
+            }
+          }
+        }
+      });
+    }
+  }
+
+  // Bottom sheet kapatıldığında olay
+  void _handleBottomSheetClosed() {
+    _isBottomSheetActive = false;
+    // Bottom sheet kapatıldığında ana sayfaya dön, ancak
+    // sadece poliçe seçilmemişse (kullanıcı manuel kapatırsa)
+    if (mounted && !_isPolicySelected) {
+      // Bir mikrosaniye gecikme ile çağır (Navigator işlemleri için)
+      Future.microtask(() {
+        if (mounted) {
+          _navigateToHomeIndex(0); // Ana sayfa (Dashboard) indeksi
+        }
+      });
     }
   }
 }
@@ -679,7 +566,7 @@ class _ManualEntryViewState extends State<ManualEntryView> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        backgroundColor: const Color(0xFF1C3879),
+        backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
         title: Column(
           mainAxisSize: MainAxisSize.min,
@@ -997,7 +884,7 @@ class _ManualEntryViewState extends State<ManualEntryView> {
               }
               return null;
             },
-            // Seçenek yoksa veya tek seçenek varsa görünümü ayarla
+            // Seçenek yoksa veya tek seçenek varsa görüntülemeyi ayarla
             disabledHint: options.isEmpty 
                 ? const Text('Seçenek bulunamadı') 
                 : null,
@@ -1199,6 +1086,7 @@ class _ManualEntryViewState extends State<ManualEntryView> {
                 // Türkçe görüntüleme formatı (GG.AA.YYYY)
                 final turkishFormattedDate = '${pickedDate!.day.toString().padLeft(2, '0')}.${pickedDate!.month.toString().padLeft(2, '0')}.${pickedDate!.year}';
                 
+                // Widget hala ağaçta olduğundan eminiz, çünkü yukarıda kontrol ettik
                 setState(() {
                   // API'ye gönderilecek değer olarak controller'a atama yapıyoruz
                   _controllers[field.key]!.text = apiFormattedDate;

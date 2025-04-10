@@ -21,6 +21,7 @@ import 'viewmodels/notification_viewmodel.dart';
 import 'viewmodels/policy_viewmodel.dart';
 import 'dart:async';
 import 'dart:convert';
+import 'services/update_notifier.dart';
 
 // Arka planda bildirim işleme - Uygulama tamamen kapalıyken
 @pragma('vm:entry-point')
@@ -55,6 +56,9 @@ void main() async {
   
   // Navigasyon için global key oluştur
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  
+  // UpdateNotifier için navigatorKey ayarla
+  UpdateNotifier.navigatorKey = navigatorKey;
   
   // Bildirim servislerini oluştur
   final notificationService = NotificationService();
@@ -175,14 +179,10 @@ class _TayamerAppState extends State<TayamerApp> {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF1E3A73), // Ana renk: koyu mavi
+          primary: const Color(0xFF1E3A73),
           secondary: const Color(0xFFE0622C),   // İkincil renk: turuncu
         ),
         useMaterial3: true,
-        appBarTheme: AppBarTheme(
-          backgroundColor: const Color(0xFF1E3A73),
-          foregroundColor: Colors.white,
-          elevation: 0,
-        ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             foregroundColor: Colors.white,

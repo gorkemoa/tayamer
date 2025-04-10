@@ -136,7 +136,7 @@ class _SmsConfirmationViewState extends State<SmsConfirmationView> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('SMS Onayı'),
-        backgroundColor: const Color(0xFF1E3A8A),
+        backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
       ),
       body: Consumer<NotificationViewModel>(

@@ -29,7 +29,7 @@ class _OfferDetailViewState extends State<OfferDetailView> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E3A8A),
+        backgroundColor: Theme.of(context).primaryColor,
         title: const Text(
           'Teklif Detayı',
           style: TextStyle(

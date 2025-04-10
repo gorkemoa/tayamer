@@ -6,6 +6,8 @@ import '../models/policy_model.dart';
 import 'notifications_view.dart';
 import 'policy_detail_view.dart';
 import 'webview_screen.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class PoliciesView extends StatefulWidget {
   const PoliciesView({super.key});
@@ -32,9 +34,9 @@ class _PoliciesViewState extends State<PoliciesView> {
       builder: (context, viewModel, child) {
         _viewModel = viewModel;
         return Scaffold(
-          backgroundColor: const Color(0xFF1D3A70),
+          backgroundColor: Theme.of(context).primaryColor,
           appBar: AppBar(
-            backgroundColor: const Color(0xFF1D3A70),
+            backgroundColor: Theme.of(context).primaryColor,
             elevation: 0,
             title: const Text(
               'Poliçeler',
@@ -45,7 +47,7 @@ class _PoliciesViewState extends State<PoliciesView> {
               ),
             ),
             leading:  IconButton(
-          icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+          icon: const Icon(FontAwesomeIcons.comments, color: Colors.white),
           onPressed: () {
             final viewModel = context.read<OfferViewModel>();
             // Genel sohbet teklifini (id: -1) bul

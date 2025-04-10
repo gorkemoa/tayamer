@@ -82,7 +82,7 @@ class _LoginViewState extends State<LoginView> {
     return Image.asset(
       'assets/images/tayamer-logo.png',
       width: 280,
-      height: 180,
+      height: 150,
       color: Colors.white,
     );
   }
@@ -232,7 +232,7 @@ class _LoginViewState extends State<LoginView> {
                             child: ElevatedButton(
                               onPressed: _isLoading ? null : _login,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF7C8BA1), // Gri-mavi buton rengi
+                                backgroundColor: const Color.fromARGB(255, 43, 117, 228), // Gri-mavi buton rengi
                                 foregroundColor: Colors.white,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(

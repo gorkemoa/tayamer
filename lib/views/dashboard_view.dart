@@ -5,6 +5,7 @@ import 'package:tayamer/views/webview_screen.dart';
 import '../models/user_model.dart';
 import '../services/user_service.dart';
 import '../viewmodels/offer_viewmodel.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
@@ -17,7 +18,6 @@ class _DashboardViewState extends State<DashboardView> {
   final UserService _userService = UserService();
   User? _user;
   bool _isLoading = true;
-  int _selectedIndex = 0; // Alt menü için seçili indeks
 
   @override
   void initState() {
@@ -44,18 +44,16 @@ class _DashboardViewState extends State<DashboardView> {
     }
   }
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    // Burada farklı sayfalara yönlendirme yapılabilir
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
+      return const Scaffold(
+        backgroundColor: Color(0xFF1E3A8A),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Colors.white,
+          ),
+        ),
       );
     }
 
@@ -69,149 +67,166 @@ class _DashboardViewState extends State<DashboardView> {
     final totalAmount = _formatAmount(statistics?.totalAmount ?? '9000.00');
 
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(250),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(20),
-              bottomRight: Radius.circular(20),
-            ),
-            color: const Color(0xFF1E3A73),
-          ),
-          child: AppBar(
-            leading: IconButton(
-              icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
-              onPressed: () {
-                final viewModel = context.read<OfferViewModel>();
-                try {
-                  final generalChatOffer = viewModel.offers.firstWhere(
-                    (offer) => offer.id.toString() == '-1',
-                  );
+      backgroundColor: Theme.of(context).primaryColor,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).primaryColor,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(FontAwesomeIcons.comments),
+          onPressed: () {
+            final viewModel = context.read<OfferViewModel>();
+            try {
+              final generalChatOffer = viewModel.offers.firstWhere(
+                (offer) => offer.id.toString() == '-1',
+              );
 
-                  if (generalChatOffer.chatUrl.isNotEmpty) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => WebViewScreen(
-                          url: generalChatOffer.chatUrl,
-                          title: 'Genel Sohbet',
-                        ),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Genel sohbet bağlantısı bulunamadı.')),
-                    );
-                  }
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Genel sohbet şu anda mevcut değil.')),
-                  );
-                  debugPrint("Genel sohbet offer bulunamadı: $e");
-                }
-              },
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.notifications_none, color: Colors.white),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const NotificationsView(),
+              if (generalChatOffer.chatUrl.isNotEmpty) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => WebViewScreen(
+                      url: generalChatOffer.chatUrl,
+                      title: 'Genel Sohbet',
                     ),
-                  );
-                },
-              ),
-            ],
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            toolbarHeight: 250,
-            title: Column(
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Genel sohbet bağlantısı bulunamadı.')),
+                );
+              }
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Genel sohbet şu anda mevcut değil.')),
+              );
+              debugPrint("Genel sohbet offer bulunamadı: $e");
+            }
+          },
+        ),
+        title: Image.network('https://tayamer.com/img/amblem.png', height: 40, color: Colors.white),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_none, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationsView(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Profil bölümü
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.only(bottom: 30),
+            child: Column(
               children: [
-                Image.network('https://tayamer.com/img/amblem.png', height: 50),
-                const SizedBox(height: 10),
                 Container(
-                  width: 90,
-                  height: 90,
-                  decoration: BoxDecoration(
+                  width: 120,
+                  height: 120,
+                  margin: const EdgeInsets.symmetric(vertical: 15),
+                  decoration: const BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.white,
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(45),
+                    borderRadius: BorderRadius.circular(60),
                     child: _user?.profilePhoto != null && _user!.profilePhoto.isNotEmpty
                       ? Image.network(
                           _user!.profilePhoto,
-                          width: 90,
-                          height: 90,
+                          width: 120,
+                          height: 120,
                           fit: BoxFit.cover,
                         )
-                      : const Icon(Icons.person, size: 60, color: Colors.grey),
+                      : const Icon(Icons.person, size: 80, color: Colors.grey),
                   ),
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  _user?.userFullname ?? 'EXAMPLE NAME',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    _user?.userFullname ?? 'Görkem ÖZTÜRK',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const SizedBox(height: 5),
-                Text(
-                  _user?.userEmail ?? 'EXAMPLE EMAIL',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    _user?.userEmail ?? 'gorkem.ozturk@office701.com',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(height: 15),
+                const SizedBox(height: 20),
               ],
             ),
-            centerTitle: true,
           ),
-        ),
-      ),
-      body: Container(
-        color: Colors.grey[100],
-        padding: const EdgeInsets.all(15),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // İstatistik kartları
-            Row(
-              children: [
-                // Toplam Teklif
-                Expanded(
-                  child: _buildInfoCard('Toplam Teklif', totalOffer),
+          
+          // İstatistik kartları
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                color: Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
                 ),
-                const SizedBox(width: 15),
-                // Toplam Poliçe
-                Expanded(
-                  child: _buildInfoCard('Toplam Poliçe', totalPolicy),
-                ),
-              ],
+              ),
+              padding: const EdgeInsets.all(15),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // İstatistik kartları
+                  Row(
+                    children: [
+                      // Toplam Teklif
+                      Expanded(
+                        child: _buildInfoCard('Toplam Teklif', totalOffer),
+                      ),
+                      const SizedBox(width: 15),
+                      // Toplam Poliçe
+                      Expanded(
+                        child: _buildInfoCard('Toplam Poliçe', totalPolicy),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 15),
+                  // Alt satır kartları
+                  Row(
+                    children: [
+                      // Aylık Tayamer Puanı
+                      Expanded(
+                        child: _buildInfoCard('Aylık Tayamer Puanı', monthlyAmount),
+                      ),
+                      const SizedBox(width: 15),
+                      // Toplam Tayamer Puanı
+                      Expanded(
+                        child: _buildInfoCard('Toplam Tayamer Puanı', totalAmount),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 15),
-            // Alt satır kartları
-            Row(
-              children: [
-                // Aylık Tayamer Puanı
-                Expanded(
-                  child: _buildInfoCard('Aylık Tayamer Puanı', monthlyAmount),
-                ),
-                const SizedBox(width: 15),
-                // Toplam Tayamer Puanı
-                Expanded(
-                  child: _buildInfoCard('Toplam Tayamer Puanı', totalAmount),
-                ),
-              ],
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

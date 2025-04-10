@@ -42,7 +42,7 @@ class _PolicyDetailViewState extends State<PolicyDetailView> {
         return Scaffold(
           backgroundColor: Colors.grey[100],
           appBar: AppBar(
-            backgroundColor: const Color(0xFF1D3A70),
+            backgroundColor: Theme.of(context).primaryColor,
             elevation: 0,
             title: const Text(
               'Poliçe Detayı',

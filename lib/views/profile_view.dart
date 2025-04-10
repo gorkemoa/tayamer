@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/user_model.dart';
 import '../services/user_service.dart';
@@ -86,14 +87,14 @@ class _ProfileViewState extends State<ProfileView> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1F3567),
+        backgroundColor: Theme.of(context).primaryColor,
         title: const Text(
           'Hesabım',
           style: TextStyle(color: Colors.white),
         ),
         centerTitle: true,
         leading:  IconButton(
-          icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+          icon: const Icon(FontAwesomeIcons.comments, color: Colors.white),
           onPressed: () {
             final viewModel = context.read<OfferViewModel>();
             // Genel sohbet teklifini (id: -1) bul
@@ -277,7 +278,7 @@ class _ProfileViewState extends State<ProfileView> {
             const SizedBox(height: 16),
             const Center(
               child: Text(
-                'v2.3.7',
+                'v2.3.4',
                 style: TextStyle(
                   color: Colors.grey,
                   fontSize: 14,

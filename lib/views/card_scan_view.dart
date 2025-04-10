@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import '../viewmodels/offer_viewmodel.dart';
 import '../viewmodels/payment_viewmodel.dart';
 import 'package:flutter/services.dart';
-import 'package:card_scanner/card_scanner.dart';
+import 'package:ml_card_scanner/ml_card_scanner.dart';
+import 'package:ml_card_scanner/ml_card_scanner.dart';
 
 // CardScanView ve _CardScanViewState sınıfları kaldırıldı.
 
@@ -66,7 +67,7 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
     super.dispose();
   }
 
-  // Kart tarama fonksiyonu eklendi
+  // Kart tarama fonksiyonu güncellendi
   Future<void> _scanCard() async {
     if (_isScanning) return;
 
@@ -75,29 +76,42 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
     });
 
     try {
-      final CardDetails? result = await CardScanner.scanCard();
+      final controller = ScannerWidgetController();
+      
+      final result = await showDialog(
+        context: context,
+        builder: (context) => Dialog(
+          child: ScannerWidget(
+            controller: controller,
+            oneShotScanning: true,
+            overlayOrientation: CardOrientation.portrait,
+          ),
+        ),
+      );
 
       if (result != null && mounted) {
         // Kart bilgilerini forma aktar
         setState(() {
-          _cardNumberController.text = result.cardNumber;
+          _cardNumberController.text = result.cardNumber ?? '';
           _cardHolderController.text = result.cardHolderName ?? '';
-          _expiryDateController.text = result.expiryDate;
+          if (result.expiryDate != null) {
+            _expiryDateController.text = result.expiryDate!;
+          }
           // CVV genellikle taranamadığı için temizlenir veya kullanıcıya sorulur.
           _cvvController.clear(); 
         });
+        
         // Formatlayıcıları tetiklemek için manuel olarak metni yeniden ayarlayabiliriz
-        // veya kullanıcı zaten alana odaklandığında formatlamanın çalışmasını bekleyebiliriz.
-        // Örneğin:
         _cardNumberController.text = CardNumberInputFormatter().formatEditUpdate(
           TextEditingValue.empty,
           TextEditingValue(text: _cardNumberController.text),
         ).text;
-         _expiryDateController.text = CardExpiryInputFormatter().formatEditUpdate(
-          TextEditingValue.empty,
-          TextEditingValue(text: _expiryDateController.text),
-        ).text;
-
+        if (_expiryDateController.text.isNotEmpty) {
+          _expiryDateController.text = CardExpiryInputFormatter().formatEditUpdate(
+            TextEditingValue.empty,
+            TextEditingValue(text: _expiryDateController.text),
+          ).text;
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -109,11 +123,11 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
         );
       }
     } finally {
-       if (mounted) {
-          setState(() {
-            _isScanning = false;
-          });
-       }
+      if (mounted) {
+        setState(() {
+          _isScanning = false;
+        });
+      }
     }
   }
 
@@ -121,7 +135,7 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E3A8A),
+        backgroundColor: Theme.of(context).primaryColor,
         title: const Text(
           'Kart Bilgileri',
           style: TextStyle(

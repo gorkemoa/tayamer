@@ -8,16 +8,20 @@ import 'offers_view.dart';
 import 'new_offer_view.dart';
 import 'policies_view.dart';
 import 'profile_view.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class HomeView extends StatefulWidget {
-  const HomeView({super.key});
+  final int initialIndex;
+  
+  const HomeView({super.key, this.initialIndex = 0});
 
   @override
   State<HomeView> createState() => _HomeViewState();
 }
 
 class _HomeViewState extends State<HomeView> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
   final UserService _userService = UserService();
   User? _user;
   bool _isLoading = true;
@@ -28,6 +32,9 @@ class _HomeViewState extends State<HomeView> {
   @override
   void initState() {
     super.initState();
+    // Widget'tan initialIndex değerini al
+    _selectedIndex = widget.initialIndex;
+    
     _pages = [
       const DashboardView(),
       const OffersView(),
@@ -106,7 +113,7 @@ class _HomeViewState extends State<HomeView> {
             label: 'Ana Sayfa',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.description_outlined),
+            icon: Icon(Icons.tag_outlined),
             label: 'Teklifler',
           ),
           BottomNavigationBarItem(
@@ -114,11 +121,11 @@ class _HomeViewState extends State<HomeView> {
             label: 'Yeni Teklif',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.file_copy_outlined),
+            icon: Icon(Icons.description_outlined),
             label: 'Poliçeler',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
+            icon: Icon(Icons.person_outline),
             label: 'Hesabım',
           ),
         ],
