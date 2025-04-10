@@ -9,6 +9,7 @@ import 'views/home_view.dart';
 import 'views/offer_detail_view.dart';
 import 'views/policy_detail_view.dart';
 import 'views/sms_confirmation_view.dart';
+import 'views/splash_screen.dart';
 import 'services/auth_service.dart';
 import 'services/http_interceptor.dart';
 import 'services/api_service.dart';
@@ -213,7 +214,7 @@ class _TayamerAppState extends State<TayamerApp> {
       initialRoute: '/',
       routes: {
         '/': (context) => _isLoading 
-            ? const Scaffold(body: Center(child: CircularProgressIndicator()))
+            ? const SplashScreen()
             : _isLoggedIn ? const HomeView() : LoginView(),
         '/login': (context) => LoginView(),
         '/home': (context) => const HomeView(),

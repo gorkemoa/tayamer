@@ -1,12 +1,340 @@
+import 'package:card_scanner/card_scanner.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/offer_viewmodel.dart';
 import '../viewmodels/payment_viewmodel.dart';
 import 'package:flutter/services.dart';
-import 'package:ml_card_scanner/ml_card_scanner.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:ml_card_scanner/ml_card_scanner.dart';
 
-// CardScanView ve _CardScanViewState sınıfları kaldırıldı.
+// Kart tarama işlemi ile başlayan ekran
+class CardScanView extends StatefulWidget {
+  final String detailUrl;
+  final int offerId;
+  final int companyId;
+  final String holderTC;
+  final String holderBD;
+  final int maxInstallment;
+
+  const CardScanView({
+    Key? key,
+    required this.detailUrl,
+    required this.offerId,
+    required this.companyId,
+    required this.holderTC,
+    required this.holderBD,
+    this.maxInstallment = 1,
+  }) : super(key: key);
+
+  @override
+  State<CardScanView> createState() => _CardScanViewState();
+}
+
+class _CardScanViewState extends State<CardScanView> {
+  bool _isLoading = false;
+  bool _permissionDenied = false;
+  bool _scanning = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Sayfa açıldığında hemen kamera izinlerini kontrol et ve taramayı başlat
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // initState içinde doğrudan çağırmak yerine postFrameCallback kullanıyoruz
+      _checkCameraPermission();
+    });
+  }
+  
+  // Kamera izinlerini kontrol et
+  Future<void> _checkCameraPermission() async {
+    try {
+      // Önce mevcut durumu kontrol et
+      final status = await Permission.camera.status;
+      
+      if (status.isGranted) {
+        // İzin zaten verilmiş, taramayı hemen başlat
+        if (mounted) {
+          _startCardScan();
+        }
+        return;
+      }
+      
+      // İzin durumunu kontrol et ve açık bir şekilde iste
+      final result = await Permission.camera.request();
+      
+      if (mounted) {
+        if (result.isGranted) {
+          // İzin alındı, taramayı başlat
+          _startCardScan();
+        } else if (result.isPermanentlyDenied) {
+          // Kullanıcı kalıcı olarak reddetti
+          setState(() {
+            _permissionDenied = true;
+          });
+        } else {
+          // Normal ret durumu
+          setState(() {
+            _permissionDenied = true;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('İzin kontrolü sırasında hata: $e');
+      // Hata durumunda manuel form göster
+      if (mounted) {
+        setState(() {
+          _permissionDenied = true;
+        });
+      }
+    }
+  }
+
+  // Kart tarama işlemini başlat
+  Future<void> _startCardScan() async {
+    if (_scanning) return;
+
+    setState(() {
+      _scanning = true;
+    });
+
+    try {
+      // Tarama işlemini başlatmadan önce ek kontrol
+      final cameraStatus = await Permission.camera.status;
+      if (!cameraStatus.isGranted) {
+        if (mounted) {
+          setState(() {
+            _scanning = false;
+            _permissionDenied = true;
+          });
+        }
+        return;
+      }
+      
+      // Widget kullanmadan scanner'ı açacak şekilde çağrı yapılır
+      final CardInfo? cardInfo = await showDialog<CardInfo>(
+        context: context,
+        barrierDismissible: true,
+        builder: (context) {
+          final controller = ScannerWidgetController();
+          
+          // Card tarandığında kontrol için
+          controller.setCardListener((cardInfo) {
+            if (cardInfo != null) {
+              Navigator.of(context).pop(cardInfo);
+            }
+          });
+          
+          return AlertDialog(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            contentPadding: EdgeInsets.zero,
+            content: SizedBox(
+              width: double.infinity,
+              height: MediaQuery.of(context).size.height * 0.8,
+              child: ScannerWidget(
+                overlayOrientation: CardOrientation.portrait,
+                oneShotScanning: true,
+                cardScanTries: 4,  // Tarama denemesi sayısı
+                cameraResolution: CameraResolution.high,
+                usePreprocessingFilters: true,
+                controller: controller,
+              ),
+            ),
+          );
+        },
+      );
+
+      if (mounted) {
+        if (cardInfo != null && cardInfo.isValid()) {
+          // Tarama başarılı oldu, manuel form ekranına geç
+          _navigateToManualEntry(cardInfo);
+        } else {
+          // Tarama iptal edildi veya başarısız oldu
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Kart taraması iptal edildi veya tamamlanamadı.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Kart tarama hatası: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Kart tarama sırasında hata oluştu. Manuel girişi deneyebilirsiniz.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _scanning = false;
+        });
+      }
+    }
+  }
+
+  // Manuel giriş ekranına geçiş
+  void _navigateToManualEntry(CardInfo? scanResult) {
+    if (!mounted) return;
+    
+    Navigator.pushReplacement(
+      context, 
+      MaterialPageRoute(
+        builder: (context) => CardManualEntryView(
+          detailUrl: widget.detailUrl,
+          offerId: widget.offerId,
+          companyId: widget.companyId,
+          holderTC: widget.holderTC,
+          holderBD: widget.holderBD,
+          maxInstallment: widget.maxInstallment,
+          scanResult: scanResult,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // İzin reddedilmişse yönlendirme ekranı göster
+    if (_permissionDenied) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Kamera İzni Gerekli'),
+          backgroundColor: const Color(0xFF1E3A8A),
+          foregroundColor: Colors.white,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => _navigateToManualEntry(null),
+          ),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.camera_alt_outlined,
+                  size: 80,
+                  color: Colors.grey,
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Kart tarama işlemi için kamera izni gereklidir.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18),
+                ),
+                const SizedBox(height: 30),
+                ElevatedButton(
+                  onPressed: () async {
+                    await openAppSettings();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                    backgroundColor: const Color(0xFF1E3A8A),
+                  ),
+                  child: const Text('Ayarları Aç', style: TextStyle(color: Colors.white)),
+                ),
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: () => _navigateToManualEntry(null),
+                  child: const Text('Manuel Bilgi Girişi Yap'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    
+    // Kart tarama ekranı
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1E3A8A),
+        foregroundColor: Colors.white,
+        title: const Text('Kartınızı Okutun'),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => _navigateToManualEntry(null),
+        ),
+      ),
+      body: Column(
+        children: [
+          // Tarama alanı (ekranın büyük kısmını kaplayacak)
+          Expanded(
+            child: Center(
+              child: GestureDetector(
+                onTap: _startCardScan,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Kamera görüntüsü temsili alanı
+                      Container(
+                        width: double.infinity,
+                        height: 250, // Tarama alanı yüksekliği
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: _scanning 
+                          ? const Center(child: CircularProgressIndicator(color: Colors.blue))
+                          : const Center(
+                              child: Icon(
+                                Icons.credit_card,
+                                size: 80,
+                                color: Colors.black26,
+                              ),
+                            ),
+                      ),
+                      
+                      // Mavi çerçeve
+                      Container(
+                        width: double.infinity,
+                        height: 250,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.blue,
+                            width: 4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          
+          // Alt kısım - Manuel Giriş butonu
+          Container(
+            padding: const EdgeInsets.all(20),
+            child: TextButton(
+              onPressed: () => _navigateToManualEntry(null),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
+                foregroundColor: const Color(0xFF1E3A8A),
+                textStyle: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              child: const Text('Manuel Giriş'),
+            ),
+          ),
+          const SizedBox(height: 20), // Ekranın alt kısmında biraz boşluk bırak
+        ],
+      ),
+    );
+  }
+}
 
 // Manuel kart bilgileri giriş ekranı
 class CardManualEntryView extends StatefulWidget {
@@ -16,7 +344,7 @@ class CardManualEntryView extends StatefulWidget {
   final String holderTC;
   final String holderBD;
   final int maxInstallment;
-  // scannedCardData parametresi kaldırıldı.
+  final CardInfo? scanResult; // Tarama sonucu - ml_card_scanner paketi kullanıyor
 
   const CardManualEntryView({
     Key? key,
@@ -26,7 +354,7 @@ class CardManualEntryView extends StatefulWidget {
     required this.holderTC,
     required this.holderBD,
     this.maxInstallment = 1,
-    // scannedCardData parametresi kaldırıldı.
+    this.scanResult,
   }) : super(key: key);
 
   @override
@@ -50,10 +378,46 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
     super.initState();
     _paymentViewModel = Provider.of<PaymentViewModel>(context, listen: false);
 
-    // scannedCardData kontrolü kaldırıldı.
     // TC ve doğum tarihi bilgilerini widget parametrelerinden al
     _tcNoController.text = widget.holderTC;
     _birthDateController.text = widget.holderBD;
+    
+    // Tarama sonucu varsa, form alanlarını doldur
+    if (widget.scanResult != null) {
+      _processScannedCardData(widget.scanResult!);
+    }
+  }
+  
+  // Tarama sonucunu işleme
+  void _processScannedCardData(CardInfo scanResult) {
+    try {
+      // Kart numarası
+      if (scanResult.number.isNotEmpty) {
+        _cardNumberController.text = scanResult.numberFormatted();
+      }
+      
+      // Son kullanma tarihi
+      if (scanResult.expiry.isNotEmpty) {
+        // Tarih formatını kontrol et
+        String expiryDate = scanResult.expiry;
+        
+        // Eksik formatı düzelt (bazen MM/YY yerine sadece MMYY olabilir)
+        if (!expiryDate.contains('/') && expiryDate.length >= 4) {
+          expiryDate = "${expiryDate.substring(0, 2)}/${expiryDate.substring(2, 4)}";
+        }
+        
+        _expiryDateController.text = expiryDate;
+        
+        // Formatlama uygula
+        _expiryDateController.text = CardExpiryInputFormatter().formatEditUpdate(
+          TextEditingValue.empty,
+          TextEditingValue(text: _expiryDateController.text),
+        ).text;
+      }
+    } catch (e) {
+      // Tarama sonucu işlenirken hata olursa sessizce geç
+      debugPrint('Kart verileri işlenirken hata: $e');
+    }
   }
 
   @override
@@ -67,7 +431,7 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
     super.dispose();
   }
 
-  // Kart tarama fonksiyonu güncellendi
+  // Kart tarama fonksiyonu
   Future<void> _scanCard() async {
     if (_isScanning) return;
 
@@ -76,42 +440,66 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
     });
 
     try {
-      final controller = ScannerWidgetController();
+      // Önce kamera izinlerini kontrol et
+      final status = await Permission.camera.status;
       
-      final result = await showDialog(
+      if (!status.isGranted) {
+        // İzin iste
+        final result = await Permission.camera.request();
+        if (!result.isGranted) {
+          // Kullanıcıya bildirim göster
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Kart tarama işlemi için kamera izni gereklidir.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          setState(() {
+            _isScanning = false;
+          });
+          return;
+        }
+      }
+      
+      // Widget kullanmadan scanner'ı açacak şekilde çağrı yapılır
+      final CardInfo? cardInfo = await showDialog<CardInfo>(
         context: context,
-        builder: (context) => Dialog(
-          child: ScannerWidget(
-            controller: controller,
-            oneShotScanning: true,
-            overlayOrientation: CardOrientation.portrait,
-          ),
-        ),
+        barrierDismissible: true,
+        builder: (context) {
+          final controller = ScannerWidgetController();
+          
+          // Card tarandığında kontrol için
+          controller.setCardListener((cardInfo) {
+            if (cardInfo != null) {
+              Navigator.of(context).pop(cardInfo);
+            }
+          });
+          
+          return AlertDialog(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            contentPadding: EdgeInsets.zero,
+            content: SizedBox(
+              width: double.infinity,
+              height: MediaQuery.of(context).size.height * 0.8,
+              child: ScannerWidget(
+                overlayOrientation: CardOrientation.portrait,
+                oneShotScanning: true,
+                cardScanTries: 4,  // Tarama denemesi sayısı
+                cameraResolution: CameraResolution.high,
+                usePreprocessingFilters: true,
+                controller: controller,
+              ),
+            ),
+          );
+        },
       );
 
-      if (result != null && mounted) {
-        // Kart bilgilerini forma aktar
-        setState(() {
-          _cardNumberController.text = result.cardNumber ?? '';
-          _cardHolderController.text = result.cardHolderName ?? '';
-          if (result.expiryDate != null) {
-            _expiryDateController.text = result.expiryDate!;
-          }
-          // CVV genellikle taranamadığı için temizlenir veya kullanıcıya sorulur.
-          _cvvController.clear(); 
-        });
-        
-        // Formatlayıcıları tetiklemek için manuel olarak metni yeniden ayarlayabiliriz
-        _cardNumberController.text = CardNumberInputFormatter().formatEditUpdate(
-          TextEditingValue.empty,
-          TextEditingValue(text: _cardNumberController.text),
-        ).text;
-        if (_expiryDateController.text.isNotEmpty) {
-          _expiryDateController.text = CardExpiryInputFormatter().formatEditUpdate(
-            TextEditingValue.empty,
-            TextEditingValue(text: _expiryDateController.text),
-          ).text;
-        }
+      if (mounted && cardInfo != null && cardInfo.isValid()) {
+        // Tarama sonucunu işle
+        _processScannedCardData(cardInfo);
       }
     } catch (e) {
       if (mounted) {
@@ -148,29 +536,6 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        // AppBar'a tarama butonu eklendi
-        actions: [
-          if (!_isScanning) // Tarama sırasında butonu gizle/devre dışı bırak
-            IconButton(
-              icon: const Icon(Icons.camera_alt_outlined, color: Colors.white),
-              tooltip: 'Kartı Tara',
-              onPressed: _scanCard,
-            )
-          else // Tarama sırasında yükleme göstergesi göster
-            const Padding(
-              padding: EdgeInsets.only(right: 12.0),
-              child: Center(
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  ),
-                ),
-              ),
-            ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(15.0),
@@ -228,10 +593,6 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                   if (value == null || value.trim().isEmpty) {
                     return 'Kart sahibi adı gerekli';
                   }
-                  // İsteğe bağlı: Sadece harf ve boşluk kontrolü eklenebilir
-                  // if (!RegExp(r'^[a-zA-Z ]+$').hasMatch(value)) {
-                  //   return 'Geçerli bir ad girin';
-                  // }
                   return null;
                 },
               ),
@@ -283,17 +644,11 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                   }
                   final cleanValue = value.replaceAll(' ', '');
                   if (cleanValue.length != 16) {
-                     // Genellikle 16 hanedir, bazı kartlar farklı olabilir. 
-                     // İhtiyaca göre 15-19 arası kontrolü eklenebilir.
                     return 'Kart numarası 16 haneli olmalı';
                   }
                   if (!RegExp(r'^\d+$').hasMatch(cleanValue)) {
                     return 'Sadece rakam girilmelidir';
                   }
-                  // İsteğe bağlı: Luhn algoritması kontrolü eklenebilir
-                  // if (!isValidLuhn(cleanValue)) {
-                  //   return 'Geçersiz kart numarası';
-                  // }
                   return null;
                 },
               ),
@@ -350,7 +705,7 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                       final month = int.tryParse(parts[0]);
                       final year = int.tryParse('20${parts[1]}'); // YY -> YYYY
                       if (month == null || year == null) {
-                         return 'Geçersiz tarih';
+                        return 'Geçersiz tarih';
                       }
                       final now = DateTime.now();
                       // Ayın son gününü kontrol et
@@ -415,7 +770,6 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                               return 'CVV gerekli';
                             }
                             if (!RegExp(r'^\d{3}$').hasMatch(value)) {
-                              // Amex için 4 haneli olabilir, gerekirse kontrol eklenir
                               return 'CVV 3 haneli olmalı';
                             }
                             return null;
@@ -536,12 +890,8 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                     return 'TC No 11 haneli olmalı';
                   }
                   if (!RegExp(r'^\d{11}$').hasMatch(value)) {
-                     return 'Sadece rakam girilmelidir';
+                    return 'Sadece rakam girilmelidir';
                   }
-                  // İsteğe bağlı: TC Kimlik No algoritma kontrolü eklenebilir
-                  // if (!isValidTCKN(value)) {
-                  //   return 'Geçersiz TC Kimlik No';
-                  // }
                   return null;
                 },
               ),
@@ -585,27 +935,23 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                 keyboardType: TextInputType.datetime,
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
-                   LengthLimitingTextInputFormatter(8),
-                   BirthDateInputFormatter(),
+                  LengthLimitingTextInputFormatter(8),
+                  BirthDateInputFormatter(),
                 ],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Doğum tarihi gerekli';
                   }
                   if (!RegExp(r'^(0[1-9]|[12][0-9]|3[01])\.(0[1-9]|1[0-2])\.\d{4}$').hasMatch(value)) {
-                     return 'Geçersiz format (GG.AA.YYYY)';
+                    return 'Geçersiz format (GG.AA.YYYY)';
                   }
                   try {
                     final parts = value.split('.');
                     final day = int.parse(parts[0]);
                     final month = int.parse(parts[1]);
                     final year = int.parse(parts[2]);
-                    // Basit tarih geçerlilik kontrolü (örn. 31 Şubat yok)
-                    DateTime(year, month, day); 
-                    // İsteğe bağlı: Daha detaylı yaş kontrolü eklenebilir
-                    // if (DateTime.now().year - year < 18) {
-                    //   return '18 yaşından büyük olmalısınız';
-                    // }
+                    // Basit tarih geçerlilik kontrolü
+                    DateTime(year, month, day);
                   } catch (e) {
                     return 'Geçersiz tarih';
                   }

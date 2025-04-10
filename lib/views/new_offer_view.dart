@@ -327,8 +327,9 @@ class _NewOfferViewState extends State<NewOfferView> {
         MaterialPageRoute(
           builder: (context) => QRScannerView(
             onManualEntry: () {
-              // Manuel giriş formuna yönlendir
-              Navigator.pop(context); // Önce tarayıcıyı kapat
+              // Manuel giriş formuna yönlendir - Future.microtask KULLANMA
+              // Sadece QR tarayıcıdan çık
+              Navigator.pop(context);
             },
             onResult: (data) {
               // QR sonucunu al
@@ -352,15 +353,11 @@ class _NewOfferViewState extends State<NewOfferView> {
         if (!mounted) return;
         
         print('DEBUG: Manuel giriş sayfasına yönlendiriliyor');
-        // Doğrudan manuel form sayfasına yönlendir
-        Future.microtask(() {
-          if (mounted) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => ManualEntryView(policyType: policyType)),
-            );
-          }
-        });
+        // Doğrudan manuel form sayfasına yönlendir - Future.microtask KULLANMA
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ManualEntryView(policyType: policyType)),
+        );
       } 
       // QR sonucu ile döndü
       else if (result is Map<String, String>) {
@@ -368,20 +365,16 @@ class _NewOfferViewState extends State<NewOfferView> {
         if (!mounted) return;
         
         print('DEBUG: QR sonucu ile form sayfasına yönlendiriliyor: $result');
-        // Future.microtask kullanarak UI thread'inin tamamlanmasını bekleyerek navigasyon yap
-        Future.microtask(() {
-          if (mounted) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ManualEntryView(
-                  policyType: policyType,
-                  initialData: result,
-                ),
-              ),
-            );
-          }
-        });
+        // Future.microtask KULLANMA - Doğrudan navigasyon yap
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ManualEntryView(
+              policyType: policyType,
+              initialData: result,
+            ),
+          ),
+        );
       }
     } catch (e) {
       print('QR tarama hatası: $e');
@@ -405,27 +398,25 @@ class _NewOfferViewState extends State<NewOfferView> {
       
       print('DEBUG: Hata sonrası manuel girişe yönlendiriliyor');
       
-      // Hata durumunda manuel girişe yönlendirme - Future.microtask ile güvenli navigasyon
-      Future.microtask(() {
-        if (mounted) {
-          try {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ManualEntryView(
-                  policyType: policyType,
-                ),
+      // Hata durumunda manuel girişe yönlendirme - Future.microtask KULLANMA
+      if (mounted) {
+        try {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ManualEntryView(
+                policyType: policyType,
               ),
-            );
-          } catch (navigationError) {
-            print('DEBUG: Navigation hatası: $navigationError');
-            // Eğer navigasyon hatası varsa, ana sayfaya dön
-            if (mounted) {
-              _navigateToHomeIndex(0);
-            }
+            ),
+          );
+        } catch (navigationError) {
+          print('DEBUG: Navigation hatası: $navigationError');
+          // Eğer navigasyon hatası varsa, ana sayfaya dön
+          if (mounted) {
+            _navigateToHomeIndex(0);
           }
         }
-      });
+      }
     }
   }
 

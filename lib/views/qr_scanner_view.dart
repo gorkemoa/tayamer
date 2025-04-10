@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart' as mlkit;
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 // import 'package:flutter/foundation.dart';
 
@@ -401,22 +402,130 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
 
       if (image != null) {
         try {
-          // ML Kit ile görüntüden metin tanıma
+          // QR kodunu doğrudan okumak için ML Kit Barcode Scanning kullanımı
+          print('DEBUG: Fotoğraf seçildi, QR kodu taranıyor...');
+          
+          // Barcode Scanner oluştur
           final InputImage inputImage = InputImage.fromFilePath(image.path);
-          final textRecognizer = TextRecognizer();
-          final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
+          final barcodeScanner = mlkit.BarcodeScanner(formats: [mlkit.BarcodeFormat.qrCode]);
           
-          // QR kod içeriğini bulmaya çalış
-          String fullText = recognizedText.text;
-          await textRecognizer.close();
+          // Barcode taraması yap
+          final List<mlkit.Barcode> barcodes = await barcodeScanner.processImage(inputImage);
+          await barcodeScanner.close();
           
-          if (fullText.isNotEmpty) {
-            // Olası QR kodu içeriği olarak işle
-            _processQRContent(fullText);
-          } else {
-            _showError('QR kod bulunamadı veya okunamadı');
+          // Eğer QR kod varsa işle
+          if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
+            final String qrContent = barcodes.first.rawValue!;
+            print('DEBUG: Fotoğraftan QR kod okundu: $qrContent');
+            
+            // QR bilgilerini işlemek için galleryMode bayrağını ekle
+            Map<String, String> qrData = {};
+            
+            // URL mi diye kontrol et
+            if (qrContent.startsWith('http://') || qrContent.startsWith('https://')) {
+              try {
+                // URL'yi parse et
+                final uri = Uri.parse(qrContent);
+                
+                // Query parametrelerini al
+                final params = uri.queryParameters;
+                
+                if (params.isNotEmpty) {
+                  // Query parametrelerinden form alanları için veri çıkar
+                  params.forEach((key, value) {
+                    qrData[key] = value;
+                  });
+                  
+                  print('DEBUG: URL verisi ayrıştırıldı: $qrData');
+                } else {
+                  // URL'de query parametresi yoksa ham URL'yi sakla
+                  qrData['rawData'] = qrContent;
+                  print('DEBUG: URL\'de parametre bulunamadı: $qrContent');
+                }
+              } catch (e) {
+                // URL parse hatası durumunda ham içeriği sakla
+                qrData['rawData'] = qrContent;
+                print('DEBUG: URL ayrıştırma hatası: $e');
+              }
+            } 
+            // Geleneksel format: RuhsatNo-Plaka-TC
+            else if (qrContent.contains('-')) {
+              final parts = qrContent.split('-');
+              if (parts.length == 3) {
+                qrData['ruhsatNo'] = parts[0].trim();
+                qrData['plaka'] = parts[1].trim();
+                qrData['tc'] = parts[2].trim();
+                
+                print('DEBUG: QR verisi ayrıştırıldı: RuhsatNo=${qrData['ruhsatNo']}, Plaka=${qrData['plaka']}, TC=${qrData['tc']}');
+              } else {
+                // Format uygun değilse ham veriyi sakla
+                qrData['rawData'] = qrContent;
+                print('DEBUG: Geçersiz QR format: $qrContent');
+              }
+            } 
+            // Başka formatlar için
+            else {
+              // Ham veriyi sakla
+              qrData['rawData'] = qrContent;
+              print('DEBUG: Düz metin QR içeriği: $qrContent');
+            }
+            
+            // Galeri modunda olduğunu belirt
+            qrData['galleryMode'] = 'true';
+            
+            // Sonuçları işle ve sayfayı kapat
+            if (widget.onResult != null) {
+              widget.onResult!(qrData);
+            } else {
+              if (mounted) {
+                Navigator.pop(context, qrData);
+              }
+            }
+          } 
+          // QR kod bulunamadı, yedek olarak Text Recognition dene
+          else {
+            print('DEBUG: QR kod bulunamadı, metin tanıma deneniyor...');
+            
+            // Metin tanımayı dene - bazı QR kodları metin olarak tanınabilir
+            final textRecognizer = TextRecognizer();
+            final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
+            final String fullText = recognizedText.text;
+            await textRecognizer.close();
+            
+            if (fullText.isNotEmpty) {
+              print('DEBUG: Metin tanıma başarılı, içerik: $fullText');
+              
+              // QR veri işleme (yedek metod)
+              Map<String, String> qrData = {};
+              qrData['rawData'] = fullText;
+              qrData['galleryMode'] = 'true';
+              
+              // Eğer format RuhsatNo-Plaka-TC ise tanı
+              if (fullText.contains('-')) {
+                final parts = fullText.split('-');
+                if (parts.length == 3) {
+                  qrData['ruhsatNo'] = parts[0].trim();
+                  qrData['plaka'] = parts[1].trim();
+                  qrData['tc'] = parts[2].trim();
+                  
+                  print('DEBUG: Metin ayrıştırıldı: RuhsatNo=${qrData['ruhsatNo']}, Plaka=${qrData['plaka']}, TC=${qrData['tc']}');
+                }
+              }
+              
+              // Sonuçları işle
+              if (widget.onResult != null) {
+                widget.onResult!(qrData);
+              } else {
+                if (mounted) {
+                  Navigator.pop(context, qrData);
+                }
+              }
+            } else {
+              _showError('QR kod bulunamadı veya okunamadı. Daha net bir fotoğraf deneyin veya manuel giriş yapın.');
+            }
           }
         } catch (e) {
+          print('DEBUG: Fotoğraf QR okuma hatası: $e');
           _showError('QR kod okunamadı: $e');
         } finally {
           _isProcessing = false;
