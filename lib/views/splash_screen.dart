@@ -17,19 +17,6 @@ class SplashScreen extends StatelessWidget {
               width: 200,
               height: 200,
             ),
-            // Yükleniyor yazısı
-            const SizedBox(height: 20),
-            const CircularProgressIndicator(
-              color: Colors.white,
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Yükleniyor...',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-              ),
-            ),
           ],
         ),
       ),

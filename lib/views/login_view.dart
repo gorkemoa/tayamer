@@ -24,9 +24,18 @@ class _LoginViewState extends State<LoginView> {
   @override
   void initState() {
     super.initState();
-    // Test için kullanıcı adı ve şifre otomatik doldurulabilir
-    _emailController.text = 'gorkemozturk';
-    _passwordController.text = 'GO5235010';
+    // Eğer kullanıcı zaten giriş yapmışsa anasayfaya yönlendir
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    final isLoggedIn = await _viewModel.isLoggedIn();
+    if (isLoggedIn && mounted) {
+      // Kullanıcı giriş yapmış, ana sayfaya yönlendir
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const HomeView()),
+      );
+    }
   }
 
   @override
