@@ -385,10 +385,14 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
   }
 
   Future<void> _pickImage() async {
-    if (_isDisposed || _isProcessing) return;
+    if (_isDisposed || _isProcessing || !mounted) return;
 
     try {
       _isProcessing = true;
+      
+      // Context'i güvenli bir şekilde kaydet
+      final currentContext = context;
+      
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
         // Görüntü kalitesini düşürerek performansı artırabilirsiniz
@@ -412,6 +416,11 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
           // Barcode taraması yap
           final List<mlkit.Barcode> barcodes = await barcodeScanner.processImage(inputImage);
           await barcodeScanner.close();
+          
+          if (!mounted || _isDisposed) {
+            _isProcessing = false;
+            return;
+          }
           
           // Eğer QR kod varsa işle
           if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
@@ -473,17 +482,34 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
             // Galeri modunda olduğunu belirt
             qrData['galleryMode'] = 'true';
             
+            // Kamerayı güvenli şekilde kapat
+            _disposeCamera();
+            
             // Sonuçları işle ve sayfayı kapat
             if (widget.onResult != null) {
-              widget.onResult!(qrData);
+              // Callback'i UI thread'inde çalıştır
+              Future.microtask(() {
+                if (mounted && !_isDisposed && widget.onResult != null) {
+                  widget.onResult!(qrData);
+                }
+              });
             } else {
-              if (mounted) {
-                Navigator.pop(context, qrData);
+              if (mounted && !_isDisposed) {
+                // Navigator'u UI thread'inde çalıştır
+                Future.microtask(() {
+                  if (mounted && !_isDisposed) {
+                    Navigator.pop(currentContext, qrData);
+                  }
+                });
               }
             }
           } 
           // QR kod bulunamadı, yedek olarak Text Recognition dene
           else {
+            if (!mounted || _isDisposed) {
+              _isProcessing = false;
+              return;
+            }
             print('DEBUG: QR kod bulunamadı, metin tanıma deneniyor...');
             
             // Metin tanımayı dene - bazı QR kodları metin olarak tanınabilir
@@ -491,6 +517,11 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
             final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
             final String fullText = recognizedText.text;
             await textRecognizer.close();
+            
+            if (!mounted || _isDisposed) {
+              _isProcessing = false;
+              return;
+            }
             
             if (fullText.isNotEmpty) {
               print('DEBUG: Metin tanıma başarılı, içerik: $fullText');
@@ -512,12 +543,25 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
                 }
               }
               
+              // Kamerayı güvenli şekilde kapat
+              _disposeCamera();
+              
               // Sonuçları işle
               if (widget.onResult != null) {
-                widget.onResult!(qrData);
+                // Callback'i UI thread'inde çalıştır
+                Future.microtask(() {
+                  if (mounted && !_isDisposed && widget.onResult != null) {
+                    widget.onResult!(qrData);
+                  }
+                });
               } else {
-                if (mounted) {
-                  Navigator.pop(context, qrData);
+                if (mounted && !_isDisposed) {
+                  // Navigator'u UI thread'inde çalıştır
+                  Future.microtask(() {
+                    if (mounted && !_isDisposed) {
+                      Navigator.pop(currentContext, qrData);
+                    }
+                  });
                 }
               }
             } else {
@@ -526,7 +570,9 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
           }
         } catch (e) {
           print('DEBUG: Fotoğraf QR okuma hatası: $e');
-          _showError('QR kod okunamadı: $e');
+          if (mounted && !_isDisposed) {
+            _showError('QR kod okunamadı: $e');
+          }
         } finally {
           _isProcessing = false;
         }
@@ -613,20 +659,30 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
 
       print('DEBUG: QR işleme tamamlandı: $qrData');
       
+      // Önce callback veya navigator işlemlerinden önce kamerayı durdur
+      _disposeCamera();
+      
       // Eğer callback tanımlıysa
       if (widget.onResult != null) {
         print('DEBUG: onResult callback kullanılıyor');
         
-        // Context güvenli mi kontrol et
-        if (mounted && !_isDisposed) {
-          // Callback üzerinden veri dön
-          widget.onResult!(qrData);
-        }
+        // Callback'i UI thread'inde çalıştır
+        Future.microtask(() {
+          // Context güvenli mi kontrol et
+          if (mounted && !_isDisposed && widget.onResult != null) {
+            // Callback üzerinden veri dön
+            widget.onResult!(qrData);
+          }
+        });
       } else {
         // Context güvenli mi kontrol et
         if (mounted && !_isDisposed) {
-          // Direkt olarak Navigator ile geri dön
-          Navigator.pop(currentContext, qrData);
+          // Direkt olarak Navigator ile geri dön - microtask içinde
+          Future.microtask(() {
+            if (mounted && !_isDisposed) {
+              Navigator.pop(currentContext, qrData);
+            }
+          });
         }
       }
     } catch (e) {
@@ -645,12 +701,20 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
     if (_isDisposed || !mounted) return;
     
     try {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.red,
-        ),
-      );
+      // Context'i güvenli bir şekilde kaydet
+      final currentContext = context;
+      
+      // UI thread'inde çalıştır
+      Future.microtask(() {
+        if (!_isDisposed && mounted) {
+          ScaffoldMessenger.of(currentContext).showSnackBar(
+            SnackBar(
+              content: Text(message),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      });
     } catch (e) {
       print('DEBUG: SnackBar gösterme hatası: $e');
     }
@@ -658,18 +722,28 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
 
   // Manuel giriş butonuna basıldığında
   void _handleManualEntry() {
-    if (_isDisposed) return;
+    if (_isDisposed || !mounted) return;
     
     try {
       // Kamerayı güvenli şekilde temizle
       _disposeCamera();
       
+      // Context'i güvenli şekilde saklayalım
+      final currentContext = context;
+      
       // Eğer onManualEntry callback tanımlanmışsa çağır
       if (widget.onManualEntry != null) {
-        // QR tarayıcıyı kapat
-        Navigator.of(context).pop();
-        
-        Future.microtask(() => widget.onManualEntry!());
+        // QR tarayıcıyı kapat - güvenli context kullanımı
+        if (mounted && !_isDisposed) {
+          Navigator.of(currentContext).pop();
+          
+          // callback'i microtask içinde çağır
+          Future.microtask(() {
+            if (widget.onManualEntry != null) {
+              widget.onManualEntry!();
+            }
+          });
+        }
       } else {
         // Callback tanımlı değilse ana sayfaya dön
         _navigateToDashboard();
@@ -825,11 +899,15 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
       // Kamerayı güvenli şekilde kapat
       _disposeCamera();
       
+      // Context'i güvenli şekilde saklayalım
+      final currentContext = context;
+      
       // UI thread'i için Future.microtask kullan
       Future.microtask(() {
-        if (mounted) {
+        // Yine kontrol et çünkü microtask içindeyiz
+        if (!_isDisposed && mounted) {
           // Tüm route'ları temizleyerek ana sayfaya dön
-          Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+          Navigator.of(currentContext).pushNamedAndRemoveUntil('/home', (route) => false);
         }
       });
     } catch (e) {

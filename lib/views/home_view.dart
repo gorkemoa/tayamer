@@ -109,23 +109,23 @@ class _HomeViewState extends State<HomeView> {
         },
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+            icon: Icon(FontAwesomeIcons.house),
             label: 'Ana Sayfa',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.tag_outlined),
+            icon: Icon(FontAwesomeIcons.tags),
             label: 'Teklifler',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.qr_code),
+            icon: Icon(FontAwesomeIcons.qrcode),
             label: 'Yeni Teklif',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.description_outlined),
+            icon: Icon(FontAwesomeIcons.fileContract),
             label: 'Poliçeler',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
+            icon: Icon(FontAwesomeIcons.user),
             label: 'Hesabım',
           ),
         ],

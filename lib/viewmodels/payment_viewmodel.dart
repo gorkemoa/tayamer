@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/payment_model.dart';
 import '../services/payment_service.dart';
+import '../views/card_form_view.dart';
 import '../views/card_scan_view.dart'; // CardData sınıfı için import eklendi
 
 enum PaymentViewState {

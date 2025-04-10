@@ -77,6 +77,13 @@ void main() async {
         print('🔄 FCM token yenilendi: $newToken');
         notificationService.updateFcmToken();
       });
+      
+      // Test bildirimi göndermek isterseniz yorum işaretini kaldırın
+      // FCM token bildirimi testi
+     // await notificationService.sendTestNotification(fcmToken);
+      
+      // Topic'e test bildirimi göndermek isterseniz yorum işaretini kaldırın
+     //  await notificationService.sendTopicTestNotification("11");
     }
     
     // Basit debounce mantığı için global değişken

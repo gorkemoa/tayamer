@@ -472,4 +472,172 @@ class NotificationService {
       print('API bildirimleri gösterilirken hata: $e');
     }
   }
+
+  // FCM token ile bildirim gönderme
+  Future<bool> sendNotificationToToken({
+    required String fcmToken,
+    required String title,
+    required String body,
+    Map<String, dynamic>? data,
+    String? bearerToken,
+  }) async {
+    try {
+      print('FCM token ile bildirim gönderiliyor: $fcmToken');
+      
+      // FCM REST API
+      final url = Uri.parse('https://fcm.googleapis.com/fcm/send');
+      
+      // Postman'dan alınan token kullanılıyor
+      final token = bearerToken ?? "AAAAc-kBmcU:APA91bHAx322CrW8jFFiZSrEMHACdryb1rUGmQbI-xm0ma41wEBQTwwG6-iixXOjwEtKwH0A2EfzVtFBluTgZDZrH6F9UsKuRu00rRarE-2x5ZiDyXSf_t-3Y1skmunYdHNKGMa1S0ye";
+      print('Kullanılan token: $token');
+      
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'key=$token',
+      };
+      
+      // Legacy FCM API payload yapısı
+      final message = {
+        'to': fcmToken, // Belirli bir cihaza bildirim gönderiliyor
+        'notification': {
+          'title': title,
+          'body': body,
+        },
+        'data': data ?? {},
+      };
+      
+      print('FCM isteği: ${jsonEncode(message)}');
+      print('FCM URL: $url');
+      print('FCM Headers: $headers');
+      
+      final response = await http.post(
+        url,
+        headers: headers,
+        body: jsonEncode(message),
+      );
+      
+      print('FCM yanıt kodu: ${response.statusCode}');
+      print('FCM yanıt içeriği: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        print('FCM bildirim başarıyla gönderildi');
+        return true;
+      } else {
+        print('FCM bildirim gönderilirken hata: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('FCM bildirim gönderilirken istisna: $e');
+      return false;
+    }
+  }
+
+  // Örnek kullanım metodu - Test için
+  Future<void> sendTestNotification(String fcmToken, {String? bearerToken}) async {
+    try {
+      // Örnek bildirim gönderme
+      final success = await sendNotificationToToken(
+        fcmToken: fcmToken,
+        title: "Teklifiniz Hazırlanıyor",
+        body: "35BIC082 plakalı aracınıza ait teklifinizi hazırlamaya başladık, tahmini bekleme süreniz 5 dakikadır.",
+        data: {
+          "type": "offer_creating", 
+          "id": "25"
+        },
+        bearerToken: bearerToken,
+      );
+      
+      if (success) {
+        print('Test bildirimi başarıyla gönderildi');
+      } else {
+        print('Test bildirimi gönderilemedi');
+      }
+    } catch (e) {
+      print('Test bildirimi gönderilirken hata: $e');
+    }
+  }
+
+  // FCM topic ile bildirim gönderme
+  Future<bool> sendNotificationToTopic({
+    required String topic,
+    required String title,
+    required String body,
+    Map<String, dynamic>? data,
+    String? bearerToken,
+  }) async {
+    try {
+      print('FCM topic ile bildirim gönderiliyor: $topic');
+      
+      // FCM REST API
+      final url = Uri.parse('https://fcm.googleapis.com/fcm/send');
+      
+      // Postman'dan alınan token kullanılıyor
+      final token = bearerToken ?? "AAAAc-kBmcU:APA91bHAx322CrW8jFFiZSrEMHACdryb1rUGmQbI-xm0ma41wEBQTwwG6-iixXOjwEtKwH0A2EfzVtFBluTgZDZrH6F9UsKuRu00rRarE-2x5ZiDyXSf_t-3Y1skmunYdHNKGMa1S0ye";
+      print('Kullanılan token: $token');
+      
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'key=$token',
+      };
+      
+      // Legacy FCM API payload yapısı - Topic için
+      final message = {
+        'to': '/topics/$topic', // Topic'e bildirim gönderiliyor
+        'notification': {
+          'title': title,
+          'body': body,
+        },
+        'data': data ?? {},
+      };
+      
+      print('FCM Topic isteği: ${jsonEncode(message)}');
+      print('FCM URL: $url');
+      print('FCM Headers: $headers');
+      
+      final response = await http.post(
+        url,
+        headers: headers,
+        body: jsonEncode(message),
+      );
+      
+      print('FCM yanıt kodu: ${response.statusCode}');
+      print('FCM yanıt içeriği: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        print('FCM topic bildirimi başarıyla gönderildi');
+        return true;
+      } else {
+        print('FCM topic bildirimi gönderilirken hata: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('FCM topic bildirimi gönderilirken istisna: $e');
+      return false;
+    }
+  }
+
+  // Topic'e örnek bildirim gönderme
+  Future<void> sendTopicTestNotification(String topic, {String? bearerToken}) async {
+    try {
+      // Örnek bildirim gönderme
+      final success = await sendNotificationToTopic(
+        topic: topic,
+        title: "Teklifiniz Hazırlanıyor",
+        body: "35BIC082 plakalı aracınıza ait teklifinizi hazırlamaya başladık, tahmini bekleme süreniz 5 dakikadır.",
+        data: {
+          "type": "offer_creating", 
+          "id": "25"
+        },
+        bearerToken: bearerToken,
+      );
+      
+      if (success) {
+        print('Topic test bildirimi başarıyla gönderildi');
+      } else {
+        print('Topic test bildirimi gönderilemedi');
+      }
+    } catch (e) {
+      print('Topic test bildirimi gönderilirken hata: $e');
+    }
+  }
 } 

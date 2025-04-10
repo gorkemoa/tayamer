@@ -24,6 +24,8 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>FLTEnableImpeller</key>
+	<false/>
 	<key>FirebaseAppDelegateProxyEnabled</key>
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
@@ -40,6 +42,10 @@
 	<string>Bu uygulama QR kodları taramak için kameranıza erişmek istiyor</string>
 	<key>NSContactsUsageDescription</key>
 	<string>Kişiler izni gerekmemektedir</string>
+	<key>NSFileProviderDomainUsageDescription</key>
+	<string>Uygulama QR kod işlemek için dosya erişimine ihtiyaç duyar</string>
+	<key>NSFileProviderPresenceUsageDescription</key>
+	<string>Uygulama QR kod işlemek için dosya erişimine ihtiyaç duyar</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>QR kod içeren fotoğrafları yüklemek için galeri izni gerekiyor</string>
 	<key>NSUserNotificationAlertStyle</key>
@@ -52,10 +58,6 @@
 	<string>Bildirimler aracılığıyla size önemli güncellemeler ve doğrulama kodları göndereceğiz.</string>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>Bildirimler aracılığıyla size önemli güncellemeler ve doğrulama kodları göndereceğiz.</string>
-	<key>NSFileProviderDomainUsageDescription</key>
-	<string>Uygulama QR kod işlemek için dosya erişimine ihtiyaç duyar</string>
-	<key>NSFileProviderPresenceUsageDescription</key>
-	<string>Uygulama QR kod işlemek için dosya erişimine ihtiyaç duyar</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>
@@ -82,7 +84,5 @@
 	</array>
 	<key>io.flutter.embedded_views_preview</key>
 	<true/>
-	<key>FLTEnableImpeller</key>
-	<false/>
 </dict>
 </plist>

@@ -14,18 +14,22 @@ class SplashScreen extends StatelessWidget {
             // Logo
             Image.asset(
               'assets/images/tayamer-logo.png',
-              color: Colors.white,
               width: 200,
               height: 200,
             ),
-            const SizedBox(height: 30),
-            // Yükleme göstergesi
+            // Yükleniyor yazısı
+            const SizedBox(height: 20),
             const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              color: Colors.white,
             ),
             const SizedBox(height: 20),
-            // Yükleniyor yazısı
-            
+            const Text(
+              'Yükleniyor...',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+              ),
+            ),
           ],
         ),
       ),
