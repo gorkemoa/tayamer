@@ -129,7 +129,7 @@ class _ProfileViewState extends State<ProfileView> {
           },
         ),   actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none, color: Colors.white),
+            icon: const Icon(FontAwesomeIcons.bell, color: Colors.white),
             onPressed: () {
               Navigator.push(
                 context,

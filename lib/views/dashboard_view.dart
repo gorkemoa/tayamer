@@ -63,8 +63,8 @@ class _DashboardViewState extends State<DashboardView> {
     final totalPolicy = statistics?.totalPolicy.toString() ?? '1';
     
     // Para formatında gösterim için 
-    final monthlyAmount = _formatAmount(statistics?.monthlyAmount ?? '9000.00');
-    final totalAmount = _formatAmount(statistics?.totalAmount ?? '9000.00');
+    final monthlyAmount = _formatAmount(statistics?.monthlyAmount ?? '000.00');
+    final totalAmount = _formatAmount(statistics?.totalAmount ?? '000.00');
 
     return Scaffold(
       backgroundColor: Theme.of(context).primaryColor,
