@@ -3,14 +3,51 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
-import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart' as mlkit;
-import 'package:qr_code_scanner/qr_code_scanner.dart';
-// import 'package:flutter/foundation.dart';
+import 'package:mobile_scanner/mobile_scanner.dart' as mobile_scanner;
+import 'package:permission_handler/permission_handler.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:photo_manager/photo_manager.dart';
+import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 
-// QR tarayıcı kontrol bayrakları
-bool _isQRPackageAvailable = true;
+// QR tarayıcı köşe kutusu widget'ı
+class _CornerBox extends StatelessWidget {
+  final bool isTopLeft;
+  final bool isTopRight;
+  final bool isBottomLeft;
+  final bool isBottomRight;
+  
+  const _CornerBox({
+    Key? key,
+    this.isTopLeft = false,
+    this.isTopRight = false,
+    this.isBottomLeft = false,
+    this.isBottomRight = false,
+  }) : super(key: key);
+  
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 20,
+      height: 20,
+      decoration: BoxDecoration(
+        border: Border(
+          left: isTopLeft || isBottomLeft 
+              ? const BorderSide(color: Color(0xFF1C3879), width: 3)
+              : BorderSide.none,
+          top: isTopLeft || isTopRight 
+              ? const BorderSide(color: Color(0xFF1C3879), width: 3)
+              : BorderSide.none,
+          right: isTopRight || isBottomRight 
+              ? const BorderSide(color: Color(0xFF1C3879), width: 3)
+              : BorderSide.none,
+          bottom: isBottomLeft || isBottomRight 
+              ? const BorderSide(color: Color(0xFF1C3879), width: 3)
+              : BorderSide.none,
+        ),
+      ),
+    );
+  }
+}
 
 class QRScannerView extends StatefulWidget {
   /// Manuel giriş butonuna tıklandığında çağrılacak callback
@@ -26,46 +63,111 @@ class QRScannerView extends StatefulWidget {
 }
 
 class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserver {
-  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
-  QRViewController? controller;
+  mobile_scanner.MobileScannerController? controller;
   bool _isProcessing = false;
   bool _isDisposed = false;
-  BuildContext? _storedContext;
   final ImagePicker _picker = ImagePicker();
   
-  // Kamera kontrolü için ekstra bayrak
+  // Kamera kontrolü için bayraklar
   bool _isCameraInitialized = false;
-  
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _storedContext = context;
-  }
+  bool _isCameraPermissionDenied = false;
+  bool _isCameraPermissionRequested = false;
   
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _isDisposed = false; // İlk başta false olarak ayarla
-    print('DEBUG: QRScannerView initState çağrıldı');
+    _isDisposed = false;
+    
+    // Kamera izni kontrolü ve başlatma
+    _checkCameraPermission();
+  }
+  
+  // Kamera iznini kontrol et ve gerekirse iste
+  Future<void> _checkCameraPermission() async {
+    try {
+      // Kamera izni kontrolü
+      var status = await Permission.camera.status;
+      
+      // İzin durumuna göre işlem yap
+      if (status.isGranted) {
+        // İzin verilmiş, kamerayı başlat
+        _initializeMobileScanner();
+      } else if (status.isDenied && !_isCameraPermissionRequested) {
+        // İzin istenmemiş veya reddedilmiş, izin iste
+        _isCameraPermissionRequested = true;
+        
+        status = await Permission.camera.request();
+        
+        if (status.isGranted) {
+          // İzin alındı, kamerayı başlat
+          if (mounted) {
+            setState(() {
+              _isCameraPermissionDenied = false;
+            });
+            _initializeMobileScanner();
+          }
+        } else {
+          // İzin reddedildi
+          if (mounted) {
+            setState(() {
+              _isCameraPermissionDenied = true;
+            });
+          }
+        }
+      } else {
+        // İzin kalıcı olarak reddedilmiş
+        if (mounted) {
+          setState(() {
+            _isCameraPermissionDenied = true;
+          });
+        }
+      }
+    } catch (e) {
+      // Hata durumunda kamera erişilemez olarak işaretle
+      if (mounted) {
+        setState(() {
+          _isCameraPermissionDenied = true;
+        });
+      }
+    }
+  }
+  
+  void _initializeMobileScanner() {
+    try {
+      controller = mobile_scanner.MobileScannerController(
+        facing: mobile_scanner.CameraFacing.back,
+        torchEnabled: false,
+        returnImage: true,
+      );
+      
+      if (mounted) {
+        setState(() {
+          _isCameraInitialized = true;
+          _isCameraPermissionDenied = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isCameraInitialized = false;
+          _isCameraPermissionDenied = true;
+        });
+      }
+    }
   }
   
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Uygulama arkaplanda veya öne geldiğinde kamerayı kontrol et
-    print('DEBUG: AppLifecycleState değişti: $state');
-    
     if (controller == null || _isDisposed) return;
     
     // Uygulamadan çıkıldığında kamerayı durdur
     if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
-      print('DEBUG: Uygulama arkaplan/duraklama durumuna geçti, kamera duruyor');
       _disposeCamera();
     }
     
     // Uygulama tekrar aktif olduğunda kamerayı yeniden başlat
     else if (state == AppLifecycleState.resumed && _isCameraInitialized) {
-      print('DEBUG: Uygulama öne geldi, kamera yeniden başlatılıyor');
       _initializeCamera();
     }
   }
@@ -75,10 +177,17 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
     if (_isDisposed) return;
     
     try {
-      print('DEBUG: Kamera durduruluyor...');
-      controller?.pauseCamera();
+      if (controller == null || !_isCameraInitialized) {
+        return;
+      }
+      
+      try {
+        controller?.stop();
+      } catch (e) {
+        // Hata durumunu sessizce geç
+      }
     } catch (e) {
-      print('DEBUG: Kamera durdurma hatası (güvenli): $e');
+      // Hata durumunu sessizce geç
     }
   }
   
@@ -87,28 +196,30 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
     if (_isDisposed || controller == null) return;
     
     try {
-      print('DEBUG: Kamera başlatılıyor...');
-      controller?.resumeCamera();
+      controller?.start();
     } catch (e) {
-      print('DEBUG: Kamera başlatma hatası (güvenli): $e');
+      // Hata durumunda kamera erişilemez olarak işaretle
+      if (mounted) {
+        setState(() {
+          _isCameraInitialized = false;
+          _isCameraPermissionDenied = true;
+        });
+      }
     }
   }
   
   @override
   void dispose() {
-    print('DEBUG: QRScannerView dispose çağrıldı');
-    
     // Önce Observer'ı kaldır
     WidgetsBinding.instance.removeObserver(this);
     
-    // Sonra kamerayı temizle (try-finally kullanarak)
+    // Sonra kamerayı temizle
     if (controller != null) {
       try {
-        print('DEBUG: Kamera dispose ediliyor...');
-        controller?.pauseCamera();
+        controller?.stop();
         controller?.dispose();
       } catch (e) {
-        print('DEBUG: Controller dispose hatası: $e');
+        // Hata durumunu sessizce geç
       } finally {
         controller = null;
       }
@@ -125,18 +236,14 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
     // Sıcak yeniden yükleme sırasında kamerayı durdurup yeniden başlat
     if (Platform.isAndroid && controller != null && !_isDisposed) {
       try {
-        controller?.pauseCamera();
+        controller?.stop();
         Future.delayed(const Duration(milliseconds: 300), () {
           if (!_isDisposed && mounted && controller != null) {
-            try {
-              controller?.resumeCamera();
-            } catch (e) {
-              print('DEBUG: Kamera yeniden başlatma hatası: $e');
-            }
+            controller?.start();
           }
         });
       } catch (e) {
-        print('DEBUG: Reassemble kamera hatası: $e');
+        // Hata durumunu sessizce geç
       }
     }
   }
@@ -147,25 +254,19 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
       return const SizedBox.shrink();
     }
     return WillPopScope(
-      // Geri tuşu işleyicisi
       onWillPop: () async {
-        // Eğer işlem yapılıyorsa geri dönüşü engelle
         if (_isProcessing) return false;
-        
-        // Kamerayı güvenli bir şekilde durdur
         _disposeCamera();
-        
-        // Ana sayfaya dön
-        _navigateToDashboard();
-        
-        // WillPopScope'un Navigator.pop yapmasını engelle
-        return false;
+        return true;
       },
       child: Scaffold(
         body: Stack(
           children: [
-            // QR kod tarayıcı
-            _buildQRView(),
+            // QR kod tarayıcı veya kamera izni yoksa alternatif görünüm
+            if (_isCameraPermissionDenied || !_isCameraInitialized)
+              _buildCameraUnavailableView()
+            else
+              _buildQRView(),
             
             // Arayüz elemanları
             SafeArea(
@@ -181,8 +282,8 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
                           icon: const Icon(Icons.close, color: Colors.white),
                           onPressed: () {
                             if (!_isDisposed) {
-                              // Ana sayfaya dön
-                              _navigateToDashboard();
+                              _disposeCamera();
+                              Navigator.of(context).pop();
                             }
                           },
                         ),
@@ -207,39 +308,40 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
                   
                   const Spacer(), // Kamera alanı için boşluk
                   
-                  // Alt butonlar
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(25),
+                  // Alt butonlar - Kamera izni yoksa bu kısmı gösterme (tam ekran CameraUnavailable görünümünü tercih et)
+                  if (!_isCameraPermissionDenied && _isCameraInitialized)
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25),
+                              ),
                             ),
+                            onPressed: () => _handleManualEntry(),
+                            child: const Text('Manuel Giriş'),
                           ),
-                          onPressed: () => _handleManualEntry(),
-                          child: const Text('Manuel Giriş'),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(25),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25),
+                              ),
                             ),
+                            onPressed: () => _pickImage(),
+                            child: const Text('Fotoğraf Yükle'),
                           ),
-                          onPressed: () => _pickImage(),
-                          child: const Text('Fotoğraf Yükle'),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -250,117 +352,6 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
     );
   }
 
-  void _onQRViewCreated(QRViewController controller) {
-    if (_isDisposed) return;
-    
-    print('DEBUG: QR görünümü oluşturuldu, controller ayarlanıyor');
-    // Controller'ı atama
-    this.controller = controller;
-    
-    // Kameranın başlatılacağını belirt
-    _isCameraInitialized = true;
-    
-    // Platform kontrolü
-    if (Platform.isIOS) {
-      // iOS için güvenli kamera başlatma
-      _safeInitCameraForIOS(controller);
-    } else {
-      // Android için direkt başlat
-      try {
-        print('DEBUG: Android kamerası başlatılıyor');
-        controller.resumeCamera();
-      } catch (e) {
-        print('DEBUG: Android kamera başlatma hatası: $e');
-        if (!_isDisposed && mounted) {
-          Future.microtask(() {
-            // Hata dialogu yerine bilgilendirme mesajı gösteriyoruz
-            _showError('Kamera başlatılamadı. Fotoğraf yükleme veya manuel giriş seçeneklerini kullanabilirsiniz.');
-          });
-        }
-      }
-    }
-    
-    // QR kod okuma listener'ı - zayıf referans kullan
-    try {
-      controller.scannedDataStream.listen(
-        (scanData) {
-          // İşlenip işlenmediğini kontrol et
-          if (_isDisposed || !mounted || _isProcessing) return;
-          
-          _isProcessing = true;
-          
-          // QR veriyi işle
-          final qrContent = scanData.code;
-          print('DEBUG: QR içeriği alındı: $qrContent');
-          
-          if (qrContent != null) {
-            // QR veriyi işle
-            _processScannedQRContent(qrContent);
-          } else {
-            _isProcessing = false;
-          }
-        }, 
-        onError: (error) {
-          print('DEBUG: QR scanner hatası: $error');
-          if (!_isDisposed && mounted) {
-            _showError('QR tarayıcı hatası: $error');
-          }
-          _isProcessing = false;
-        },
-        cancelOnError: false,
-      );
-    } catch (e) {
-      print('DEBUG: QR stream başlatma hatası: $e');
-      if (!_isDisposed && mounted) {
-        // Kamera başlatma hatası durumunda bilgilendirici mesaj göster
-        Future.microtask(() {
-          _showError('QR tarayıcısı çalıştırılamadı. Fotoğraf yükleme veya manuel giriş seçeneklerini kullanabilirsiniz.');
-        });
-      }
-    }
-  }
-  
-  // Platform özel kamera başlatma
-  void _safeInitCameraForIOS(QRViewController controller) {
-    try {
-      print('DEBUG: iOS kamerası hazırlanıyor');
-      controller.pauseCamera(); // Önce durdur
-      
-      if (!mounted || _isDisposed) return;
-      
-      // Zamanlayıcı ile kamerayı başlat
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (!mounted || _isDisposed) {
-          print('DEBUG: iOS kamera başlatmadan önce widget dispose oldu');
-          return;
-        }
-        
-        try {
-          print('DEBUG: iOS kamerası başlatılıyor');
-          controller.resumeCamera();
-        } catch (e) {
-          print('DEBUG: iOS kamera başlatma hatası: $e');
-          
-          // Kamera hatası durumunda kullanıcıya bilgilendirici mesaj göster
-          if (!_isDisposed && mounted) {
-            Future.microtask(() {
-              _showError('iOS kamerası başlatılamadı. Fotoğraf yükleme veya manuel giriş seçeneklerini kullanabilirsiniz.');
-            });
-          }
-        }
-      });
-    } catch (e) {
-      print('DEBUG: iOS kamera hazırlama hatası: $e');
-      
-      // Kamera hatası durumunda kullanıcıya bilgilendirici mesaj göster
-      if (!_isDisposed && mounted) {
-        Future.microtask(() {
-          _showError('iOS kamerası hazırlanamadı. Fotoğraf yükleme veya manuel giriş seçeneklerini kullanabilirsiniz.');
-        });
-      }
-    }
-  }
-  
   // Taranan QR içeriğini işle
   void _processScannedQRContent(String qrContent) {
     if (_isDisposed || !mounted) {
@@ -369,221 +360,200 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
     }
     
     try {
-      // İşlemeden önce önce kamerayı durdur
-      try {
-        controller?.pauseCamera();
-      } catch (e) {
-        print('DEBUG: QR işleme öncesi kamera durdurma hatası: $e');
-      }
-      
-      // Standart QR veri işleme
+      controller?.stop();
       _processQRContent(qrContent);
     } catch (e) {
-      print('DEBUG: QR tarama işleme hatası: $e');
       _isProcessing = false;
     }
   }
 
   Future<void> _pickImage() async {
     if (_isDisposed || _isProcessing || !mounted) return;
-
+    
     try {
       _isProcessing = true;
       
-      // Context'i güvenli bir şekilde kaydet
-      final currentContext = context;
+      // Kamerayı durdur
+      _disposeCamera();
       
-      final XFile? image = await _picker.pickImage(
-        source: ImageSource.gallery,
-        // Görüntü kalitesini düşürerek performansı artırabilirsiniz
-        imageQuality: 70, 
+      // Resim seçici aç
+      final List<AssetEntity>? result = await AssetPicker.pickAssets(
+        context,
+        pickerConfig: const AssetPickerConfig(
+          maxAssets: 1,
+          requestType: RequestType.image,
+        ),
       );
-
-      if (!mounted || _isDisposed) {
+      
+      if (result == null || result.isEmpty || !mounted) {
         _isProcessing = false;
         return;
       }
-
-      if (image != null) {
-        try {
-          // QR kodunu doğrudan okumak için ML Kit Barcode Scanning kullanımı
-          print('DEBUG: Fotoğraf seçildi, QR kodu taranıyor...');
-          
-          // Barcode Scanner oluştur
-          final InputImage inputImage = InputImage.fromFilePath(image.path);
-          final barcodeScanner = mlkit.BarcodeScanner(formats: [mlkit.BarcodeFormat.qrCode]);
-          
-          // Barcode taraması yap
-          final List<mlkit.Barcode> barcodes = await barcodeScanner.processImage(inputImage);
-          await barcodeScanner.close();
-          
-          if (!mounted || _isDisposed) {
-            _isProcessing = false;
-            return;
-          }
-          
-          // Eğer QR kod varsa işle
-          if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
-            final String qrContent = barcodes.first.rawValue!;
-            print('DEBUG: Fotoğraftan QR kod okundu: $qrContent');
-            
-            // QR bilgilerini işlemek için galleryMode bayrağını ekle
-            Map<String, String> qrData = {};
-            
-            // URL mi diye kontrol et
-            if (qrContent.startsWith('http://') || qrContent.startsWith('https://')) {
-              try {
-                // URL'yi parse et
-                final uri = Uri.parse(qrContent);
-                
-                // Query parametrelerini al
-                final params = uri.queryParameters;
-                
-                if (params.isNotEmpty) {
-                  // Query parametrelerinden form alanları için veri çıkar
-                  params.forEach((key, value) {
-                    qrData[key] = value;
-                  });
-                  
-                  print('DEBUG: URL verisi ayrıştırıldı: $qrData');
-                } else {
-                  // URL'de query parametresi yoksa ham URL'yi sakla
-                  qrData['rawData'] = qrContent;
-                  print('DEBUG: URL\'de parametre bulunamadı: $qrContent');
-                }
-              } catch (e) {
-                // URL parse hatası durumunda ham içeriği sakla
-                qrData['rawData'] = qrContent;
-                print('DEBUG: URL ayrıştırma hatası: $e');
-              }
-            } 
-            // Geleneksel format: RuhsatNo-Plaka-TC
-            else if (qrContent.contains('-')) {
-              final parts = qrContent.split('-');
-              if (parts.length == 3) {
-                qrData['ruhsatNo'] = parts[0].trim();
-                qrData['plaka'] = parts[1].trim();
-                qrData['tc'] = parts[2].trim();
-                
-                print('DEBUG: QR verisi ayrıştırıldı: RuhsatNo=${qrData['ruhsatNo']}, Plaka=${qrData['plaka']}, TC=${qrData['tc']}');
-              } else {
-                // Format uygun değilse ham veriyi sakla
-                qrData['rawData'] = qrContent;
-                print('DEBUG: Geçersiz QR format: $qrContent');
-              }
-            } 
-            // Başka formatlar için
-            else {
-              // Ham veriyi sakla
-              qrData['rawData'] = qrContent;
-              print('DEBUG: Düz metin QR içeriği: $qrContent');
-            }
-            
-            // Galeri modunda olduğunu belirt
-            qrData['galleryMode'] = 'true';
-            
-            // Kamerayı güvenli şekilde kapat
-            _disposeCamera();
-            
-            // Sonuçları işle ve sayfayı kapat
-            if (widget.onResult != null) {
-              // Callback'i UI thread'inde çalıştır
-              Future.microtask(() {
-                if (mounted && !_isDisposed && widget.onResult != null) {
-                  widget.onResult!(qrData);
-                }
-              });
-            } else {
-              if (mounted && !_isDisposed) {
-                // Navigator'u UI thread'inde çalıştır
-                Future.microtask(() {
-                  if (mounted && !_isDisposed) {
-                    Navigator.pop(currentContext, qrData);
-                  }
-                });
-              }
-            }
-          } 
-          // QR kod bulunamadı, yedek olarak Text Recognition dene
-          else {
-            if (!mounted || _isDisposed) {
-              _isProcessing = false;
-              return;
-            }
-            print('DEBUG: QR kod bulunamadı, metin tanıma deneniyor...');
-            
-            // Metin tanımayı dene - bazı QR kodları metin olarak tanınabilir
-            final textRecognizer = TextRecognizer();
-            final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
-            final String fullText = recognizedText.text;
-            await textRecognizer.close();
-            
-            if (!mounted || _isDisposed) {
-              _isProcessing = false;
-              return;
-            }
-            
-            if (fullText.isNotEmpty) {
-              print('DEBUG: Metin tanıma başarılı, içerik: $fullText');
-              
-              // QR veri işleme (yedek metod)
-              Map<String, String> qrData = {};
-              qrData['rawData'] = fullText;
-              qrData['galleryMode'] = 'true';
-              
-              // Eğer format RuhsatNo-Plaka-TC ise tanı
-              if (fullText.contains('-')) {
-                final parts = fullText.split('-');
-                if (parts.length == 3) {
-                  qrData['ruhsatNo'] = parts[0].trim();
-                  qrData['plaka'] = parts[1].trim();
-                  qrData['tc'] = parts[2].trim();
-                  
-                  print('DEBUG: Metin ayrıştırıldı: RuhsatNo=${qrData['ruhsatNo']}, Plaka=${qrData['plaka']}, TC=${qrData['tc']}');
-                }
-              }
-              
-              // Kamerayı güvenli şekilde kapat
-              _disposeCamera();
-              
-              // Sonuçları işle
-              if (widget.onResult != null) {
-                // Callback'i UI thread'inde çalıştır
-                Future.microtask(() {
-                  if (mounted && !_isDisposed && widget.onResult != null) {
-                    widget.onResult!(qrData);
-                  }
-                });
-              } else {
-                if (mounted && !_isDisposed) {
-                  // Navigator'u UI thread'inde çalıştır
-                  Future.microtask(() {
-                    if (mounted && !_isDisposed) {
-                      Navigator.pop(currentContext, qrData);
-                    }
-                  });
-                }
-              }
-            } else {
-              _showError('QR kod bulunamadı veya okunamadı. Daha net bir fotoğraf deneyin veya manuel giriş yapın.');
-            }
-          }
-        } catch (e) {
-          print('DEBUG: Fotoğraf QR okuma hatası: $e');
-          if (mounted && !_isDisposed) {
-            _showError('QR kod okunamadı: $e');
-          }
-        } finally {
-          _isProcessing = false;
-        }
-      } else {
+      
+      // Seçilen resim
+      final AssetEntity asset = result.first;
+      
+      // Resmin dosya yolunu al
+      final File? file = await asset.file;
+      
+      if (file == null || !mounted) {
         _isProcessing = false;
+        if (mounted) _showMessage('Resim dosyası alınamadı.');
+        return;
+      }
+      
+      // QR kod tespiti yap
+      final qrData = await _detectQRFromFile(file.path);
+      
+      if (!mounted) {
+        _isProcessing = false;
+        return;
+      }
+      
+      if (qrData != null) {
+        // QR kod bulundu
+        _showMessage('QR kod başarıyla okundu!', isError: false);
+        
+        // Galeri işlemi bitince güvenli navigasyon
+        _safeNavigateWithResult(qrData);
+      } else {
+        // QR kod bulunamadı
+        _showMessage('QR kod tespit edilemedi. Manuel giriş yapabilirsiniz.');
+        
+        // Galeri modu verisi oluştur
+        final emptyData = {'galleryMode': 'true', 'tc': '', 'plaka': '', 'ruhsatNo': ''};
+        
+        // Galeri işlemi bitince güvenli navigasyon
+        _safeNavigateWithResult(emptyData);
       }
     } catch (e) {
-      if (!mounted || _isDisposed) return;
-      _showError('Fotoğraf seçilirken hata oluştu: $e');
+      if (mounted) _showMessage('Hata: $e');
       _isProcessing = false;
     }
+  }
+  
+  Future<void> _pickImageWithRawData() async {
+    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile == null) return;
+    
+    // iOS'ta Uint8List ile çalışma
+    final bytes = await pickedFile.readAsBytes();
+    
+    // ML Kit ile bytes kullanarak tarama
+    final inputImage = InputImage.fromBytes(
+      bytes: bytes,
+      metadata: InputImageMetadata(
+        size: Size(800, 800), 
+        rotation: InputImageRotation.rotation0deg,
+        format: InputImageFormat.yuv420,
+        bytesPerRow: 800 * 4,
+      ),
+    );
+    
+    // QR tarama işlemi...
+  }
+  
+  // QR kod tespiti için file_picker ile seçilmiş dosyayı işleyen metod
+  Future<Map<String, String>?> _detectQRFromFile(String filePath) async {
+    try {
+      // Önce file doğrulama
+      final file = File(filePath);
+      if (!await file.exists()) {
+        return null;
+      }
+      
+      // iOS'ta raw data kullanımı
+      final Uint8List bytes = await file.readAsBytes();
+      
+      // InputImage.fromBytes kullanımı
+      final inputImage = InputImage.fromBytes(
+        bytes: bytes,
+        metadata: InputImageMetadata(
+          size: Size(800, 800), 
+          rotation: InputImageRotation.rotation0deg,
+          format: InputImageFormat.yuv420,
+          bytesPerRow: 800 * 4,
+        ),
+      );
+      
+      final barcodeScanner = GoogleMlKit.vision.barcodeScanner();
+      final barcodes = await barcodeScanner.processImage(inputImage);
+      await barcodeScanner.close();
+      
+      if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
+        return _parseQRContent(barcodes.first.rawValue!);
+      }
+      return null;
+    } catch (e) {
+      print('QR okuma hatası: $e');
+      return null;
+    }
+  }
+  
+  // Eski _detectQRFromImage metodunu kaldır veya güncelle
+  Future<Map<String, String>?> _detectQRFromImage(XFile image) async {
+    return _detectQRFromFile(image.path);
+  }
+  
+  // Basit mesaj gösterimi (hata veya bilgi)
+  void _showMessage(String message, {bool isError = true}) {
+    if (!mounted || _isDisposed) return;
+    print("DEBUG: SimpleMessage gösteriliyor: $message");
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : Colors.blue,
+        duration: Duration(seconds: isError ? 3 : 1),
+      ),
+    );
+  }
+  
+  Map<String, String> _parseQRContent(String content) {
+    Map<String, String> qrData = {};
+    
+    // URL mi diye kontrol et
+    if (content.startsWith('http://') || content.startsWith('https://')) {
+      try {
+        // URL'yi parse et
+        final uri = Uri.parse(content);
+        
+        // Query parametrelerini al
+        final params = uri.queryParameters;
+        
+        if (params.isNotEmpty) {
+          // Query parametrelerinden form alanları için veri çıkar
+          params.forEach((key, value) {
+            qrData[key] = value;
+          });
+        } else {
+          // URL'de query parametresi yoksa ham URL'yi sakla
+          qrData['rawData'] = content;
+        }
+      } catch (e) {
+        // URL parse hatası durumunda ham içeriği sakla
+        qrData['rawData'] = content;
+      }
+    } 
+    // Geleneksel format: RuhsatNo-Plaka-TC
+    else if (content.contains('-')) {
+      final parts = content.split('-');
+      if (parts.length == 3) {
+        qrData['ruhsatNo'] = parts[0].trim();
+        qrData['plaka'] = parts[1].trim();
+        qrData['tc'] = parts[2].trim();
+      } else {
+        // Format uygun değilse ham veriyi sakla
+        qrData['rawData'] = content;
+      }
+    } 
+    // Başka formatlar için
+    else {
+      // Ham veriyi sakla
+      qrData['rawData'] = content;
+    }
+    
+    return qrData;
   }
   
   Future<void> _processQRContent(String content) async {
@@ -593,101 +563,24 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
     }
 
     try {
-      // Önce herhangi bir hata olmasın diye context erişimlerini güvence altına al
-      final currentContext = context;
+      // Kamerayı durdur
+      _disposeCamera();
+      
       if (!mounted || _isDisposed) {
         _isProcessing = false;
         return;
       }
       
-      Map<String, String> qrData = {};
+      Map<String, String> qrData = _parseQRContent(content);
       
-      // QR veri işleme (mevcut kodunuz)
-      // URL mi diye kontrol et
-      if (content.startsWith('http://') || content.startsWith('https://')) {
-        try {
-          // URL'yi parse et
-          final uri = Uri.parse(content);
-          
-          // Query parametrelerini al
-          final params = uri.queryParameters;
-          
-          if (params.isNotEmpty) {
-            // Query parametrelerinden form alanları için veri çıkar
-            params.forEach((key, value) {
-              qrData[key] = value;
-            });
-            
-            print('DEBUG: URL verisi ayrıştırıldı: $qrData');
-          } else {
-            // URL'de query parametresi yoksa ham URL'yi sakla
-            qrData['rawData'] = content;
-            print('DEBUG: URL\'de parametre bulunamadı: $content');
-          }
-        } catch (e) {
-          // URL parse hatası durumunda ham içeriği sakla
-          qrData['rawData'] = content;
-          print('DEBUG: URL ayrıştırma hatası: $e');
-        }
-      } 
-      // Geleneksel format: RuhsatNo-Plaka-TC
-      else if (content.contains('-')) {
-        final parts = content.split('-');
-        if (parts.length == 3) {
-          qrData['ruhsatNo'] = parts[0].trim(); // EK266102
-          qrData['plaka'] = parts[1].trim();    // 06SS733
-          qrData['tc'] = parts[2].trim();       // 4811012298
-          
-          print('DEBUG: QR verisi ayrıştırıldı: RuhsatNo=${qrData['ruhsatNo']}, Plaka=${qrData['plaka']}, TC=${qrData['tc']}');
-        } else {
-          // Format uygun değilse ham veriyi sakla
-          qrData['rawData'] = content;
-          print('DEBUG: Geçersiz QR format: $content');
-        }
-      } 
-      // Başka formatlar için
-      else {
-        // Ham veriyi sakla
-        qrData['rawData'] = content;
-        print('DEBUG: Düz metin QR içeriği: $content');
+      if (!mounted || _isDisposed) {
+        _isProcessing = false;
+        return;
       }
       
-      // Fotoğraftan okuma özelliği
-      if (content.contains('galleryMode')) {
-        qrData['galleryMode'] = 'true';
-      }
-
-      print('DEBUG: QR işleme tamamlandı: $qrData');
-      
-      // Önce callback veya navigator işlemlerinden önce kamerayı durdur
-      _disposeCamera();
-      
-      // Eğer callback tanımlıysa
-      if (widget.onResult != null) {
-        print('DEBUG: onResult callback kullanılıyor');
-        
-        // Callback'i UI thread'inde çalıştır
-        Future.microtask(() {
-          // Context güvenli mi kontrol et
-          if (mounted && !_isDisposed && widget.onResult != null) {
-            // Callback üzerinden veri dön
-            widget.onResult!(qrData);
-          }
-        });
-      } else {
-        // Context güvenli mi kontrol et
-        if (mounted && !_isDisposed) {
-          // Direkt olarak Navigator ile geri dön - microtask içinde
-          Future.microtask(() {
-            if (mounted && !_isDisposed) {
-              Navigator.pop(currentContext, qrData);
-            }
-          });
-        }
-      }
+      // Galeri işlemi bitince güvenli navigasyon
+      _safeNavigateWithResult(qrData);
     } catch (e) {
-      print('DEBUG: QR işleme hatası: $e');
-      
       if (!_isDisposed && mounted) {
         _showError('QR kod işlenirken hata oluştu');
       }
@@ -696,27 +589,40 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
     }
   }
 
+  // Galeri işlemi bitince güvenli navigasyon
+  void _safeNavigateWithResult(Map<String, String> result) {
+    if (!mounted) return;
+    
+    // Önce durumu al, sonra widget'a erişme
+    final onResultCallback = widget.onResult;
+    
+    if (onResultCallback != null) {
+      // Context yok context kullanmadan geri çağrı
+      onResultCallback(result);
+    } else if (mounted) {
+      // Context'e erişmeden önce mounted kontrolü
+      Navigator.of(context).pop(result);
+    }
+  }
+
   // Güvenli SnackBar gösterimi
-  void _showError(String message) {
+  void _showError(String message, {bool isError = true}) {
     if (_isDisposed || !mounted) return;
     
     try {
-      // Context'i güvenli bir şekilde kaydet
       final currentContext = context;
-      
-      // UI thread'inde çalıştır
       Future.microtask(() {
         if (!_isDisposed && mounted) {
           ScaffoldMessenger.of(currentContext).showSnackBar(
             SnackBar(
               content: Text(message),
-              backgroundColor: Colors.red,
+              backgroundColor: isError ? Colors.red : Colors.blue,
             ),
           );
         }
       });
     } catch (e) {
-      print('DEBUG: SnackBar gösterme hatası: $e');
+      // Hata durumunu sessizce geç
     }
   }
 
@@ -725,33 +631,26 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
     if (_isDisposed || !mounted) return;
     
     try {
-      // Kamerayı güvenli şekilde temizle
       _disposeCamera();
-      
-      // Context'i güvenli şekilde saklayalım
       final currentContext = context;
       
-      // Eğer onManualEntry callback tanımlanmışsa çağır
       if (widget.onManualEntry != null) {
-        // QR tarayıcıyı kapat - güvenli context kullanımı
         if (mounted && !_isDisposed) {
-          Navigator.of(currentContext).pop();
+          Navigator.of(currentContext).maybePop();
           
-          // callback'i microtask içinde çağır
           Future.microtask(() {
             if (widget.onManualEntry != null) {
               widget.onManualEntry!();
             }
           });
         }
-      } else {
-        // Callback tanımlı değilse ana sayfaya dön
-        _navigateToDashboard();
+      } else if (mounted && !_isDisposed) {
+        Navigator.of(currentContext).maybePop();
       }
     } catch (e) {
-      print('DEBUG: Manuel giriş hatası: $e');
-      // Hata durumunda ana sayfaya dön
-      _navigateToDashboard();
+      if (mounted && !_isDisposed) {
+        Navigator.of(context).maybePop();
+      }
     }
   }
   
@@ -788,130 +687,202 @@ class _QRScannerViewState extends State<QRScannerView> with WidgetsBindingObserv
         ),
       );
     } catch (e) {
-      print('DEBUG: Yardım dialog hatası: $e');
+      // Hata durumunu sessizce geç
     }
   }
   
   // QR görünümü oluştur
   Widget _buildQRView() {
-    try {
-      print('DEBUG: QR görünümü oluşturuluyor');
-      
-      // QR paket kontrolü - bazı cihazlarda paketin yüklenmemesi durumuna karşı
-      if (!_isQRPackageAvailable) {
-        print('DEBUG: QR paketi kullanılamıyor, alternatif görünüm gösteriliyor');
-        return _buildAlternativeQRView();
-      }
-      
-      return QRView(
-        key: qrKey,
-        onQRViewCreated: _onQRViewCreated,
-        overlay: QrScannerOverlayShape(
-          borderColor: const Color(0xFF1C3879),
-          borderRadius: 10,
-          borderLength: 30,
-          borderWidth: 10,
-          cutOutSize: 250,
-        ),
-        onPermissionSet: (ctrl, permission) {
-          print('DEBUG: Kamera izni durumu: $permission');
-          if (!permission) {
-            print('DEBUG: Kamera izni verilmedi.');
-            // Kamera izni verilmediğinde hata dialogu göstermek yerine
-            // ekranı karanlık bırakıp kullanıcıya mesaj gösteriyoruz
-            // Kullanıcı isterse manuel giriş butonunu kendisi kullanabilir
-            Future.microtask(() {
-              if (!_isDisposed && mounted) {
-                // Sadece bilgi mesajı göster
-                _showError('Kamera izni verilmedi. Fotoğraf yükleme veya manuel giriş seçeneklerini kullanabilirsiniz.');
-                
-                // 3 saniye sonra ana sayfaya dön
-                Future.delayed(const Duration(seconds: 3), () {
-                  if (!_isDisposed && mounted) {
-                    _navigateToDashboard();
-                  }
-                });
-              }
-            });
-          }
-        },
-      );
-    } catch (e) {
-      print('DEBUG: QR görünümü oluşturma hatası: $e');
-      // QR paketi sorunu olabilir, bayrağı güncelle
-      _isQRPackageAvailable = false;
-      
-      // Alternatif görünüm göster
-      return _buildAlternativeQRView();
+    // Kamera başlatılmadıysa alternatif görünümü göster
+    if (!_isCameraInitialized) {
+      return _buildCameraUnavailableView();
     }
+    
+    return mobile_scanner.MobileScanner(
+      controller: controller,
+      onDetect: (mobile_scanner.BarcodeCapture capture) {
+        if (_isDisposed || !mounted || _isProcessing) return;
+        
+        final List<mobile_scanner.Barcode> barcodes = capture.barcodes;
+        if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
+          _isProcessing = true;
+          _processScannedQRContent(barcodes.first.rawValue!);
+        }
+      },
+      overlay: Stack(
+        children: [
+          ColorFiltered(
+            colorFilter: ColorFilter.mode(
+              Colors.black.withOpacity(0.5), 
+              BlendMode.srcOut
+            ),
+            child: Stack(
+              children: [
+                Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.transparent,
+                  ),
+                  child: Container(
+                    width: double.infinity,
+                    height: double.infinity,
+                    color: Colors.black,
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.center,
+                  child: Container(
+                    height: 250,
+                    width: 250,
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // QR tarama çerçevesi
+          Center(
+            child: Container(
+              width: 250,
+              height: 250,
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: const Color(0xFF1C3879),
+                  width: 3,
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Stack(
+                children: [
+                  // Köşe işaretleri
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    child: _CornerBox(isTopLeft: true),
+                  ),
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: _CornerBox(isTopRight: true),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    child: _CornerBox(isBottomLeft: true),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: _CornerBox(isBottomRight: true),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Tarama talimatı
+          Positioned(
+            bottom: 300,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Text(
+                'QR Kodunuzu Çerçeveye Getirin',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  backgroundColor: Colors.black.withOpacity(0.3),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
   
-  // Alternatif QR görünümü - qr_code_scanner paketi yüklenemediğinde gösterilir
-  Widget _buildAlternativeQRView() {
-    Future.delayed(const Duration(milliseconds: 1000), () {
-      if (mounted && !_isDisposed) {
-        _showQRPackageErrorDialog();
-      }
-    });
-    
+  // Kamera kullanılamadığında gösterilecek görünüm
+  Widget _buildCameraUnavailableView() {
     return Container(
       color: Colors.black,
-      child: const Center(
+      child: Center(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(color: Colors.white),
-            SizedBox(height: 20),
-            Text(
-              'QR tarayıcı hazırlanıyor...',
-              style: TextStyle(color: Colors.white),
+            const Icon(
+              Icons.no_photography,
+              color: Colors.white,
+              size: 80,
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Kamera kullanılamıyor',
+              style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+              child: Text(
+                _isCameraPermissionDenied 
+                    ? 'Kamera izni reddedildi. Ayarlardan izin vermeniz gerekebilir.'
+                    : 'QR tarayıcı başlatılamadı. Lütfen cihaz ayarlarınızı kontrol edin veya aşağıdaki seçenekleri kullanın.',
+                style: const TextStyle(color: Colors.white70, fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 30),
+            if (_isCameraPermissionDenied)
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.blue,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                onPressed: () async {
+                  // Ayarlar sayfasına yönlendir
+                  await openAppSettings();
+                },
+                child: const Text('Ayarları Aç'),
+              ),
+            const SizedBox(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.blue,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  onPressed: () => _handleManualEntry(),
+                  child: const Text('Manuel Giriş'),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.blue,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  onPressed: () => _pickImage(),
+                  child: const Text('Fotoğraf Yükle'),
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
-  }
-  
-  // QR paketi hatası durumunda gösterilecek dialog
-  void _showQRPackageErrorDialog() {
-    if (_isDisposed || !mounted) return;
-    
-    try {
-      // Zorla kapatmak yerine bilgilendirici mesaj göster
-      _showError('QR tarayıcı kullanılamıyor. Lütfen fotoğraf yükleme veya manuel giriş seçeneklerini kullanın.');
-      
-      // 3 saniye sonra ana sayfaya dön
-      Future.delayed(const Duration(seconds: 3), () {
-        if (!_isDisposed && mounted) {
-          _navigateToDashboard();
-        }
-      });
-    } catch (e) {
-      print('DEBUG: QR paketi hata mesajı gösterme hatası: $e');
-    }
-  }
-
-  // Ana sayfaya (Dashboard) dönüş metodu
-  void _navigateToDashboard() {
-    if (_isDisposed || !mounted) return;
-    
-    try {
-      // Kamerayı güvenli şekilde kapat
-      _disposeCamera();
-      
-      // Context'i güvenli şekilde saklayalım
-      final currentContext = context;
-      
-      // UI thread'i için Future.microtask kullan
-      Future.microtask(() {
-        // Yine kontrol et çünkü microtask içindeyiz
-        if (!_isDisposed && mounted) {
-          // Tüm route'ları temizleyerek ana sayfaya dön
-          Navigator.of(currentContext).pushNamedAndRemoveUntil('/home', (route) => false);
-        }
-      });
-    } catch (e) {
-      print('DEBUG: Ana sayfaya dönüş hatası: $e');
-    }
   }
 } 

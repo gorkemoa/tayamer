@@ -48,6 +48,10 @@
 	<string>Uygulama QR kod işlemek için dosya erişimine ihtiyaç duyar</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>QR kod içeren fotoğrafları yüklemek için galeri izni gerekiyor</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Galeriye fotoğraf kaydetmek için izin gerekir</string>
+	<key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
+	<true/>
 	<key>NSUserNotificationAlertStyle</key>
 	<string>alert</string>
 	<key>NSUserNotificationCenterDelegate</key>
@@ -65,6 +69,11 @@
 		<string>fetch</string>
 		<string>remote-notification</string>
 	</array>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
+	<key>UIFileSharingEnabled</key>
+	<true/>
+
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

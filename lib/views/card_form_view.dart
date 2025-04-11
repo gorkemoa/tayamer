@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:ml_card_scanner/ml_card_scanner.dart';
 import 'package:card_scanner/card_scanner.dart';
 import '../viewmodels/offer_viewmodel.dart';
 import '../viewmodels/payment_viewmodel.dart';
@@ -15,7 +14,7 @@ class CardManualEntryView extends StatefulWidget {
   final String holderTC;
   final String holderBD;
   final int maxInstallment;
-  final CardInfo? scanResult; // ml_card_scanner paketi kullanılıyorsa
+  final CardDetails? scanResult; // card_scanner paketi kullanılacak
   final String? cardNumber; // Direkt olarak kart numarası da alabilir
   final String? cardHolder; // Kart sahibi adı
   final String? expiryDate; // Son kullanma tarihi
@@ -127,17 +126,17 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
   }
   
   // Tarama sonucunu işleme
-  void _processScannedCardData(CardInfo scanResult) {
+  void _processScannedCardData(CardDetails scanResult) {
     try {
       // Kart numarası
-      if (scanResult.number.isNotEmpty) {
-        _cardNumberController.text = scanResult.numberFormatted();
+      if (scanResult.cardNumber != null && scanResult.cardNumber!.isNotEmpty) {
+        _cardNumberController.text = _formatCardNumber(scanResult.cardNumber!);
       }
       
       // Son kullanma tarihi
-      if (scanResult.expiry.isNotEmpty) {
+      if (scanResult.expiryDate != null && scanResult.expiryDate!.isNotEmpty) {
         // Tarih formatını kontrol et
-        String expiryDate = scanResult.expiry;
+        String expiryDate = scanResult.expiryDate!;
         
         // Eksik formatı düzelt (bazen MM/YY yerine sadece MMYY olabilir)
         if (!expiryDate.contains('/') && expiryDate.length >= 4) {
@@ -151,6 +150,11 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
           TextEditingValue.empty,
           TextEditingValue(text: _expiryDateController.text),
         ).text;
+      }
+      
+      // Kart sahibi adı
+      if (scanResult.cardHolderName != null && scanResult.cardHolderName!.isNotEmpty) {
+        _cardHolderController.text = scanResult.cardHolderName!;
       }
     } catch (e) {
       // Tarama sonucu işlenirken hata olursa sessizce geç
@@ -201,7 +205,7 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
         }
       }
       
-      // Önce card_scanner paketini deneyelim
+      // Card Scanner paketi ile tarama
       try {
         debugPrint('Card Scanner paketi ile taramayı deniyorum...');
         
@@ -229,56 +233,19 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
             if (cardDetails.cardHolderName != null) {
               _cardHolderController.text = cardDetails.cardHolderName!;
             }
-            
-            setState(() {
-              _isScanning = false;
-            });
-            return;
           }
         }
       } catch (e) {
         debugPrint('Card Scanner paketi ile tarama başarısız: $e');
-        // CardScanner başarısız olursa, ml_card_scanner'ı deneyelim
-      }
-      
-      // ml_card_scanner paketi ile tarama (yedek yöntem)
-      final CardInfo? cardInfo = await showDialog<CardInfo>(
-        context: context,
-        barrierDismissible: true,
-        builder: (context) {
-          final controller = ScannerWidgetController();
-          
-          // Card tarandığında kontrol için
-          controller.setCardListener((cardInfo) {
-            if (cardInfo != null) {
-              Navigator.of(context).pop(cardInfo);
-            }
-          });
-          
-          return AlertDialog(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            contentPadding: EdgeInsets.zero,
-            content: SizedBox(
-              width: double.infinity,
-              height: MediaQuery.of(context).size.height * 0.8,
-              child: ScannerWidget(
-                overlayOrientation: CardOrientation.portrait,
-                oneShotScanning: true,
-                cardScanTries: 4,  // Tarama denemesi sayısı
-                cameraResolution: CameraResolution.high,
-                usePreprocessingFilters: true,
-                controller: controller,
-              ),
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Kart tarama işlemi başarısız: $e'),
+              backgroundColor: Colors.red,
             ),
           );
-        },
-      );
-
-      if (mounted && cardInfo != null && cardInfo.isValid()) {
-        debugPrint('ML Card Scanner ile kart tarandı');
-        // Tarama sonucunu işle
-        _processScannedCardData(cardInfo);
+        }
       }
     } catch (e) {
       if (mounted) {
