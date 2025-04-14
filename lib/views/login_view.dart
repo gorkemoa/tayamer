@@ -161,30 +161,20 @@ class _LoginViewState extends State<LoginView> {
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: Colors.grey.shade300),
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.person_outline, color: Colors.grey[700]),
-                                  const SizedBox(width: 15),
-                                  Expanded(
-                                    child: TextFormField(
-                                      controller: _emailController,
-                                      decoration: const InputDecoration(
-                                        hintText: 'Kullanıcı Adınız',
-                                        border: InputBorder.none,
-                                        contentPadding: EdgeInsets.symmetric(vertical: 18),
-                                      ),
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'Lütfen kullanıcı adınızı girin';
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                  ),
-                                ],
+                            child: TextFormField(
+                              controller: _emailController,
+                              decoration: InputDecoration(
+                                hintText: 'Kullanıcı Adınız',
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+                                prefixIcon: Icon(Icons.person_outline, color: Colors.grey[700]),
                               ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Lütfen kullanıcı adınızı girin';
+                                }
+                                return null;
+                              },
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -195,31 +185,21 @@ class _LoginViewState extends State<LoginView> {
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: Colors.grey.shade300),
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.lock_outline, color: Colors.grey[700]),
-                                  const SizedBox(width: 15),
-                                  Expanded(
-                                    child: TextFormField(
-                                      controller: _passwordController,
-                                      obscureText: true,
-                                      decoration: const InputDecoration(
-                                        hintText: 'Şifreniz',
-                                        border: InputBorder.none,
-                                        contentPadding: EdgeInsets.symmetric(vertical: 18),
-                                      ),
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'Lütfen şifrenizi girin';
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                  ),
-                                ],
+                            child: TextFormField(
+                              controller: _passwordController,
+                              obscureText: true,
+                              decoration: InputDecoration(
+                                hintText: 'Şifreniz',
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+                                prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[700]),
                               ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Lütfen şifrenizi girin';
+                                }
+                                return null;
+                              },
                             ),
                           ),
                           if (_errorMessage.isNotEmpty) ...[
