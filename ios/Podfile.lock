@@ -1,42 +1,8 @@
 PODS:
-  - card_scanner (0.0.1):
+  - credit_card_scanner (0.0.1):
     - Flutter
     - GoogleMLKit/TextRecognition
   - device_info_plus (0.0.1):
-    - Flutter
-  - DKImagePickerController/Core (4.3.9):
-    - DKImagePickerController/ImageDataManager
-    - DKImagePickerController/Resource
-  - DKImagePickerController/ImageDataManager (4.3.9)
-  - DKImagePickerController/PhotoGallery (4.3.9):
-    - DKImagePickerController/Core
-    - DKPhotoGallery
-  - DKImagePickerController/Resource (4.3.9)
-  - DKPhotoGallery (0.0.19):
-    - DKPhotoGallery/Core (= 0.0.19)
-    - DKPhotoGallery/Model (= 0.0.19)
-    - DKPhotoGallery/Preview (= 0.0.19)
-    - DKPhotoGallery/Resource (= 0.0.19)
-    - SDWebImage
-    - SwiftyGif
-  - DKPhotoGallery/Core (0.0.19):
-    - DKPhotoGallery/Model
-    - DKPhotoGallery/Preview
-    - SDWebImage
-    - SwiftyGif
-  - DKPhotoGallery/Model (0.0.19):
-    - SDWebImage
-    - SwiftyGif
-  - DKPhotoGallery/Preview (0.0.19):
-    - DKPhotoGallery/Model
-    - DKPhotoGallery/Resource
-    - SDWebImage
-    - SwiftyGif
-  - DKPhotoGallery/Resource (0.0.19):
-    - SDWebImage
-    - SwiftyGif
-  - file_picker (0.0.1):
-    - DKImagePickerController/PhotoGallery
     - Flutter
   - Firebase/CoreOnly (10.18.0):
     - FirebaseCore (= 10.18.0)
@@ -71,8 +37,6 @@ PODS:
     - GoogleUtilities/UserDefaults (~> 7.8)
     - nanopb (< 2.30910.0, >= 2.30908.0)
   - Flutter (1.0.0)
-  - flutter_barcode_scanner (2.0.0):
-    - Flutter
   - flutter_local_notifications (0.0.1):
     - Flutter
   - flutter_pdfview (1.0.2):
@@ -343,20 +307,13 @@ PODS:
     - FlutterMacOS
   - permission_handler_apple (9.3.0):
     - Flutter
-  - photo_manager (2.0.0):
-    - Flutter
-    - FlutterMacOS
   - PromisesObjC (2.4.0)
-  - SDWebImage (5.21.0):
-    - SDWebImage/Core (= 5.21.0)
-  - SDWebImage/Core (5.21.0)
   - share_plus (0.0.1):
     - Flutter
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
   - SSZipArchive (2.1.5)
-  - SwiftyGif (5.4.5)
   - url_launcher_ios (0.0.1):
     - Flutter
   - webview_flutter_wkwebview (0.0.1):
@@ -364,13 +321,11 @@ PODS:
     - FlutterMacOS
 
 DEPENDENCIES:
-  - card_scanner (from `.symlinks/plugins/card_scanner/ios`)
+  - credit_card_scanner (from `.symlinks/plugins/credit_card_scanner/ios`)
   - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
-  - file_picker (from `.symlinks/plugins/file_picker/ios`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
   - firebase_messaging (from `.symlinks/plugins/firebase_messaging/ios`)
   - Flutter (from `Flutter`)
-  - flutter_barcode_scanner (from `.symlinks/plugins/flutter_barcode_scanner/ios`)
   - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
   - flutter_pdfview (from `.symlinks/plugins/flutter_pdfview/ios`)
   - google_mlkit_barcode_scanning (from `.symlinks/plugins/google_mlkit_barcode_scanning/ios`)
@@ -391,7 +346,6 @@ DEPENDENCIES:
   - mobile_scanner (from `.symlinks/plugins/mobile_scanner/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
-  - photo_manager (from `.symlinks/plugins/photo_manager/ios`)
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
@@ -399,8 +353,6 @@ DEPENDENCIES:
 
 SPEC REPOS:
   https://github.com/CocoaPods/Specs.git:
-    - DKImagePickerController
-    - DKPhotoGallery
     - Firebase
     - FirebaseCore
     - FirebaseCoreInternal
@@ -441,25 +393,19 @@ SPEC REPOS:
     - MLKitXenoCommon
     - nanopb
     - PromisesObjC
-    - SDWebImage
     - SSZipArchive
-    - SwiftyGif
 
 EXTERNAL SOURCES:
-  card_scanner:
-    :path: ".symlinks/plugins/card_scanner/ios"
+  credit_card_scanner:
+    :path: ".symlinks/plugins/credit_card_scanner/ios"
   device_info_plus:
     :path: ".symlinks/plugins/device_info_plus/ios"
-  file_picker:
-    :path: ".symlinks/plugins/file_picker/ios"
   firebase_core:
     :path: ".symlinks/plugins/firebase_core/ios"
   firebase_messaging:
     :path: ".symlinks/plugins/firebase_messaging/ios"
   Flutter:
     :path: Flutter
-  flutter_barcode_scanner:
-    :path: ".symlinks/plugins/flutter_barcode_scanner/ios"
   flutter_local_notifications:
     :path: ".symlinks/plugins/flutter_local_notifications/ios"
   flutter_pdfview:
@@ -500,8 +446,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
   permission_handler_apple:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
-  photo_manager:
-    :path: ".symlinks/plugins/photo_manager/ios"
   share_plus:
     :path: ".symlinks/plugins/share_plus/ios"
   shared_preferences_foundation:
@@ -512,11 +456,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/webview_flutter_wkwebview/darwin"
 
 SPEC CHECKSUMS:
-  card_scanner: 0f041b5afb64b30d868303c2fe3cec41f653a0fe
+  credit_card_scanner: add4d85b986d60051f28685fe9e556fe32f80695
   device_info_plus: 335f3ce08d2e174b9fdc3db3db0f4e3b1f66bd89
-  DKImagePickerController: 946cec48c7873164274ecc4624d19e3da4c1ef3c
-  DKPhotoGallery: b3834fecb755ee09a593d7c9e389d8b5d6deed60
-  file_picker: 07c75322ede1d47ec9bb4ac82b27c94d3598251a
   Firebase: 414ad272f8d02dfbf12662a9d43f4bba9bec2a06
   firebase_core: 5bad2e50fa73344e56ba062623bc23ea08381b5a
   firebase_messaging: fad5de12041454ab766048b3519b1b29688e1c6f
@@ -525,7 +466,6 @@ SPEC CHECKSUMS:
   FirebaseInstallations: 913cf60d0400ebd5d6b63a28b290372ab44590dd
   FirebaseMessaging: 9bc34a98d2e0237e1b121915120d4d48ddcf301e
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
-  flutter_barcode_scanner: c5aa9f51c150a6242fa392386bd52b64bb27fcb5
   flutter_local_notifications: a5a732f069baa862e728d839dd2ebb904737effb
   flutter_pdfview: 32bf27bda6fd85b9dd2c09628a824df5081246cf
   google_mlkit_barcode_scanning: 677dbd0a43df527f5a4055cdfc53cf86ff02c01e
@@ -580,13 +520,10 @@ SPEC CHECKSUMS:
   nanopb: d4d75c12cd1316f4a64e3c6963f879ecd4b5e0d5
   path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
   permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
-  photo_manager: d2fbcc0f2d82458700ee6256a15018210a81d413
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
-  SDWebImage: f84b0feeb08d2d11e6a9b843cb06d75ebf5b8868
   share_plus: 011d6fb4f9d2576b83179a3a5c5e323202cdabcf
   shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
   SSZipArchive: cefe1364104a0231268a5deb8495bdf2861f52f0
-  SwiftyGif: 706c60cf65fa2bc5ee0313beece843c8eb8194d4
   url_launcher_ios: 694010445543906933d732453a59da0a173ae33d
   webview_flutter_wkwebview: 1821ceac936eba6f7984d89a9f3bcb4dea99ebb2
 

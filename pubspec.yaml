@@ -15,11 +15,9 @@ dependencies:
 
 
   cupertino_icons: ^1.0.8
-  google_fonts: ^6.1.0
   path_provider: ^2.1.3
   http: ^1.2.1
   shared_preferences: ^2.5.3
-  flutter_barcode_scanner: ^2.0.0
   provider: ^6.1.4
   image_picker: ^1.0.4
   url_launcher: ^6.3.1
@@ -33,12 +31,10 @@ dependencies:
   firebase_messaging: ^14.7.9
   mobile_scanner: ^3.5.7 # Yeni QR tarayıcı paketi
   font_awesome_flutter:
-  card_scanner: ^1.0.2
   permission_handler: ^11.3.0
   google_ml_kit: ^0.16.3
-  file_picker: ^6.2.0
-  photo_manager: ^3.6.4
   device_info_plus: ^9.1.2
+  credit_card_scanner: ^1.0.5
 
 dev_dependencies:
   flutter_test:

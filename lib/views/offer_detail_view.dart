@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../viewmodels/offer_viewmodel.dart';
 import '../models/offer_model.dart';
 import 'package:intl/intl.dart';
-import 'card_scan_view.dart';
+import 'card_form_view.dart';
 
 class OfferDetailView extends StatefulWidget {
   final String offerId;
@@ -293,7 +293,7 @@ class _OfferDetailViewState extends State<OfferDetailView> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => CardScanView(
+                      builder: (context) => CardManualEntryView(
                         detailUrl: price.detailUrl,
                         offerId: int.parse(widget.offerId),
                         companyId: int.parse(price.companyID),

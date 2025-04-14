@@ -33,14 +33,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.2"
-  card_scanner:
-    dependency: "direct main"
-    description:
-      name: card_scanner
-      sha256: "0812cc2c5194ff2a3c3e1ea370d2d2bb3e9bc597b2c46cc872409476c9b48da9"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.2"
   characters:
     dependency: transitive
     description:
@@ -73,6 +65,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.8.0"
+  credit_card_scanner:
+    dependency: "direct main"
+    description:
+      name: credit_card_scanner
+      sha256: "9bbfcac698f01bb32cbb2abfc6a9efa7fdea006e5a982cb4b8dc69fa0e8c1d19"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.5"
   cross_file:
     dependency: transitive
     description:
@@ -145,14 +145,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.1"
-  file_picker:
-    dependency: "direct main"
-    description:
-      name: file_picker
-      sha256: "1bbf65dd997458a08b531042ec3794112a6c39c07c37ff22113d2e7e4f81d4e4"
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.2.1"
   file_selector_linux:
     dependency: transitive
     description:
@@ -246,14 +238,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_barcode_scanner:
-    dependency: "direct main"
-    description:
-      name: flutter_barcode_scanner
-      sha256: a4ba37daf9933f451a5e812c753ddd045d6354e4a3280342d895b07fecaab3fa
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.0"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -328,14 +312,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "10.8.0"
-  google_fonts:
-    dependency: "direct main"
-    description:
-      name: google_fonts
-      sha256: b1ac0fe2832c9cc95e5e88b57d627c5e68c223b9657f4b96e1487aa9098c7b82
-      url: "https://pub.dev"
-    source: hosted
-    version: "6.2.1"
   google_ml_kit:
     dependency: "direct main"
     description:
@@ -744,14 +720,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.0.2"
-  photo_manager:
-    dependency: "direct main"
-    description:
-      name: photo_manager
-      sha256: "0bc7548fd3111eb93a3b0abf1c57364e40aeda32512c100085a48dade60e574f"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.6.4"
   platform:
     dependency: transitive
     description:

@@ -459,12 +459,12 @@ class _NewOfferViewState extends State<NewOfferView> {
       _isBottomSheetActive = false;
     });
     
-    // Sadece poliçe tipi seçilmediğinde ve bottom sheet manuel olarak kapatıldığında yönlendir
-    // Poliçe seçilmişse (_isPolicySelected=true), yönlendirme yapmayız çünkü kullanıcı zaten bir işlem yapmaktadır
-    // Kullanıcı bir poliçe seçtiğinde _selectPolicyType() metodu çağrılır ve _isPolicySelected=true olur
-    // Böylece kullanıcı iptal etmediği sürece teklifler sayfasına atılmayacak
+    // Bottom sheet kapandığında herhangi bir yönlendirme yapmıyoruz
+    // Böylece kullanıcı en son görüntülediği sayfada kalacak
+    
+    // Eğer doğrudan yeni teklif sayfasına gelmiş ve geri gidilecek sayfa yoksa
+    // (Yani Navigator.of(context).canPop() false ise) ana sayfaya yönlendir
     if (!_isPolicySelected && mounted && !Navigator.of(context).canPop()) {
-      // Ana sayfaya yönlendir
       _navigateToHomeIndex(1);
     }
   }

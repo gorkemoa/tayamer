@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
+import 'package:credit_card_scanner/credit_card_scanner.dart';
 import '../viewmodels/offer_viewmodel.dart';
 import '../viewmodels/payment_viewmodel.dart';
 
@@ -37,6 +38,7 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
   final _birthDateController = TextEditingController();
   String _instalmentValue = "1";
   late PaymentViewModel _paymentViewModel;
+  bool _isScanning = false;
 
   @override
   void initState() {
@@ -76,6 +78,19 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: _isScanning 
+              ? const SizedBox(
+                  width: 24, 
+                  height: 24, 
+                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                )
+              : const Icon(Icons.camera_alt, color: Colors.white),
+            tooltip: 'Kartı Tarayarak Doldur',
+            onPressed: _isScanning ? null : _scanCard,
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(15.0),
@@ -599,6 +614,101 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
           );
         }
       });
+    }
+  }
+
+  // Kart tarama fonksiyonu
+  Future<void> _scanCard() async {
+    try {
+      setState(() {
+        _isScanning = true;
+      });
+      
+      // Bilgilendirme mesajı göster
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Kart Tarama'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                CircularProgressIndicator(),
+                SizedBox(height: 20),
+                Text(
+                  'Lütfen kartınızı kamera çerçevesine yerleştirin. '
+                  'Kart bilgileri otomatik olarak okunacaktır.',
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          );
+        },
+      );
+      
+      final CardDetails? cardDetails = await CardScanner.scanCard(
+        scanOptions: const CardScanOptions(
+          scanCardHolderName: true,
+          enableDebugLogs: true,
+          validCardsToScanBeforeFinishingScan: 3,
+          considerPastDatesInExpiryDateScan: false,
+        ),
+      );
+      
+      // Dialog'u kapat
+      if (!mounted) return;
+      Navigator.pop(context);
+      
+      setState(() {
+        _isScanning = false;
+      });
+      
+      if (cardDetails != null) {
+        setState(() {
+          if (cardDetails.cardNumber != null && cardDetails.cardNumber!.isNotEmpty) {
+            _cardNumberController.text = cardDetails.cardNumber!;
+          }
+          
+          if (cardDetails.cardHolderName != null && cardDetails.cardHolderName!.isNotEmpty) {
+            _cardHolderController.text = cardDetails.cardHolderName!.toUpperCase();
+          }
+          
+          if (cardDetails.expiryDate != null && cardDetails.expiryDate!.isNotEmpty) {
+            // Tarih formatını kontrol et ve düzenle
+            final expiry = cardDetails.expiryDate!;
+            if (expiry.length >= 4) {
+              final month = expiry.substring(0, 2);
+              final year = expiry.substring(2, 4);
+              _expiryDateController.text = '$month/$year';
+            }
+          }
+        });
+        
+        // Başarı mesajı göster
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Kart bilgileri başarıyla tarandı'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isScanning = false;
+      });
+      
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Kart tarama hatası: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
   }
 }
