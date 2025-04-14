@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:card_scanner/card_scanner.dart';
 import '../viewmodels/offer_viewmodel.dart';
 import '../viewmodels/payment_viewmodel.dart';
 
@@ -14,10 +12,6 @@ class CardManualEntryView extends StatefulWidget {
   final String holderTC;
   final String holderBD;
   final int maxInstallment;
-  final CardDetails? scanResult; // card_scanner paketi kullanılacak
-  final String? cardNumber; // Direkt olarak kart numarası da alabilir
-  final String? cardHolder; // Kart sahibi adı
-  final String? expiryDate; // Son kullanma tarihi
 
   const CardManualEntryView({
     Key? key,
@@ -27,10 +21,6 @@ class CardManualEntryView extends StatefulWidget {
     required this.holderTC,
     required this.holderBD,
     this.maxInstallment = 1,
-    this.scanResult,
-    this.cardNumber,
-    this.cardHolder,
-    this.expiryDate,
   }) : super(key: key);
 
   @override
@@ -47,7 +37,6 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
   final _birthDateController = TextEditingController();
   String _instalmentValue = "1";
   late PaymentViewModel _paymentViewModel;
-  bool _isScanning = false; // Tarama durumu için flag
 
   @override
   void initState() {
@@ -57,109 +46,6 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
     // TC ve doğum tarihi bilgilerini widget parametrelerinden al
     _tcNoController.text = widget.holderTC;
     _birthDateController.text = widget.holderBD;
-    
-    // Tarama sonucu varsa, form alanlarını doldur
-    if (widget.scanResult != null) {
-      _processScannedCardData(widget.scanResult!);
-    } else if (widget.cardNumber != null || widget.expiryDate != null || widget.cardHolder != null) {
-      // Direkt olarak kart bilgileri verildiyse
-      _processDirectCardData();
-    }
-  }
-  
-  // Doğrudan gelen kart bilgilerini işle
-  void _processDirectCardData() {
-    try {
-      // Kart numarası
-      if (widget.cardNumber != null && widget.cardNumber!.isNotEmpty) {
-        _cardNumberController.text = widget.cardNumber!;
-        
-        // Gerekirse kart numarası formatlaması yapılabilir
-        if (!_cardNumberController.text.contains(' ')) {
-          final formattedNumber = _formatCardNumber(widget.cardNumber!);
-          _cardNumberController.text = formattedNumber;
-        }
-      }
-      
-      // Kart sahibi adı
-      if (widget.cardHolder != null && widget.cardHolder!.isNotEmpty) {
-        _cardHolderController.text = widget.cardHolder!;
-      }
-      
-      // Son kullanma tarihi
-      if (widget.expiryDate != null && widget.expiryDate!.isNotEmpty) {
-        String expiryDate = widget.expiryDate!;
-        
-        // Eksik formatı düzelt (bazen MM/YY yerine sadece MMYY olabilir)
-        if (!expiryDate.contains('/') && expiryDate.length >= 4) {
-          expiryDate = "${expiryDate.substring(0, 2)}/${expiryDate.substring(2, 4)}";
-        }
-        
-        _expiryDateController.text = expiryDate;
-        
-        // Formatlama uygula
-        _expiryDateController.text = CardExpiryInputFormatter().formatEditUpdate(
-          TextEditingValue.empty,
-          TextEditingValue(text: _expiryDateController.text),
-        ).text;
-      }
-      
-      debugPrint('Kart bilgileri direkt olarak işlendi: ${_cardNumberController.text}');
-    } catch (e) {
-      debugPrint('Kart bilgileri işlenirken hata: $e');
-    }
-  }
-  
-  // Kart numarası formatlama (4 hanede bir boşluk)
-  String _formatCardNumber(String number) {
-    String cleanNumber = number.replaceAll(RegExp(r'\D'), '');
-    StringBuffer buffer = StringBuffer();
-    
-    for (int i = 0; i < cleanNumber.length; i++) {
-      if (i > 0 && i % 4 == 0) {
-        buffer.write(' ');
-      }
-      buffer.write(cleanNumber[i]);
-    }
-    
-    return buffer.toString();
-  }
-  
-  // Tarama sonucunu işleme
-  void _processScannedCardData(CardDetails scanResult) {
-    try {
-      // Kart numarası
-      if (scanResult.cardNumber != null && scanResult.cardNumber!.isNotEmpty) {
-        _cardNumberController.text = _formatCardNumber(scanResult.cardNumber!);
-      }
-      
-      // Son kullanma tarihi
-      if (scanResult.expiryDate != null && scanResult.expiryDate!.isNotEmpty) {
-        // Tarih formatını kontrol et
-        String expiryDate = scanResult.expiryDate!;
-        
-        // Eksik formatı düzelt (bazen MM/YY yerine sadece MMYY olabilir)
-        if (!expiryDate.contains('/') && expiryDate.length >= 4) {
-          expiryDate = "${expiryDate.substring(0, 2)}/${expiryDate.substring(2, 4)}";
-        }
-        
-        _expiryDateController.text = expiryDate;
-        
-        // Formatlama uygula
-        _expiryDateController.text = CardExpiryInputFormatter().formatEditUpdate(
-          TextEditingValue.empty,
-          TextEditingValue(text: _expiryDateController.text),
-        ).text;
-      }
-      
-      // Kart sahibi adı
-      if (scanResult.cardHolderName != null && scanResult.cardHolderName!.isNotEmpty) {
-        _cardHolderController.text = scanResult.cardHolderName!;
-      }
-    } catch (e) {
-      // Tarama sonucu işlenirken hata olursa sessizce geç
-      debugPrint('Kart verileri işlenirken hata: $e');
-    }
   }
 
   @override
@@ -173,103 +59,11 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
     super.dispose();
   }
 
-  // Kart tarama fonksiyonu
-  Future<void> _scanCard() async {
-    if (_isScanning) return;
-
-    setState(() {
-      _isScanning = true;
-    });
-
-    try {
-      // Önce kamera izinlerini kontrol et
-      final status = await Permission.camera.status;
-      
-      if (!status.isGranted) {
-        // İzin iste
-        final result = await Permission.camera.request();
-        if (!result.isGranted) {
-          // Kullanıcıya bildirim göster
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Kart tarama işlemi için kamera izni gereklidir.'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-          setState(() {
-            _isScanning = false;
-          });
-          return;
-        }
-      }
-      
-      // Card Scanner paketi ile tarama
-      try {
-        debugPrint('Card Scanner paketi ile taramayı deniyorum...');
-        
-        // Doğrudan CardScanner.scanCard() çağrısı yapılıyor
-        final cardDetails = await CardScanner.scanCard();
-        
-        if (cardDetails != null) {
-          if (mounted) {
-            debugPrint('Card Scanner ile kart tarandı: ${cardDetails.cardNumber}');
-            
-            if (cardDetails.cardNumber != null) {
-              _cardNumberController.text = _formatCardNumber(cardDetails.cardNumber!);
-            }
-            
-            if (cardDetails.expiryDate != null) {
-              _expiryDateController.text = cardDetails.expiryDate!;
-              
-              // Formatlama uygula
-              _expiryDateController.text = CardExpiryInputFormatter().formatEditUpdate(
-                TextEditingValue.empty,
-                TextEditingValue(text: _expiryDateController.text),
-              ).text;
-            }
-            
-            if (cardDetails.cardHolderName != null) {
-              _cardHolderController.text = cardDetails.cardHolderName!;
-            }
-          }
-        }
-      } catch (e) {
-        debugPrint('Card Scanner paketi ile tarama başarısız: $e');
-        
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Kart tarama işlemi başarısız: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Kart tarama hatası: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isScanning = false;
-        });
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).primaryColor,
+        backgroundColor: const Color(0xFF1E3A8A),
         title: const Text(
           'Kart Bilgileri',
           style: TextStyle(

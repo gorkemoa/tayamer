@@ -652,42 +652,7 @@ class _ManualEntryViewState extends State<ManualEntryView> {
                   textAlign: TextAlign.center,
                 ),
                 
-                // Galeri modu için özel bilgilendirme
-                if (isGalleryMode && focusFields.isNotEmpty)
-                  Container(
-                    margin: const EdgeInsets.only(top: 16, bottom: 8),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.blue.shade200),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.info_outline, color: Colors.blue.shade700),
-                            const SizedBox(width: 8),
-                            const Expanded(
-                              child: Text(
-                                'QR Kod Bilgilerini Doldurun',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: Colors.blue,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Lütfen öne çıkarılan alanlara (plaka, TC kimlik, ruhsat numarası) doğru bilgileri girerek devam edin.',
-                          style: TextStyle(fontSize: 14),
-                        ),
-                      ],
-                    ),
-                  ),
+                
                 
                 const SizedBox(height: 24),
                 
