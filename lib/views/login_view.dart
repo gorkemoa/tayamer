@@ -100,161 +100,168 @@ class _LoginViewState extends State<LoginView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          // Logo alanı - üst kısmı tamamen kaplayan turuncu arka plan
-      Container(
-  width: double.infinity,
-  decoration: BoxDecoration(
-    color: appTheme.colorScheme.secondary, // Turuncu arka plan
-    borderRadius: BorderRadius.circular(24), // Köşeleri yumuşat
-  ),
-  child: SafeArea(
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 60.0, horizontal: 40.0),
-      child: Column(
-        children: [
-          // Tayamer logo
-          _buildLogo(),
-        ],
+      appBar: AppBar(
+        toolbarHeight: 0,
+        elevation: 0,
+        backgroundColor: appTheme.colorScheme.secondary, // Turuncu arka plan
       ),
-    ),
-  ),
-),
-          // Form alanı
-          Expanded(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text(
-                      'MÜŞTERİ GİRİŞİ',
-                      style: TextStyle(
-                        fontSize: 23,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFE0622C), // Secondary color
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Lütfen size iletilen kullanıcı adı ve şifreniz ile\ngiriş yapınız.',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey,
-                        height: 1.5,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 40),
-                    // Form başlangıcı
-                    Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          // Kullanıcı adı alanı
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.grey[100],
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.grey.shade300),
-                            ),
-                            child: TextFormField(
-                              controller: _emailController,
-                              decoration: InputDecoration(
-                                hintText: 'Kullanıcı Adınız',
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
-                                prefixIcon: Icon(Icons.person_outline, color: Colors.grey[700]),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Lütfen kullanıcı adınızı girin';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          // Şifre alanı
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.grey[100],
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.grey.shade300),
-                            ),
-                            child: TextFormField(
-                              controller: _passwordController,
-                              obscureText: true,
-                              decoration: InputDecoration(
-                                hintText: 'Şifreniz',
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
-                                prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[700]),
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Lütfen şifrenizi girin';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                          if (_errorMessage.isNotEmpty) ...[
-                            const SizedBox(height: 16),
-                            Text(
-                              _errorMessage,
-                              style: const TextStyle(color: Colors.red),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                          const SizedBox(height: 32),
-                          // Giriş butonu
-                          Container(
-                            width: double.infinity,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: ElevatedButton(
-                              onPressed: _isLoading ? null : _login,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color.fromARGB(255, 43, 117, 228), // Gri-mavi buton rengi
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: _isLoading
-                                  ? const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 3,
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Giriş Yap',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // Logo alanı - üst kısmı kaplayan turuncu arka plan
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: appTheme.colorScheme.secondary, // Turuncu arka plan
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 40.0),
+                  child: Column(
+                    children: [
+                      // Tayamer logo
+                      _buildLogo(),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+            // Form alanı
+            Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'MÜŞTERİ GİRİŞİ',
+                    style: TextStyle(
+                      fontSize: 23,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFE0622C), // Secondary color
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Lütfen size iletilen kullanıcı adı ve şifreniz ile\ngiriş yapınız.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey,
+                      height: 1.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 40),
+                  // Form başlangıcı
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        // Kullanıcı adı alanı
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: TextFormField(
+                            controller: _emailController,
+                            decoration: InputDecoration(
+                              hintText: 'Kullanıcı Adınız',
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+                              prefixIcon: Icon(Icons.person_outline, color: Colors.grey[700]),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Lütfen kullanıcı adınızı girin';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // Şifre alanı
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: TextFormField(
+                            controller: _passwordController,
+                            obscureText: true,
+                            decoration: InputDecoration(
+                              hintText: 'Şifreniz',
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+                              prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[700]),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Lütfen şifrenizi girin';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        if (_errorMessage.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          Text(
+                            _errorMessage,
+                            style: const TextStyle(color: Colors.red),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                        const SizedBox(height: 32),
+                        // Giriş butonu
+                        Container(
+                          width: double.infinity,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _login,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color.fromARGB(255, 43, 117, 228), // Gri-mavi buton rengi
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 3,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Giriş Yap',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
