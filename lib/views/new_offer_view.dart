@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'dart:io' show Platform;
+import 'dart:io' show File, Platform;
 import 'package:flutter/cupertino.dart';
+import 'package:mobile_scanner/mobile_scanner.dart' as mobile_scanner;
+import 'package:image_picker/image_picker.dart';
+import 'package:google_ml_kit/google_ml_kit.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import '../models/policy_type_model.dart';
 import '../viewmodels/policy_type_viewmodel.dart';
 import '../viewmodels/offer_viewmodel.dart';
 import 'home_view.dart';
 import 'offer_success_view.dart';
-import 'qr_scanner_view.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class NewOfferView extends StatefulWidget {
   const NewOfferView({super.key});
@@ -378,87 +382,73 @@ class _NewOfferViewState extends State<NewOfferView> {
       return;
     }
     
-    // Bu flag sadece lokal değişken olarak tutulsun, asenkron işlemlerden etkilenmesin
     bool wasPolicySelected = _isPolicySelected;
     print("DEBUG-OFFER: Başlangıç _isPolicySelected=$_isPolicySelected");
     
-    // QR tarama sırasında poliçe seçilmiş olarak işaretle
-    // böylece bottom sheet'den otomatik yönlendirme yapılmasın
     setState(() {
       _isPolicySelected = true;
     });
     
-    // İşlemi lokal tutmak için değişkenler
-    Map<String, String>? qrResult;
-    bool navigateToForm = false;
-    
     try {
-      print("DEBUG-OFFER: QRScannerView başlatılıyor");
+      print("DEBUG-OFFER: QR süreci başlatılıyor");
       
-      // QR tarayıcıyı aç ve sonuç için bekle
-      // NOT: onResult ve onManualEntry callback'lerini basitleştirilmiş halde kullan
-      qrResult = await Navigator.push<Map<String, String>>(
+      // Önce form sayfasını aç
+      final formPage = ManualEntryView(
+        policyType: policyType,
+        initialData: {'manualEntry': 'true'},
+      );
+      
+      // QR tarama sayfasını aç
+      final qrResult = await Navigator.push<Map<String, String>>(
         context,
         MaterialPageRoute(
           builder: (context) => QRScannerView(
-            // Manuel giriş seçildiğinde null döndür
-            onManualEntry: () => Navigator.of(context).pop(null),
-            // QR veya galeri sonucu alındığında sonucu döndür
-            onResult: (data) => Navigator.of(context).pop(data),
+            onManualEntry: () {
+              Navigator.of(context).pop();
+              if (mounted) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => formPage),
+                );
+              }
+            },
+            onResult: (data) {
+              Navigator.of(context).pop();
+              if (mounted) {
+                // QR sonucunu form sayfasına aktar
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ManualEntryView(
+                      policyType: policyType,
+                      initialData: data,
+                    ),
+                  ),
+                );
+              }
+            },
           ),
         ),
       );
       
-      print("DEBUG-OFFER: QRScannerView'dan döndü, qrResult=${qrResult.toString()}");
-      
-      // QR tarayıcıdan sonuç alınabildi mi?
-      navigateToForm = mounted; // Sadece widget hala varsa forma git
+      print("DEBUG-OFFER: QR sonucu alındı: ${qrResult?.toString()}");
       
     } catch (e) {
-      print("DEBUG-OFFER: QR tarama HATASI: $e");
-      // Hata durumunda da forma git (manuel giriş için)
-      navigateToForm = mounted;
-      qrResult = null; // Hata olduğunda sonucu temizle
-    }
-    
-    // Tüm async işlemlerden sonra widget hala aktif ve forma gitme kararı alındıysa
-    if (navigateToForm && mounted) {
-      print("DEBUG-OFFER: Form sayfasına geçiliyor, qrResult=${qrResult.toString()}");
-      
-      // Widget ağacının kararlı hale gelmesini bekle, sonra navigasyon yap
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) {
-          print("DEBUG-OFFER: PostFrameCallback içinde widget dispose edilmiş");
-          return;
-        }
-        
-        print("DEBUG-OFFER: PostFrameCallback içinde forma geçiş yapılıyor");
-        try {
-          // TAM BURADA FORMA GEÇİŞ YAP
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ManualEntryView(
-                policyType: policyType,
-                initialData: qrResult, // null olabilir - ManualEntryView bunu kontrol eder
-              ),
-            ),
-          );
-          print("DEBUG-OFFER: Form sayfasına geçiş başarılı ve form kapatıldı");
-        } catch (e) {
-          print("DEBUG-OFFER: Form sayfasına geçiş HATASI: $e");
-          // Burada yapılacak bir şey yok, kullanıcı zaten ana sayfada kalacak
-        }
-      });
-    } else {
-      print("DEBUG-OFFER: Form sayfasına geçilmiyor - mounted=$mounted, navigateToForm=$navigateToForm");
-    }
-    
-    // Tüm işlemler tamamlandığında, eğer hala bu widget aktifse poliçe seçim durumunu eski haline getir
-    if (mounted) {
-      setState(() {
-        _isPolicySelected = wasPolicySelected;
-      });
+      print("DEBUG-OFFER: QR işlem hatası: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('QR tarama sırasında bir hata oluştu: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPolicySelected = wasPolicySelected;
+        });
+      }
     }
   }
 
@@ -541,78 +531,52 @@ class _ManualEntryViewState extends State<ManualEntryView> {
       isGalleryMode = widget.initialData!.containsKey('galleryMode');
       print('DEBUG-FORM: isGalleryMode=$isGalleryMode');
       
-      // Galeri modunda odaklanılacak alanları belirle
-      focusFields = [];
-      
-      // Özellikle plaka, tc ve ruhsat bilgilerini kontrol et
-      bool hasTCField = false;
-      bool hasPlateField = false;
-      bool hasRegNoField = false;
-      
-      // Form alanlarının hangi tür bilgi içerdiğini tespit et
+      // Form alanlarına QR kod verilerini yerleştir
       widget.policyType.fields.forEach((field) {
-        // TC alanı bulundu mu?
+        String? value;
+        
+        // Alan tipine göre veri eşleştirme
         if (field.name.toLowerCase().contains('tc') || 
             field.key.toLowerCase().contains('tc') || 
             field.key.toLowerCase().contains('kimlik')) {
-          hasTCField = true;
-          print('DEBUG-FORM: TC alanı bulundu: ${field.key}');
-        }
-        
-        // Plaka alanı bulundu mu?
-        if (field.name.toLowerCase().contains('plaka') || 
-            field.key.toLowerCase().contains('plaka')) {
-          hasPlateField = true;
-          print('DEBUG-FORM: Plaka alanı bulundu: ${field.key}');
-        }
-        
-        // Ruhsat alanı bulundu mu?
-        if (field.name.toLowerCase().contains('ruhsat') || 
-            field.key.toLowerCase().contains('ruhsat')) {
-          hasRegNoField = true;
-          print('DEBUG-FORM: Ruhsat alanı bulundu: ${field.key}');
-        }
-      });
-      
-      // Form alanlarına QR kod verilerini yerleştir
-      widget.policyType.fields.forEach((field) {
-        // TC Kimlik için eşleştirme
-        if ((field.name.toLowerCase().contains('tc') || 
-             field.key.toLowerCase().contains('tc') || 
-             field.key.toLowerCase().contains('kimlik')) && 
-             widget.initialData!.containsKey('tc')) {
-          _controllers[field.key]?.text = widget.initialData!['tc']!;
-          print('DEBUG-FORM: TC alanı eşleşti: ${widget.initialData!['tc']}');
-          // Galeri modunda odaklanılacak alan
-          if (isGalleryMode) {
-            focusFields.add(field.key);
+          value = widget.initialData!['tc'];
+          if (value != null) {
+            print('DEBUG-FORM: TC alanı eşleşti: $value -> ${field.key}');
           }
         }
-        // Plaka için eşleştirme
-        else if ((field.name.toLowerCase().contains('plaka') || 
-                 field.key.toLowerCase().contains('plaka')) && 
-                 widget.initialData!.containsKey('plaka') && hasPlateField) {
-          _controllers[field.key]?.text = widget.initialData!['plaka']!;
-          print('DEBUG-FORM: Plaka alanı eşleşti: ${widget.initialData!['plaka']}');
-          // Galeri modunda odaklanılacak alan
-          if (isGalleryMode) {
-            focusFields.add(field.key);
+        else if (field.name.toLowerCase().contains('plaka') || 
+                 field.key.toLowerCase().contains('plaka')) {
+          value = widget.initialData!['plaka'];
+          if (value != null) {
+            print('DEBUG-FORM: Plaka alanı eşleşti: $value -> ${field.key}');
           }
         }
-        // Ruhsat için eşleştirme
-        else if ((field.name.toLowerCase().contains('ruhsat') || 
-                 field.key.toLowerCase().contains('ruhsat')) && 
-                 widget.initialData!.containsKey('ruhsatNo') && hasRegNoField) {
-          _controllers[field.key]?.text = widget.initialData!['ruhsatNo']!;
-          print('DEBUG-FORM: Ruhsat alanı eşleşti: ${widget.initialData!['ruhsatNo']}');
-          // Galeri modunda odaklanılacak alan
+        else if (field.name.toLowerCase().contains('ruhsat') || 
+                 field.key.toLowerCase().contains('ruhsat')) {
+          value = widget.initialData!['ruhsatNo'];
+          if (value != null) {
+            print('DEBUG-FORM: Ruhsat alanı eşleşti: $value -> ${field.key}');
+          }
+        }
+        else if (widget.initialData!.containsKey('raw')) {
+          // Eğer raw veri varsa ve alan boşsa, raw veriyi kullan
+          value = widget.initialData!['raw'];
+          if (value != null) {
+            print('DEBUG-FORM: Raw veri eşleşti: $value -> ${field.key}');
+          }
+        }
+        
+        // Eğer değer bulunduysa controller'a ata
+        if (value != null) {
+          _controllers[field.key]?.text = value;
+          // Galeri modunda odaklanılacak alanları işaretle
           if (isGalleryMode) {
             focusFields.add(field.key);
           }
         }
       });
       
-      print('DEBUG-FORM: focusFields=$focusFields');
+      print('DEBUG-FORM: Odaklanılacak alanlar: $focusFields');
     }
   }
 
@@ -1267,5 +1231,376 @@ class _ManualEntryViewState extends State<ManualEntryView> {
         ),
       );
     }
+  }
+}
+
+class QRScannerView extends StatefulWidget {
+  final Function(Map<String, String> data)? onResult;
+  final VoidCallback? onManualEntry;
+  final bool isGalleryMode;
+
+  const QRScannerView({
+    Key? key,
+    this.onResult,
+    this.onManualEntry,
+    this.isGalleryMode = false,
+  }) : super(key: key);
+
+  @override
+  State<QRScannerView> createState() => _QRScannerViewState();
+}
+
+class _QRScannerViewState extends State<QRScannerView> {
+  final mobile_scanner.MobileScannerController controller = mobile_scanner.MobileScannerController();
+  bool isProcessing = false;
+  final ImagePicker _picker = ImagePicker();
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  void _processQRCode(String qrData) {
+    try {
+      // QR kod verilerini parse et
+      Map<String, String> result = {};
+      
+      // Birleşik format kontrolü (GF362751-34ZG3326-3350421749)
+      if (qrData.contains('-')) {
+        final parts = qrData.split('-');
+        if (parts.length == 3) {
+          // Ruhsat, Plaka ve TC formatında
+          result['ruhsatNo'] = parts[0];
+          result['plaka'] = parts[1];
+          result['tc'] = parts[2];
+          print('DEBUG-QR: Birleşik format tespit edildi: ${result.toString()}');
+        }
+      }
+      // Tekil format kontrolleri
+      else {
+        // TC Kimlik kontrolü (11 haneli sayı)
+        if (qrData.length == 11 && int.tryParse(qrData) != null) {
+          result['tc'] = qrData;
+          print('DEBUG-QR: TC format tespit edildi: ${result.toString()}');
+        }
+        // Plaka kontrolü (örn: 34ABC123)
+        else if (RegExp(r'^[0-9]{2}[A-Z]{1,3}[0-9]{2,4}$').hasMatch(qrData)) {
+          result['plaka'] = qrData;
+          print('DEBUG-QR: Plaka format tespit edildi: ${result.toString()}');
+        }
+        // Ruhsat numarası kontrolü (en az 8 karakter alfanumerik)
+        else if (RegExp(r'^[A-Z0-9]{8,}$').hasMatch(qrData)) {
+          result['ruhsatNo'] = qrData;
+          print('DEBUG-QR: Ruhsat format tespit edildi: ${result.toString()}');
+        }
+      }
+      
+      // Eğer hiçbir formata uymuyorsa, raw veriyi gönder
+      if (result.isEmpty) {
+        result['raw'] = qrData;
+        print('DEBUG-QR: Bilinmeyen format: ${result.toString()}');
+      }
+      
+      // Galeri modunda olduğumuzu belirt
+      result['galleryMode'] = 'true';
+      
+      if (widget.onResult != null) {
+        widget.onResult!(result);
+      }
+    } catch (e) {
+      print('DEBUG-QR: İşleme hatası: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('QR kod işlenirken bir hata oluştu. Lütfen tekrar deneyin.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('QR Kod Tarama'),
+        backgroundColor: const Color(0xFF1C3879),
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: ValueListenableBuilder(
+              valueListenable: controller.torchState,
+              builder: (context, state, child) {
+                switch (state) {
+                  case mobile_scanner.TorchState.off:
+                    return const Icon(Icons.flash_off, color: Colors.grey);
+                  case mobile_scanner.TorchState.on:
+                    return const Icon(Icons.flash_on, color: Colors.yellow);
+                }
+              },
+            ),
+            onPressed: () => controller.toggleTorch(),
+          ),
+          IconButton(
+            icon: ValueListenableBuilder(
+              valueListenable: controller.cameraFacingState,
+              builder: (context, state, child) {
+                switch (state) {
+                  case mobile_scanner.CameraFacing.front:
+                    return const Icon(Icons.camera_front);
+                  case mobile_scanner.CameraFacing.back:
+                    return const Icon(Icons.camera_rear);
+                }
+              },
+            ),
+            onPressed: () => controller.switchCamera(),
+          ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          mobile_scanner.MobileScanner(
+            controller: controller,
+            onDetect: (capture) {
+              if (isProcessing) return;
+              isProcessing = true;
+
+              final List<mobile_scanner.Barcode> barcodes = capture.barcodes;
+              if (barcodes.isNotEmpty) {
+                final barcode = barcodes.first;
+                if (barcode.rawValue != null) {
+                  _processQRCode(barcode.rawValue!);
+                }
+              }
+              isProcessing = false;
+            },
+          ),
+          Positioned(
+            bottom: 24,
+            left: 16,
+            right: 16,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      if (widget.onManualEntry != null) {
+                        widget.onManualEntry!();
+                      }
+                    },
+                    icon: const Icon(Icons.edit),
+                    label: const Text('Manuel Giriş'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF1C3879),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _pickAndProcessImage,
+                    icon: const Icon(Icons.photo_library),
+                    label: const Text('Fotoğraf Yükle'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1C3879),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickAndProcessImage() async {
+    try {
+      // Önce kamerayı durdur
+      await controller.stop();
+      
+      // İzinleri kontrol et
+      if (Platform.isAndroid) {
+        // Android 13 ve üzeri için photos izni
+        if (await Permission.photos.status.isDenied) {
+          final result = await Permission.photos.request();
+          if (result.isDenied) {
+            if (!mounted) return;
+            _showPermissionDialog('Galeri');
+            return;
+          }
+        }
+        
+        // Android 13 altı için storage izni
+        if (int.parse(await _getAndroidVersion()) < 33) {
+          if (await Permission.storage.status.isDenied) {
+            final result = await Permission.storage.request();
+            if (result.isDenied) {
+              if (!mounted) return;
+              _showPermissionDialog('Depolama');
+              return;
+            }
+          }
+        }
+      } else if (Platform.isIOS) {
+        final status = await Permission.photos.status;
+        if (status.isDenied || status.isRestricted) {
+          final result = await Permission.photos.request();
+          if (result.isDenied || result.isRestricted) {
+            if (!mounted) return;
+            _showPermissionDialog('Galeri');
+            return;
+          }
+        }
+      }
+
+      // Görseli seç
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 95,
+      ).catchError((error) {
+        print('DEBUG-GALLERY: Görsel seçme hatası: $error');
+        throw 'Görsel seçilemedi: ${error.toString()}';
+      });
+      
+      if (image == null) {
+        print('DEBUG-GALLERY: Görsel seçilmedi');
+        // Kamerayı tekrar başlat
+        await controller.start();
+        return;
+      }
+
+      print('DEBUG-GALLERY: Görsel seçildi: ${image.path}');
+
+      // Seçilen görseli işle
+      final File imageFile = File(image.path);
+      if (!await imageFile.exists()) {
+        throw 'Seçilen görsel bulunamadı';
+      }
+
+      final InputImage inputImage = InputImage.fromFile(imageFile);
+      
+      // Google ML Kit ile QR kod tarama
+      final barcodeScanner = GoogleMlKit.vision.barcodeScanner();
+      
+      try {
+        final List<Barcode> barcodes = await barcodeScanner.processImage(inputImage);
+        print('DEBUG-GALLERY: Bulunan QR kod sayısı: ${barcodes.length}');
+        
+        if (!mounted) return;
+
+        if (barcodes.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Seçilen görselde QR kod bulunamadı. Manuel giriş yapabilirsiniz.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          if (widget.onManualEntry != null) {
+            widget.onManualEntry!();
+          }
+          return;
+        }
+
+        // İlk QR kodu işle
+        final barcode = barcodes.first;
+        if (barcode.rawValue != null) {
+          print('DEBUG-GALLERY: QR kod içeriği: ${barcode.rawValue}');
+          _processQRCode(barcode.rawValue!);
+        }
+      } finally {
+        // Tarayıcıyı temizle
+        await barcodeScanner.close();
+      }
+
+    } catch (e) {
+      print('DEBUG-GALLERY: Hata: $e');
+      if (!mounted) return;
+      
+      String errorMessage = 'Görsel işlenirken bir hata oluştu';
+      if (e.toString().contains('permission')) {
+        errorMessage = 'Galeri erişim izni alınamadı';
+      } else if (e.toString().contains('not found')) {
+        errorMessage = 'Seçilen görsel bulunamadı';
+      }
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+          action: SnackBarAction(
+            label: 'Manuel Giriş',
+            textColor: Colors.white,
+            onPressed: () {
+              if (widget.onManualEntry != null) {
+                widget.onManualEntry!();
+              }
+            },
+          ),
+        ),
+      );
+    } finally {
+      // Kamerayı tekrar başlat (eğer hala widget aktifse)
+      if (mounted) {
+        try {
+          await controller.start();
+        } catch (e) {
+          print('DEBUG-GALLERY: Kamera başlatma hatası: $e');
+        }
+      }
+    }
+  }
+
+  // Android sürüm kontrolü için yardımcı metod
+  Future<String> _getAndroidVersion() async {
+    if (!Platform.isAndroid) return '0';
+    
+    try {
+      final deviceInfoPlugin = DeviceInfoPlugin();
+      final androidInfo = await deviceInfoPlugin.androidInfo;
+      return androidInfo.version.sdkInt.toString();
+    } catch (e) {
+      print('Android sürüm bilgisi alınamadı: $e');
+      return '0';
+    }
+  }
+
+  // İzin dialog'u gösterme
+  void _showPermissionDialog(String permissionType) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('$permissionType İzni Gerekli'),
+        content: Text('QR kod içeren görselleri seçebilmek için $permissionType erişim izni gerekiyor. Lütfen ayarlardan izin verin.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('İptal'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              openAppSettings();
+            },
+            child: const Text('Ayarlara Git'),
+          ),
+        ],
+      ),
+    );
   }
 } 

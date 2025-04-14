@@ -39,7 +39,7 @@
 	<key>NSCalendarsUsageDescription</key>
 	<string>Takvim izni gerekmemektedir</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Bu uygulama QR kodları taramak için kameranıza erişmek istiyor</string>
+	<string>QR kod taraması yapabilmek için kamera izni gerekiyor</string>
 	<key>NSContactsUsageDescription</key>
 	<string>Kişiler izni gerekmemektedir</string>
 	<key>NSFileProviderDomainUsageDescription</key>
@@ -47,11 +47,21 @@
 	<key>NSFileProviderPresenceUsageDescription</key>
 	<string>Uygulama QR kod işlemek için dosya erişimine ihtiyaç duyar</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>QR kod içeren fotoğrafları yüklemek için galeri izni gerekiyor</string>
+	<string>QR kod içeren görselleri seçebilmek için galeri erişim izni gerekiyor</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Galeriye fotoğraf kaydetmek için izin gerekir</string>
 	<key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
 	<true/>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>Medya erişimi gerekmemektedir</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Mikrofon erişimi gerekmemektedir</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Konum erişimi gerekmemektedir</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Konum erişimi gerekmemektedir</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Konum erişimi gerekmemektedir</string>
 	<key>NSUserNotificationAlertStyle</key>
 	<string>alert</string>
 	<key>NSUserNotificationCenterDelegate</key>
@@ -92,6 +102,15 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>io.flutter.embedded_views_preview</key>
+	<true/>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>photos-redirect</string>
+		<string>photos</string>
+	</array>
+	<key>UISupportsDocumentBrowser</key>
 	<true/>
 </dict>
 </plist>
