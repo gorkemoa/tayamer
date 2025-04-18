@@ -232,11 +232,7 @@ class _ProfileViewState extends State<ProfileView> {
               },
             ),
             
-            _buildMenuItem(
-              icon: Icons.sms_outlined,
-              title: 'SMS Taleplerim',
-              onTap: () {},
-            ),
+     
             
             _buildMenuItem(
               icon: Icons.public,
