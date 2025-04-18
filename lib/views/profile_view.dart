@@ -276,10 +276,10 @@ class _ProfileViewState extends State<ProfileView> {
             ),
             
             const SizedBox(height: 16),
-            const Center(
+            Center(
               child: Text(
-                'v2.3.4',
-                style: TextStyle(
+                '${_user?.userVersion}',
+                style: const TextStyle(
                   color: Colors.grey,
                   fontSize: 14,
                 ),
