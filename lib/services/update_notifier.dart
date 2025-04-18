@@ -27,7 +27,7 @@ class UpdateNotifier {
                 onPressed: () {
                   // Store'a yönlendirme işlemi yapılabilir
                   Navigator.of(context).pop();
-                  _launchUpdateURL(platform);
+                  UpdateHelper.launchUpdateURL(platform);
                 },
               ),
               TextButton(
@@ -42,22 +42,26 @@ class UpdateNotifier {
       );
     }
   }
-  
-  // Store URL'sine yönlendirme
-  static Future<void> _launchUpdateURL(String platform) async {
-    final Uri url;
-    if (platform == 'iOS') {
-      // App Store URL
-      url = Uri.parse('https://apps.apple.com/tr/app/tayamer/id1589417390');
-    } else {
-      // Google Play Store URL
-      url = Uri.parse('https://play.google.com/store/apps/details?id=com.fabrikasigorta.tayamer');
-    }
-    
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      print('$platform için mağaza sayfası açılamadı: $url');
-    } else {
-      print('$platform için mağaza sayfasına yönlendirildi');
+}
+
+// Store URL'sine yönlendirme sınıfı
+class UpdateHelper {
+  static Future<void> launchUpdateURL(String platform) async {
+    final Uri url = Uri.parse(
+      platform.toLowerCase() == 'ios'
+          ? 'https://apps.apple.com/tr/app/tayamer/id1668001080'
+          : 'https://play.google.com/store/apps/details?id=com.office701.tayamer&hl=tr',
+    );
+
+    try {
+      final bool launched = await launchUrl(url, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        print('$platform için mağaza bağlantısı açılamadı: $url');
+      } else {
+        print('$platform için mağazaya yönlendirildi.');
+      }
+    } catch (e) {
+      print('Mağaza bağlantısı sırasında hata oluştu: $e');
     }
   }
 } 
