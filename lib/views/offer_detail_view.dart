@@ -116,8 +116,8 @@ class _OfferDetailViewState extends State<OfferDetailView> {
                                 child: SizedBox(
                                   width: double.infinity,
                                   child: OutlinedButton.icon(
-                                    icon: const Icon(Icons.file_download),
-                                    label: const Text('PDF İndir'),
+                                    icon: const Icon(Icons.share),
+                                    label: const Text('PDF Paylaş'),
                                     onPressed: () => viewModel.openPdfUrl(offer.pdfUrl),
                                   ),
                                 ),

@@ -50,12 +50,66 @@ class _NewOfferViewState extends State<NewOfferView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
       extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text('Yeni Teklif', style: TextStyle(color: Color(0xFF1C3879))),
+        centerTitle: true,
+        leading: Navigator.of(context).canPop() ? IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF1C3879)),
+          onPressed: () => Navigator.of(context).pop(),
+        ) : null,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.local_offer_outlined, size: 80, color: Colors.blue.shade200),
+            const SizedBox(height: 24),
+            const Text(
+              'Poliçe Tipi Seçimi',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1C3879),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                'Teklif almak istediğiniz poliçe tipini seçin',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.black54,
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
+            ElevatedButton.icon(
+              onPressed: _showPolicyTypeBottomSheet,
+              icon: const Icon(Icons.touch_app),
+              label: const Text('Poliçe Tipi Seç'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1C3879),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
       bottomNavigationBar: BottomAppBar(
         elevation: 8,
         color: Colors.white,
-        child: Container(),
+        child: Container(height: 48),
       ),
     );
   }
@@ -427,6 +481,7 @@ class _NewOfferViewState extends State<NewOfferView> {
                 );
               }
             },
+            parentState: this,
           ),
         ),
       );
@@ -1203,12 +1258,14 @@ class QRScannerView extends StatefulWidget {
   final Function(Map<String, String> data)? onResult;
   final VoidCallback? onManualEntry;
   final bool isGalleryMode;
+  final _NewOfferViewState? parentState;
 
   const QRScannerView({
     Key? key,
     this.onResult,
     this.onManualEntry,
     this.isGalleryMode = false,
+    this.parentState,
   }) : super(key: key);
 
   @override
@@ -1290,6 +1347,15 @@ class _QRScannerViewState extends State<QRScannerView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(context).pop();
+            if (widget.parentState != null && widget.parentState!.mounted) {
+              widget.parentState!._showPolicyTypeBottomSheet();
+            }
+          },
+        ),
         title: const Text('QR Kod Tarama'),
         backgroundColor: const Color(0xFF1C3879),
         foregroundColor: Colors.white,

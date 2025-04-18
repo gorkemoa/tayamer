@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import '../models/offer_model.dart';
 import '../services/offer_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
+import 'package:path/path.dart' as path;
 
 enum OfferViewState {
   initial,
@@ -96,7 +101,7 @@ class OfferViewModel extends ChangeNotifier {
     }
   }
   
-  // PDF'i açma
+  // PDF'i paylaş
   Future<void> openPdfUrl(String pdfUrl) async {
     if (pdfUrl.isEmpty) {
       _errorMessage = 'PDF belgesi bulunamadı';
@@ -104,11 +109,23 @@ class OfferViewModel extends ChangeNotifier {
       return;
     }
     
-    final url = Uri.parse(pdfUrl);
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    } else {
-      _errorMessage = 'PDF belgesi açılamadı: $pdfUrl';
+    try {
+      // PDF dosyasını önce indir
+      final response = await http.get(Uri.parse(pdfUrl));
+      final bytes = response.bodyBytes;
+      
+      // Geçici dosya oluştur
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/${path.basename(pdfUrl)}');
+      await file.writeAsBytes(bytes);
+      
+      // Dosyayı paylaş
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: 'PDF Teklifim',
+      );
+    } catch (e) {
+      _errorMessage = 'PDF paylaşılırken hata oluştu: ${e.toString()}';
       notifyListeners();
     }
   }

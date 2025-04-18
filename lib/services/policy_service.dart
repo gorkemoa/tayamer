@@ -155,8 +155,26 @@ class PolicyService {
       // API başarılı yanıt verdiyse poliçe verisini dön
       if (data is Map<String, dynamic> && data['error'] == false && data['success'] == true) {
         if (data['data'] != null && data['data'] is List && data['data'].isNotEmpty) {
-          // İlk poliçeyi al
-          return Policy.fromJson(data['data'][0]);
+          try {
+            // İlk poliçeyi al ve null kontrolü yap
+            if (data['data'][0] is Map<String, dynamic>) {
+              // Burada bir poliçe objesi oluşturmadan önce kritik alanları kontrol edelim
+              final policyData = data['data'][0] as Map<String, dynamic>;
+              
+              // statusColor null kontrolü
+              if (policyData['statusColor'] == null) {
+                policyData['statusColor'] = '#50cd89'; // Varsayılan değer
+              }
+              
+              return Policy.fromJson(policyData);
+            } else {
+              print('API yanıtında poliçe verisi geçerli formatta değil');
+              return null;
+            }
+          } catch (e) {
+            print('Poliçe verisini işlerken hata: $e');
+            return null;
+          }
         } else {
           print('API yanıtında poliçe detayı verisi yok');
           return null;
