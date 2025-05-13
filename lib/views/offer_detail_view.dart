@@ -115,7 +115,7 @@ class _OfferDetailViewState extends State<OfferDetailView> {
                                   width: double.infinity,
                                   child: OutlinedButton.icon(
                                     icon: const Icon(Icons.picture_as_pdf_outlined, size: 14),
-                                    label: const Text('Teklifi Görüntüle', style: TextStyle(fontSize: 11)),
+                                    label: const Text('Teklifi Paylaş', style: TextStyle(fontSize: 11)),
                                     onPressed: () => viewModel.openPdfUrl(offer.pdfUrl),
                                     style: OutlinedButton.styleFrom(
                                       padding: const EdgeInsets.symmetric(vertical: 4),
