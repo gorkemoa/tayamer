@@ -102,7 +102,7 @@ class UserService {
               // Version paketi ile versiyon karşılaştırması
               if (isVersionOlder(currentVersion, latestVersion)) {
                 print('Uygulama sürümü eskimiş: $currentVersion < $latestVersion');
-                showUpdateDialog(platform);
+                await showUpdateDialog(platform);
               }
             }
           } 
@@ -114,7 +114,7 @@ class UserService {
               // Version paketi ile versiyon karşılaştırması
               if (isVersionOlder(currentVersion, latestVersion)) {
                 print('Uygulama sürümü eskimiş: $currentVersion < $latestVersion');
-                showUpdateDialog(platform);
+                await showUpdateDialog(platform);
               }
             }
           }
@@ -165,12 +165,12 @@ class UserService {
   }
   
   // Güncelleme uyarı diyaloğu göster
-  void showUpdateDialog(String platform) {
+  Future<void> showUpdateDialog(String platform) async {
     final message = platform == 'ios' 
       ? 'Uygulama sürümünüz güncel değil. Lütfen App Store\'dan güncelleyin. Bu zorunlu bir güncellemedir.'
       : 'Uygulama sürümünüz güncel değil. Lütfen Google Play\'den güncelleyin. Bu zorunlu bir güncellemedir.';
       
     // Burada global bir dialog gösterme mekanizması kullanılabilir
-    UpdateNotifier.showUpdateMessage(message, platform);
+    await UpdateNotifier.showUpdateMessage(message, platform);
   }
 }

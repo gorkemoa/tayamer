@@ -136,24 +136,24 @@ class _PolicyDetailViewState extends State<PolicyDetailView> {
 
   Widget _buildPolicyDetails(Policy policy) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+      padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 10.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (policy.company.isNotEmpty && policy.company[0].logo.isNotEmpty)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: 10),
               color: Colors.white,
               child: Center(
                 child: Image.network(
                   policy.company[0].logo,
-                  height: 48,
+                  height: 40,
                   fit: BoxFit.contain,
                 ),
               ),
             ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           
           _buildDetailItem('Şirket Ünvanı', policy.company.isNotEmpty ? policy.company[0].unvan : ''),
           _buildDetailItem('Poliçe Tipi', policy.policyType),
@@ -166,10 +166,10 @@ class _PolicyDetailViewState extends State<PolicyDetailView> {
           _buildDetailItem('Net Fiyat', '₺${policy.netAmount}'),
           _buildDetailItem('Brüt Fiyat', '₺${policy.grossAmount}'),
             
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            padding: const EdgeInsets.symmetric(horizontal: 2.0),
             child: Row(
               children: [
                 Expanded(
@@ -179,7 +179,7 @@ class _PolicyDetailViewState extends State<PolicyDetailView> {
                     () => _openPdf(policy.receiptUrl, 'Makbuz'),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Expanded(
                   child: _buildActionButton(
                     'Poliçeyi İncele',
@@ -190,12 +190,12 @@ class _PolicyDetailViewState extends State<PolicyDetailView> {
               ],
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            padding: const EdgeInsets.symmetric(horizontal: 2.0),
             child: _buildLinkButton(policy.pdfUrl),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
         ],
       ),
     );
@@ -203,35 +203,34 @@ class _PolicyDetailViewState extends State<PolicyDetailView> {
 
   Widget _buildDetailItem(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 10,
               color: Colors.grey[700],
               fontWeight: FontWeight.w500
             ),
           ),
+          const SizedBox(height: 3),
           const SizedBox(height: 4),
-          const SizedBox(height: 6), // Başlık ile kutu arasına boşluk
-          // Değer için Textbox benzeri Container
           Container(
-            width: double.infinity, // Tam genişlik
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12), // İç boşluk
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.white, // Kutu arka planı
-              border: Border.all(color: Colors.grey.shade300), // Kenarlık
-              borderRadius: BorderRadius.circular(4), // Köşe yuvarlama
+              color: Colors.white,
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(3),
             ),
             child: Text(
               value,
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: Colors.black87, // Metin rengi
+                color: Colors.black87,
               ),
             ),
           ),
@@ -246,16 +245,16 @@ class _PolicyDetailViewState extends State<PolicyDetailView> {
       style: ElevatedButton.styleFrom(
         backgroundColor: color,
         foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(3),
         ),
         elevation: 0,
       ),
       child: Text(
         text,
         style: const TextStyle(
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -272,20 +271,20 @@ class _PolicyDetailViewState extends State<PolicyDetailView> {
         foregroundColor: const Color(0xFF1D3A70),
         elevation: 0,
         side: BorderSide(color: Colors.grey.shade300),
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(3),
         ),
       ),
       child: const Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.copy, size: 20),
-          SizedBox(width: 8),
+          Icon(Icons.copy, size: 18),
+          SizedBox(width: 6),
           Text(
             'Poliçe Linkini Kopyala',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
           ),

@@ -1,16 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Güncelleme bildirimi için yardımcı sınıf
 class UpdateNotifier {
   static GlobalKey<NavigatorState>? _navigatorKey;
+  static const String _lastUpdateCheckKey = 'last_update_check';
   
   // Navigator key ayarlamak için
   static set navigatorKey(GlobalKey<NavigatorState> key) {
     _navigatorKey = key;
   }
   
-  static void showUpdateMessage(String message, String platform) {
+  static Future<bool> _shouldShowUpdateDialog() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastCheck = prefs.getInt(_lastUpdateCheckKey) ?? 0;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    
+    // Son 24 saat içinde gösterilmediyse true döndür
+    if (now - lastCheck > 24 * 60 * 60 * 1000) {
+      // Son kontrol zamanını güncelle
+      await prefs.setInt(_lastUpdateCheckKey, now);
+      return true;
+    }
+    
+    return false;
+  }
+  
+  static Future<void> showUpdateMessage(String message, String platform) async {
+    // Günlük kontrol yapılıyor
+    final shouldShow = await _shouldShowUpdateDialog();
+    if (!shouldShow) {
+      print('Güncelleme bildirimi son 24 saat içinde gösterildi, tekrar gösterilmiyor.');
+      return;
+    }
+    
     // Ana ekranda gösterilecek mesaj
     final context = _navigatorKey?.currentContext;
     if (context != null) {

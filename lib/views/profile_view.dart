@@ -88,11 +88,11 @@ class _ProfileViewState extends State<ProfileView> {
         backgroundColor: Theme.of(context).primaryColor,
         title: const Text(
           'Hesabım',
-          style: TextStyle(color: Colors.white, fontSize: 17),
+          style: TextStyle(color: Colors.white, fontSize: 16),
         ),
         centerTitle: true,
         leading:  IconButton(
-          icon: const Icon(FontAwesomeIcons.comments, color: Colors.white, size: 20),
+          icon: const Icon(FontAwesomeIcons.comments, color: Colors.white, size: 18),
           onPressed: () {
             final viewModel = context.read<OfferViewModel>();
             // Genel sohbet teklifini (id: -1) bul
@@ -127,7 +127,7 @@ class _ProfileViewState extends State<ProfileView> {
           },
         ),   actions: [
           IconButton(
-            icon: const Icon(FontAwesomeIcons.bell, color: Colors.white, size: 20),
+            icon: const Icon(FontAwesomeIcons.bell, color: Colors.white, size: 18),
             onPressed: () {
               Navigator.push(
                 context,
@@ -145,17 +145,17 @@ class _ProfileViewState extends State<ProfileView> {
           children: [
             // Kullanıcı Bilgileri Bölümü
             Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.all(10.0),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Image.network(
                     _user?.profilePhoto ?? 'https://via.placeholder.com/150',
-                    width: 100,
-                    height: 150,
+                    width: 80,
+                    height: 120,
                     fit: BoxFit.cover,
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   // Kullanıcı Bilgileri
                   Expanded(
                     child: Column(
@@ -164,43 +164,43 @@ class _ProfileViewState extends State<ProfileView> {
                         const Text(
                           'Adınız Soyadınız',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             color: Colors.black87,
                           ),
                         ),
                         Container(
-                          margin: const EdgeInsets.only(top: 6, bottom: 12),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          margin: const EdgeInsets.only(top: 4, bottom: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                           decoration: BoxDecoration(
                             color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(4),
                             border: Border.all(color: Colors.grey[300]!),
                           ),
                           width: double.infinity,
                           child: Text(
                             _user?.userFullname ?? 'Adınız Soyadınız',
-                            style: const TextStyle(fontSize: 14),
+                            style: const TextStyle(fontSize: 13),
                           ),
                         ),
                         const Text(
                           'Kullanıcı Adınız',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             color: Colors.black87,
                           ),
                         ),
                         Container(
-                          margin: const EdgeInsets.only(top: 6),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          margin: const EdgeInsets.only(top: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                           decoration: BoxDecoration(
                             color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(4),
                             border: Border.all(color: Colors.grey[300]!),
                           ),
                           width: double.infinity,
                           child: Text(
                             _user?.username ?? 'Kullanıcı Adınız',
-                            style: const TextStyle(fontSize: 14),
+                            style: const TextStyle(fontSize: 13),
                           ),
                         ),
                       ],
@@ -214,8 +214,8 @@ class _ProfileViewState extends State<ProfileView> {
             _buildMenuItem(
               icon: Icons.person_outline,
               title: 'Profilim',
-              iconSize: 22,
-              titleSize: 14,
+              iconSize: 20,
+              titleSize: 13,
               onTap: () {
                 if (_user != null) {
                   Navigator.push(
@@ -237,15 +237,15 @@ class _ProfileViewState extends State<ProfileView> {
             _buildMenuItem(
               icon: Icons.public,
               title: 'Yardım',
-              iconSize: 22,
-              titleSize: 14,
+              iconSize: 20,
+              titleSize: 13,
               onTap: () {
                 _launchURL();
               },
             ),
             
             // Alt bilgiler
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Center(
              child: InkWell(
                onTap: _office701launchURL,
@@ -254,7 +254,7 @@ class _ProfileViewState extends State<ProfileView> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.blue,
-                    fontSize: 12,
+                    fontSize: 11,
                     decoration: TextDecoration.underline,
                     decorationColor: Colors.blue,
                   ),
@@ -262,29 +262,29 @@ class _ProfileViewState extends State<ProfileView> {
               ),
             ),
             
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             const Center(
               child: Text(
                 'Gizlilik Politikası',
                 style: TextStyle(
                   color: Colors.grey,
-                  fontSize: 12,
+                  fontSize: 11,
                 ),
               ),
             ),
             
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Center(
               child: Text(
                 '${_user?.userVersion}',
                 style: const TextStyle(
                   color: Colors.grey,
-                  fontSize: 12,
+                  fontSize: 11,
                 ),
               ),
             ),
             
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Center(
               child: TextButton(
                 onPressed: () => _logout(context),
@@ -292,13 +292,13 @@ class _ProfileViewState extends State<ProfileView> {
                   'Çıkış Yap',
                   style: TextStyle(
                     color: Colors.redAccent,
-                    fontSize: 14,
+                    fontSize: 13,
                   ),
                 ),
               ),
             ),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
           ],
         ),
       ),
@@ -309,24 +309,24 @@ class _ProfileViewState extends State<ProfileView> {
     required IconData icon,
     required String title,
     required VoidCallback onTap,
-    double iconSize = 28,
-    double titleSize = 16,
+    double iconSize = 24,
+    double titleSize = 14,
   }) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(4),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.15),
-            blurRadius: 1.5,
-            offset: const Offset(0, 0.5),
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 1,
+            offset: const Offset(0, 0.2),
           ),
         ],
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         leading: Icon(
           icon,
           color: Colors.black54,
@@ -342,7 +342,7 @@ class _ProfileViewState extends State<ProfileView> {
         trailing: const Icon(
           Icons.chevron_right,
           color: Colors.black54,
-          size: 22,
+          size: 20,
         ),
         onTap: onTap,
       ),

@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'http_interceptor.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class ApiService {
   // API bağlantı adresi
@@ -130,23 +131,22 @@ class ApiService {
   String getPlatform() {
     return Platform.isIOS ? 'ios' : 'android';
   }
-  // TEKRARDAN BAKILACAK
+  
   // Uygulama sürüm bilgisini al
   Future<Map<String, String>> getPackageInfo() async {
-    final prefs = await SharedPreferences.getInstance();
-    // Varsayılan sürüm bilgisi
-    String version = '2.3.4'; // Test için düşürüldü
-    // iOS kullanıcıları için güncel sürüm
-    if (Platform.isIOS) {
-      version = '2.3.4'; // Test için düşürüldü (2.3.7'den)
-    } 
-    // Android kullanıcıları için güncel sürüm
-    else if (Platform.isAndroid) {
-      version = '2.3.4'; // Test için düşürüldü (2.3.5'ten)
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      return {
+        'version': packageInfo.version,
+        'buildNumber': packageInfo.buildNumber,
+      };
+    } catch (e) {
+      print('Paket bilgileri alınırken hata: $e');
+      // Hata durumunda varsayılan değerler
+      return {
+        'version': '1.0.0',  // Varsayılan sürüm bilgisi
+        'buildNumber': '1',
+      };
     }
-    
-    return {
-      'version': version
-    };
   }
 } 

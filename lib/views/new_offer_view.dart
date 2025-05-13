@@ -697,54 +697,54 @@ class _ManualEntryViewState extends State<ManualEntryView> {
             physics: const AlwaysScrollableScrollPhysics(
               parent: BouncingScrollPhysics(),
             ),
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
                   'Aşağıdaki bilgileri kontrol ederek, poliçenizi oluşturabilirsiniz.',
-                  style: TextStyle(fontSize: 16),
+                  style: TextStyle(fontSize: 14),
                   textAlign: TextAlign.center,
                 ),
                 
                 
                 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 
                 // Form alanlarını oluştur
                 ...widget.policyType.fields.map((field) => _buildFormField(field)).toList(),
                 
                 // Açıklama alanı
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
+                  padding: const EdgeInsets.only(bottom: 12.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
                         'Ek Açıklama',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       TextFormField(
                         controller: _descController,
                         maxLines: 3,
                         decoration: InputDecoration(
                           hintText: 'Eklemek istediğiniz bilgiler...',
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide(color: Colors.grey.shade300),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                         ),
                       ),
                     ],
                   ),
                 ),
                 
-                const SizedBox(height: 40),
+                const SizedBox(height: 24),
                 
                 // Devam butonu
                 Consumer<OfferViewModel>(
@@ -758,15 +758,15 @@ class _ManualEntryViewState extends State<ManualEntryView> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1C3879),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                       child: const Text(
                         'Teklif Oluştur',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 15,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -791,7 +791,7 @@ class _ManualEntryViewState extends State<ManualEntryView> {
       return _buildDateField(field, isHighlightField);
     } else {
       return Padding(
-        padding: const EdgeInsets.only(bottom: 16.0),
+        padding: const EdgeInsets.only(bottom: 12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -801,7 +801,7 @@ class _ManualEntryViewState extends State<ManualEntryView> {
                   child: Text(
                     '${field.name} ${field.rules.containsKey('required') && field.rules['required']!.value ? '(*)' : ''}',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
                       // Galeri modunda vurgulama - önemli alanlar için renk değiştir
                       color: isHighlightField ? Colors.blue.shade800 : null,
@@ -810,30 +810,30 @@ class _ManualEntryViewState extends State<ManualEntryView> {
                 ),
                 // Galeri modunda vurgulama - önemli alanlar için ikon ekle
                 if (isHighlightField)
-                  const Icon(Icons.edit, color: Colors.blue, size: 18),
+                  const Icon(Icons.edit, color: Colors.blue, size: 16),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             TextFormField(
               controller: _controllers[field.key],
               decoration: InputDecoration(
                 hintText: 'Örn: "${field.placeholder}"',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide(color: Colors.grey.shade300),
                 ),
                 // Galeri modunda vurgulama - önemli alanlar için renk değiştir
                 enabledBorder: isHighlightField ? OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.blue.shade400, width: 2),
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.blue.shade400, width: 1.5),
                 ) : null,
                 focusedBorder: isHighlightField ? OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.blue.shade700, width: 2),
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: Colors.blue.shade700, width: 1.5),
                 ) : null,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 // Galeri modunda bilgi ikonu ekle
-                suffixIcon: isHighlightField ? const Icon(Icons.info_outline, color: Colors.blue) : null,
+                suffixIcon: isHighlightField ? const Icon(Icons.info_outline, color: Colors.blue, size: 18) : null,
               ),
               // Settings özelliklerini uygula
               keyboardType: _getKeyboardType(field),
@@ -896,7 +896,7 @@ class _ManualEntryViewState extends State<ManualEntryView> {
     final String selectedValue = viewModel.getSelectedOption(field.key) ?? '';
     
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 12.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -906,7 +906,7 @@ class _ManualEntryViewState extends State<ManualEntryView> {
                 child: Text(
               '${field.name} ${field.rules.containsKey('required') && field.rules['required']!.value ? '(*)' : ''}',
                   style: TextStyle(
-                    fontSize: 16, 
+                    fontSize: 14, 
                     fontWeight: FontWeight.w500,
                     // Galeri modunda vurgulama
                     color: isHighlightField ? Colors.blue.shade800 : null,
@@ -915,27 +915,27 @@ class _ManualEntryViewState extends State<ManualEntryView> {
               ),
               // Galeri modunda vurgulama - önemli alanlar için ikon ekle
               if (isHighlightField)
-                const Icon(Icons.edit, color: Colors.blue, size: 18),
+                const Icon(Icons.edit, color: Colors.blue, size: 16),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           DropdownButtonFormField<String>(
             value: selectedValue.isNotEmpty ? selectedValue : null,
             decoration: InputDecoration(
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(color: Colors.grey.shade300),
               ),
               // Galeri modunda vurgulama
               enabledBorder: isHighlightField ? OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.blue.shade400, width: 2),
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: Colors.blue.shade400, width: 1.5),
               ) : null,
               focusedBorder: isHighlightField ? OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.blue.shade700, width: 2),
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: Colors.blue.shade700, width: 1.5),
               ) : null,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             ),
             items: options.map((option) {
               return DropdownMenuItem<String>(
@@ -1032,7 +1032,7 @@ class _ManualEntryViewState extends State<ManualEntryView> {
   // Tarih seçim alanı için özel widget
   Widget _buildDateField(Field field, bool isHighlightField) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 12.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1042,7 +1042,7 @@ class _ManualEntryViewState extends State<ManualEntryView> {
                 child: Text(
             '${field.name} ${field.rules.containsKey('required') && field.rules['required']!.value ? '(*)' : ''}',
                   style: TextStyle(
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.w500,
                     // Galeri modunda vurgulama
                     color: isHighlightField ? Colors.blue.shade800 : null,
@@ -1051,29 +1051,29 @@ class _ManualEntryViewState extends State<ManualEntryView> {
               ),
               // Galeri modunda vurgulama - önemli alanlar için ikon ekle
               if (isHighlightField)
-                const Icon(Icons.edit, color: Colors.blue, size: 18),
+                const Icon(Icons.edit, color: Colors.blue, size: 16),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           TextFormField(
             controller: _controllers[field.key],
             readOnly: true, // Klavye girişini devre dışı bırak
             decoration: InputDecoration(
               hintText: 'Örn: "${field.placeholder}"',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(color: Colors.grey.shade300),
               ),
               // Galeri modunda vurgulama
               enabledBorder: isHighlightField ? OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.blue.shade400, width: 2),
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: Colors.blue.shade400, width: 1.5),
               ) : null,
               focusedBorder: isHighlightField ? OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.blue.shade700, width: 2),
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: Colors.blue.shade700, width: 1.5),
               ) : null,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               suffixIcon: const Icon(Icons.calendar_today),
             ),
             validator: (value) {

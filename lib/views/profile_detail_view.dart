@@ -23,16 +23,16 @@ class ProfileDetailView extends StatelessWidget {
         backgroundColor: Theme.of(context).primaryColor, 
         title: const Text(
           'Profilim',
-          style: TextStyle(color: Colors.white, fontSize: 17), // Küçültüldü
+          style: TextStyle(color: Colors.white, fontSize: 16), // Font boyutu küçültüldü
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 22), // Boyut eklendi
+          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20), // Boyut küçültüldü
           onPressed: () => Navigator.of(context).pop(),
         ),
-        iconTheme: const IconThemeData(color: Colors.white, size: 22), // Boyut eklendi
+        iconTheme: const IconThemeData(color: Colors.white, size: 20), // Boyut küçültüldü
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(12.0), // Küçültüldü
+        padding: const EdgeInsets.all(10.0), // Padding azaltıldı
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -40,44 +40,44 @@ class ProfileDetailView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 120, // Küçültüldü
-                  height: 120, // Küçültüldü
+                  width: 100, // Genişlik azaltıldı
+                  height: 100, // Yükseklik azaltıldı
                   decoration: BoxDecoration(
                     color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(6), // Küçültüldü
+                    borderRadius: BorderRadius.circular(4), // Kenar yuvarlaklığı azaltıldı
                     border: Border.all(color: Colors.grey[300]!),
                   ),
                    child: user.profilePhoto.isNotEmpty
                   ? ClipRRect( // Köşeleri yuvarlatmak için eklendi
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(4), // Kenar yuvarlaklığı azaltıldı
                       child: Image.network(user.profilePhoto, fit: BoxFit.cover)
                     )
-                  : Icon(Icons.person, size: 48, color: Colors.grey[400]), // Boyut ve renk ayarlandı
+                  : Icon(Icons.person, size: 40, color: Colors.grey[400]), // Boyut küçültüldü
                 ),
-                const SizedBox(width: 16), // Küçültüldü
+                const SizedBox(width: 12), // Boşluk azaltıldı
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildInfoField('Adınız Soyadınız', user.userFullname, labelSize: 13, valueSize: 13), // Boyutlar eklendi
-                      const SizedBox(height: 8), // Küçültüldü
-                      _buildInfoField('Kullanıcı Adınız', user.username, labelSize: 13, valueSize: 13), // Boyutlar eklendi
+                      _buildInfoField('Adınız Soyadınız', user.userFullname, labelSize: 12, valueSize: 12), // Font boyutları azaltıldı
+                      const SizedBox(height: 6), // Boşluk azaltıldı
+                      _buildInfoField('Kullanıcı Adınız', user.username, labelSize: 12, valueSize: 12), // Font boyutları azaltıldı
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20), // Küçültüldü
-            _buildInfoField('Telefon Numaranız', user.userPhone ?? '-', labelSize: 13, valueSize: 13),
-            const SizedBox(height: 12), // Küçültüldü
-            _buildInfoField('E-Posta Adresiniz', user.userEmail, labelSize: 13, valueSize: 13),
-            const SizedBox(height: 12), // Küçültüldü
-            _buildInfoField('Doğum Tarihiniz', user.userBirthday ?? '-', labelSize: 13, valueSize: 13),
-            const SizedBox(height: 12), // Küçültüldü
-            _buildInfoField('Cinsiyet', _formatGender(user.userGender), labelSize: 13, valueSize: 13),
-            const SizedBox(height: 12), // Küçültüldü
-            _buildInfoField('Adres', user.userAddress ?? '-', maxLines: 3, labelSize: 13, valueSize: 13),
-            const SizedBox(height: 24), // Küçültüldü
+            const SizedBox(height: 16), // Boşluk azaltıldı
+            _buildInfoField('Telefon Numaranız', user.userPhone ?? '-', labelSize: 12, valueSize: 12),
+            const SizedBox(height: 10), // Boşluk azaltıldı
+            _buildInfoField('E-Posta Adresiniz', user.userEmail, labelSize: 12, valueSize: 12),
+            const SizedBox(height: 10), // Boşluk azaltıldı
+            _buildInfoField('Doğum Tarihiniz', user.userBirthday ?? '-', labelSize: 12, valueSize: 12),
+            const SizedBox(height: 10), // Boşluk azaltıldı
+            _buildInfoField('Cinsiyet', _formatGender(user.userGender), labelSize: 12, valueSize: 12),
+            const SizedBox(height: 10), // Boşluk azaltıldı
+            _buildInfoField('Adres', user.userAddress ?? '-', maxLines: 3, labelSize: 12, valueSize: 12),
+            const SizedBox(height: 20), // Boşluk azaltıldı
             Center(
               child: InkWell(
                 onTap: _launchURL,
@@ -86,21 +86,21 @@ class ProfileDetailView extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.blue,
-                    fontSize: 12, // Küçültüldü
+                    fontSize: 11, // Font boyutu azaltıldı
                     decoration: TextDecoration.underline,
                     decorationColor: Colors.blue,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 16), // Eklendi (Alt boşluk)
+            const SizedBox(height: 12), // Boşluk azaltıldı
           ],
         ),
       ),
     );
   }
 
-  Widget _buildInfoField(String label, String value, {int maxLines = 1, double labelSize = 15, double valueSize = 14}) {
+  Widget _buildInfoField(String label, String value, {int maxLines = 1, double labelSize = 14, double valueSize = 13}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -112,12 +112,12 @@ class ProfileDetailView extends StatelessWidget {
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 5), // Küçültüldü
+        const SizedBox(height: 4), // Boşluk azaltıldı
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), // Padding azaltıldı
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7), // Padding azaltıldı
           decoration: BoxDecoration(
             color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(6), // Küçültüldü
+            borderRadius: BorderRadius.circular(4), // Kenar yuvarlaklığı azaltıldı
             border: Border.all(color: Colors.grey[300]!), 
           ),
           width: double.infinity,
