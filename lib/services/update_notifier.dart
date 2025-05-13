@@ -73,8 +73,8 @@ class UpdateHelper {
   static Future<void> launchUpdateURL(String platform) async {
     final Uri url = Uri.parse(
       platform.toLowerCase() == 'ios'
-          ? 'https://apps.apple.com/tr/app/tayamer/id1668001080'
-          : 'https://play.google.com/store/apps/details?id=com.office701.tayamer&hl=tr',
+          ? 'https://apps.apple.com/tr/app/id1668001080?mt=8'
+          : 'https://play.google.com/store/search?q=tayamer&c=apps',
     );
 
     try {
