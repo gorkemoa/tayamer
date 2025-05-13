@@ -102,9 +102,11 @@ class _SmsConfirmationViewState extends State<SmsConfirmationView> {
   // Bildirim detaylarını göster
   Widget _buildNotificationDetails(PaymentNotification notification) {
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+      elevation: 1.5,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -112,17 +114,18 @@ class _SmsConfirmationViewState extends State<SmsConfirmationView> {
               notification.title,
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 18,
+                fontSize: 14,
               ),
             ),
-            const SizedBox(height: 8),
-            Text(notification.body),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
+            Text(notification.body, style: const TextStyle(fontSize: 13)),
+            const SizedBox(height: 6),
             Text(
               'Tarih: ${notification.createDate}',
               style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w400,
                 color: Colors.grey[600],
-                fontSize: 12,
               ),
             ),
           ],
@@ -135,9 +138,13 @@ class _SmsConfirmationViewState extends State<SmsConfirmationView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SMS Onayı'),
+        title: const Text('SMS Onayı', style: TextStyle(fontSize: 17)),
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, size: 22),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: Consumer<NotificationViewModel>(
         builder: (context, viewModel, child) {
@@ -151,39 +158,40 @@ class _SmsConfirmationViewState extends State<SmsConfirmationView> {
           final smsNotification = viewModel.selectedNotification;
           
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Bildirim başlığı
                 const Text(
                   'Telefonunuza Gelen Kodu Giriniz',
                   style: TextStyle(
-                    fontSize: 22,
+                    fontSize: 17,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E3A8A),
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
                 
-                // Bildirim detayları
                 if (smsNotification != null)
                   _buildNotificationDetails(smsNotification),
                 
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
                 
-                // SMS kodu girişi
                 Form(
                   key: _formKey,
                   child: Column(
                     children: [
                       TextFormField(
                         controller: _smsCodeController,
-                        decoration: const InputDecoration(
+                        style: const TextStyle(fontSize: 14),
+                        decoration: InputDecoration(
                           labelText: 'SMS Kodu',
-                          border: OutlineInputBorder(),
+                          labelStyle: TextStyle(fontSize: 14, color: Colors.grey[700]),
                           hintText: 'Lütfen telefonunuza gelen kodu giriniz',
+                          hintStyle: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                          isDense: true,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                         ),
                         keyboardType: TextInputType.number,
                         validator: (value) {
@@ -193,7 +201,7 @@ class _SmsConfirmationViewState extends State<SmsConfirmationView> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 20),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -201,24 +209,25 @@ class _SmsConfirmationViewState extends State<SmsConfirmationView> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF1E3A8A),
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
                           ),
-                          child: const Text('Onayla'),
+                          child: const Text('Onayla', style: TextStyle(fontSize: 14)),
                         ),
                       ),
                     ],
                   ),
                 ),
                 
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 
-                // Kodu tekrar gönder
                 TextButton(
                   onPressed: viewModel.isLoading ? null : _fetchNotifications,
                   child: const Text(
                     'Kodu Tekrar Gönder',
                     style: TextStyle(
                       color: Color(0xFF1E3A8A),
+                      fontSize: 13
                     ),
                   ),
                 ),

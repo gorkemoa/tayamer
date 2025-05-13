@@ -17,8 +17,6 @@ class ProfileView extends StatefulWidget {
   State<ProfileView> createState() => _ProfileViewState();
 }
 
-
-
 class _ProfileViewState extends State<ProfileView> {
   final UserService _userService = UserService();
   final AuthService _authService = AuthService();
@@ -90,11 +88,11 @@ class _ProfileViewState extends State<ProfileView> {
         backgroundColor: Theme.of(context).primaryColor,
         title: const Text(
           'Hesabım',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white, fontSize: 17),
         ),
         centerTitle: true,
         leading:  IconButton(
-          icon: const Icon(FontAwesomeIcons.comments, color: Colors.white),
+          icon: const Icon(FontAwesomeIcons.comments, color: Colors.white, size: 20),
           onPressed: () {
             final viewModel = context.read<OfferViewModel>();
             // Genel sohbet teklifini (id: -1) bul
@@ -129,7 +127,7 @@ class _ProfileViewState extends State<ProfileView> {
           },
         ),   actions: [
           IconButton(
-            icon: const Icon(FontAwesomeIcons.bell, color: Colors.white),
+            icon: const Icon(FontAwesomeIcons.bell, color: Colors.white, size: 20),
             onPressed: () {
               Navigator.push(
                 context,
@@ -147,17 +145,17 @@ class _ProfileViewState extends State<ProfileView> {
           children: [
             // Kullanıcı Bilgileri Bölümü
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(12.0),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-            Image.network(
-              _user?.profilePhoto ?? 'https://via.placeholder.com/150',
-              width: 120,
-              height: 180,
-              fit: BoxFit.cover,
-            ),
-                  const SizedBox(width: 16),
+                  Image.network(
+                    _user?.profilePhoto ?? 'https://via.placeholder.com/150',
+                    width: 100,
+                    height: 150,
+                    fit: BoxFit.cover,
+                  ),
+                  const SizedBox(width: 12),
                   // Kullanıcı Bilgileri
                   Expanded(
                     child: Column(
@@ -166,43 +164,43 @@ class _ProfileViewState extends State<ProfileView> {
                         const Text(
                           'Adınız Soyadınız',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 14,
                             color: Colors.black87,
                           ),
                         ),
                         Container(
-                          margin: const EdgeInsets.only(top: 8, bottom: 16),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          margin: const EdgeInsets.only(top: 6, bottom: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           decoration: BoxDecoration(
                             color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(6),
                             border: Border.all(color: Colors.grey[300]!),
                           ),
                           width: double.infinity,
                           child: Text(
                             _user?.userFullname ?? 'Adınız Soyadınız',
-                            style: const TextStyle(fontSize: 16),
+                            style: const TextStyle(fontSize: 14),
                           ),
                         ),
                         const Text(
                           'Kullanıcı Adınız',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 14,
                             color: Colors.black87,
                           ),
                         ),
                         Container(
-                          margin: const EdgeInsets.only(top: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          margin: const EdgeInsets.only(top: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           decoration: BoxDecoration(
                             color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(6),
                             border: Border.all(color: Colors.grey[300]!),
                           ),
                           width: double.infinity,
                           child: Text(
                             _user?.username ?? 'Kullanıcı Adınız',
-                            style: const TextStyle(fontSize: 16),
+                            style: const TextStyle(fontSize: 14),
                           ),
                         ),
                       ],
@@ -216,6 +214,8 @@ class _ProfileViewState extends State<ProfileView> {
             _buildMenuItem(
               icon: Icons.person_outline,
               title: 'Profilim',
+              iconSize: 22,
+              titleSize: 14,
               onTap: () {
                 if (_user != null) {
                   Navigator.push(
@@ -237,13 +237,15 @@ class _ProfileViewState extends State<ProfileView> {
             _buildMenuItem(
               icon: Icons.public,
               title: 'Yardım',
+              iconSize: 22,
+              titleSize: 14,
               onTap: () {
                 _launchURL();
               },
             ),
             
             // Alt bilgiler
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             Center(
              child: InkWell(
                onTap: _office701launchURL,
@@ -252,7 +254,7 @@ class _ProfileViewState extends State<ProfileView> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.blue,
-                    fontSize: 14,
+                    fontSize: 12,
                     decoration: TextDecoration.underline,
                     decorationColor: Colors.blue,
                   ),
@@ -260,29 +262,29 @@ class _ProfileViewState extends State<ProfileView> {
               ),
             ),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             const Center(
               child: Text(
                 'Gizlilik Politikası',
                 style: TextStyle(
                   color: Colors.grey,
-                  fontSize: 14,
+                  fontSize: 12,
                 ),
               ),
             ),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Center(
               child: Text(
                 '${_user?.userVersion}',
                 style: const TextStyle(
                   color: Colors.grey,
-                  fontSize: 14,
+                  fontSize: 12,
                 ),
               ),
             ),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Center(
               child: TextButton(
                 onPressed: () => _logout(context),
@@ -290,13 +292,13 @@ class _ProfileViewState extends State<ProfileView> {
                   'Çıkış Yap',
                   style: TextStyle(
                     color: Colors.redAccent,
-                    fontSize: 16,
+                    fontSize: 14,
                   ),
                 ),
               ),
             ),
             
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -307,37 +309,40 @@ class _ProfileViewState extends State<ProfileView> {
     required IconData icon,
     required String title,
     required VoidCallback onTap,
+    double iconSize = 28,
+    double titleSize = 16,
   }) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(6),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            blurRadius: 2,
-            offset: const Offset(0, 1),
+            color: Colors.grey.withOpacity(0.15),
+            blurRadius: 1.5,
+            offset: const Offset(0, 0.5),
           ),
         ],
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         leading: Icon(
           icon,
           color: Colors.black54,
-          size: 28,
+          size: iconSize,
         ),
         title: Text(
           title,
-          style: const TextStyle(
-            fontSize: 16,
+          style: TextStyle(
+            fontSize: titleSize,
             fontWeight: FontWeight.w500,
           ),
         ),
         trailing: const Icon(
           Icons.chevron_right,
           color: Colors.black54,
+          size: 22,
         ),
         onTap: onTap,
       ),

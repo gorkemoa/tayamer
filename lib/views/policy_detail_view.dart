@@ -47,41 +47,40 @@ class _PolicyDetailViewState extends State<PolicyDetailView> {
             title: const Text(
               'Poliçe Detayı',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 17,
                 fontWeight: FontWeight.w500,
                 color: Colors.white,
               ),
             ),
             centerTitle: true,
-            iconTheme: const IconThemeData(color: Colors.white),
+            iconTheme: const IconThemeData(color: Colors.white, size: 20),
             actions: [
-              // Paylaşım butonu veya yüklenme göstergesi
               if (_viewModel.selectedPolicy != null)
                 _isSharing
                   ? const Padding(
-                      padding: EdgeInsets.only(right: 16.0),
+                      padding: EdgeInsets.only(right: 12.0),
                       child: Center(
                         child: SizedBox(
-                          width: 24,
-                          height: 24,
+                          width: 20,
+                          height: 20,
                           child: CircularProgressIndicator(
-                            strokeWidth: 2,
+                            strokeWidth: 1.5,
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         ),
                       ),
                     )
                   : IconButton(
-                      icon: const Icon(Icons.share, color: Colors.white),
+                      icon: const Icon(Icons.share, color: Colors.white, size: 22),
+                      tooltip: 'Paylaş',
                       onPressed: () {
-                        // _viewModel.selectedPolicy null değilse paylaşımı başlat
-                         if (_viewModel.selectedPolicy != null) {
-                            _sharePolicyFiles(_viewModel.selectedPolicy!);
-                         } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Paylaşılacak poliçe bilgisi bulunamadı.')),
-                            );
-                         }
+                        if (_viewModel.selectedPolicy != null) {
+                          _sharePolicyFiles(_viewModel.selectedPolicy!);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Paylaşılacak poliçe bilgisi bulunamadı.')),
+                          );
+                        }
                       },
                     ),
             ],
@@ -111,23 +110,24 @@ class _PolicyDetailViewState extends State<PolicyDetailView> {
         children: [
           Icon(
             Icons.error_outline,
-            size: 60,
+            size: 48,
             color: Colors.red[300],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Text(
             _viewModel.errorMessage,
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 14,
               color: Colors.grey[600],
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           TextButton(
             onPressed: () {
               _viewModel.fetchPolicyDetail(widget.policyId);
             },
-            child: const Text('Tekrar Dene'),
+            child: const Text('Tekrar Dene', style: TextStyle(fontSize: 13)),
           ),
         ],
       ),
@@ -136,65 +136,40 @@ class _PolicyDetailViewState extends State<PolicyDetailView> {
 
   Widget _buildPolicyDetails(Policy policy) {
     return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Sigorta şirketi logosu
           if (policy.company.isNotEmpty && policy.company[0].logo.isNotEmpty)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              padding: const EdgeInsets.symmetric(vertical: 12),
               color: Colors.white,
               child: Center(
                 child: Image.network(
                   policy.company[0].logo,
-                  height: 60,
+                  height: 48,
                   fit: BoxFit.contain,
                 ),
               ),
             ),
-          const SizedBox(height: 8), // Logo ile ilk öğe arasına boşluk
+          const SizedBox(height: 6),
           
-          // Poliçe detayları
-          // Container ve içindeki Column kaldırıldı, her öğe kendi padding'ine sahip
-          // Şirket ünvanı
           _buildDetailItem('Şirket Ünvanı', policy.company.isNotEmpty ? policy.company[0].unvan : ''),
-          // Divider kaldırıldı
-          
-          // Poliçe tipi
           _buildDetailItem('Poliçe Tipi', policy.policyType),
-          // Divider kaldırıldı
-          
-          // Plaka
           if (policy.plaka.isNotEmpty) ...[
             _buildDetailItem('Poliçe yapılan Plaka', policy.plaka),
-            // Divider kaldırıldı
           ],
-          
-          // Başlangıç tarihi
           _buildDetailItem('Poliçe Başlangıç Tarihi', _formatDate(policy.startDate)),
-          // Divider kaldırıldı
-          
-          // Bitiş tarihi
           _buildDetailItem('Poliçe Bitiş Tarihi', _formatDate(policy.endDate)),
-          // Divider kaldırıldı
-          
-          // Müşteri ismi
           _buildDetailItem('Müşteri İsmi', policy.customer.isNotEmpty ? policy.customer[0].adiSoyadi : ''),
-          // Divider kaldırıldı
-      
-          // Net fiyat
           _buildDetailItem('Net Fiyat', '₺${policy.netAmount}'),
-          // Divider kaldırıldı
-          
-          // Brüt fiyat
           _buildDetailItem('Brüt Fiyat', '₺${policy.grossAmount}'),
             
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           
-          // Butonlar
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
             child: Row(
               children: [
                 Expanded(
@@ -204,7 +179,7 @@ class _PolicyDetailViewState extends State<PolicyDetailView> {
                     () => _openPdf(policy.receiptUrl, 'Makbuz'),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 Expanded(
                   child: _buildActionButton(
                     'Poliçeyi İncele',
@@ -215,32 +190,32 @@ class _PolicyDetailViewState extends State<PolicyDetailView> {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
             child: _buildLinkButton(policy.pdfUrl),
           ),
-          const SizedBox(height: 16), // En alta ek boşluk
+          const SizedBox(height: 12),
         ],
       ),
     );
   }
 
   Widget _buildDetailItem(String label, String value) {
-    // Dış padding ile öğeler arasına boşluk ekle
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Başlık (Label)
           Text(
             label,
             style: TextStyle(
-              fontSize: 12, 
-              color: Colors.grey[600],
+              fontSize: 11,
+              color: Colors.grey[700],
+              fontWeight: FontWeight.w500
             ),
           ),
+          const SizedBox(height: 4),
           const SizedBox(height: 6), // Başlık ile kutu arasına boşluk
           // Değer için Textbox benzeri Container
           Container(

@@ -96,14 +96,18 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(widget.title, style: const TextStyle(fontSize: 17)),
         backgroundColor: Theme.of(context).primaryColor,
-         iconTheme: const IconThemeData(color: Colors.white),
+         iconTheme: const IconThemeData(color: Colors.white, size: 22),
          titleTextStyle: const TextStyle(
            color: Colors.white,
-           fontSize: 20,
-           fontWeight: FontWeight.bold,
+           fontSize: 17,
+           fontWeight: FontWeight.w500,
          ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, size: 22),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: _buildBody(),
     );
@@ -119,16 +123,20 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, color: Colors.red, size: 48),
-              const SizedBox(height: 16),
+              const Icon(Icons.error_outline, color: Colors.red, size: 40),
+              const SizedBox(height: 12),
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.red),
+                style: const TextStyle(color: Colors.red, fontSize: 13),
               ),
-               const SizedBox(height: 16),
+               const SizedBox(height: 12),
                ElevatedButton(
-                 onPressed: _loadPdf, // Tekrar deneme butonu
+                 onPressed: _loadPdf,
+                 style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    textStyle: const TextStyle(fontSize: 12),
+                 ),
                  child: const Text('Tekrar Dene'),
                )
             ],
@@ -168,7 +176,7 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
         },
       );
     } else {
-       return const Center(child: Text('PDF dosyası yüklenemedi.'));
+       return const Center(child: Text('PDF dosyası yüklenemedi.', style: TextStyle(fontSize: 14)));
     }
   }
 } 

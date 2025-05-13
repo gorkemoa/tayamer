@@ -107,25 +107,27 @@ class _HomeViewState extends State<HomeView> {
             _selectedIndex = index;
           });
         },
+        selectedLabelStyle: const TextStyle(fontSize: 11),
+        unselectedLabelStyle: const TextStyle(fontSize: 11),
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.house),
+            icon: Icon(FontAwesomeIcons.house, size: 20),
             label: 'Ana Sayfa',
           ),
           BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.tags),
+            icon: Icon(FontAwesomeIcons.tags, size: 20),
             label: 'Teklifler',
           ),
           BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.qrcode),
+            icon: Icon(FontAwesomeIcons.qrcode, size: 20),
             label: 'Yeni Teklif',
           ),
           BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.fileContract),
+            icon: Icon(FontAwesomeIcons.fileContract, size: 20),
             label: 'Poliçeler',
           ),
           BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.user),
+            icon: Icon(FontAwesomeIcons.user, size: 20),
             label: 'Hesabım',
           ),
         ],

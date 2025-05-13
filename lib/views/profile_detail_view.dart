@@ -20,64 +20,64 @@ class ProfileDetailView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).primaryColor, // Ana AppBar rengiyle aynı
+        backgroundColor: Theme.of(context).primaryColor, 
         title: const Text(
           'Profilim',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white, fontSize: 17), // Küçültüldü
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 22), // Boyut eklendi
           onPressed: () => Navigator.of(context).pop(),
         ),
-        iconTheme: const IconThemeData(color: Colors.white), // Geri butonu rengi
+        iconTheme: const IconThemeData(color: Colors.white, size: 22), // Boyut eklendi
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(12.0), // Küçültüldü
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Profil Fotoğrafı Alanı (Boş)
                 Container(
-                  width: 140, // Biraz daha küçük
-                  height: 140, // Kare şeklinde
+                  width: 120, // Küçültüldü
+                  height: 120, // Küçültüldü
                   decoration: BoxDecoration(
                     color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(8), // Köşeleri yuvarlatılmış
+                    borderRadius: BorderRadius.circular(6), // Küçültüldü
                     border: Border.all(color: Colors.grey[300]!),
                   ),
-                  // TODO: Profil fotoğrafını göstermek için Image widget'ı eklenebilir
                    child: user.profilePhoto.isNotEmpty
-                  ? Image.network(user.profilePhoto, fit: BoxFit.cover)
-                  : const Icon(Icons.person, size: 60, color: Colors.grey),
+                  ? ClipRRect( // Köşeleri yuvarlatmak için eklendi
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.network(user.profilePhoto, fit: BoxFit.cover)
+                    )
+                  : Icon(Icons.person, size: 48, color: Colors.grey[400]), // Boyut ve renk ayarlandı
                 ),
-                const SizedBox(width: 20),
-                // Ad Soyad ve Kullanıcı Adı
+                const SizedBox(width: 16), // Küçültüldü
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildInfoField('Adınız Soyadınız', user.userFullname),
-                      const SizedBox(height: 10),
-                      _buildInfoField('Kullanıcı Adınız', user.username),
+                      _buildInfoField('Adınız Soyadınız', user.userFullname, labelSize: 13, valueSize: 13), // Boyutlar eklendi
+                      const SizedBox(height: 8), // Küçültüldü
+                      _buildInfoField('Kullanıcı Adınız', user.username, labelSize: 13, valueSize: 13), // Boyutlar eklendi
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 24), // Alanlar arası boşluk
-            _buildInfoField('Telefon Numaranız', user.userPhone ?? '-'),
-            const SizedBox(height: 16),
-            _buildInfoField('E-Posta Adresiniz', user.userEmail),
-            const SizedBox(height: 16),
-            _buildInfoField('Doğum Tarihiniz', user.userBirthday ?? '-'),
-            const SizedBox(height: 16),
-            _buildInfoField('Cinsiyet', _formatGender(user.userGender)),
-            const SizedBox(height: 16),
-            _buildInfoField('Adres', user.userAddress ?? '-', maxLines: 3),
-            const SizedBox(height: 32),
+            const SizedBox(height: 20), // Küçültüldü
+            _buildInfoField('Telefon Numaranız', user.userPhone ?? '-', labelSize: 13, valueSize: 13),
+            const SizedBox(height: 12), // Küçültüldü
+            _buildInfoField('E-Posta Adresiniz', user.userEmail, labelSize: 13, valueSize: 13),
+            const SizedBox(height: 12), // Küçültüldü
+            _buildInfoField('Doğum Tarihiniz', user.userBirthday ?? '-', labelSize: 13, valueSize: 13),
+            const SizedBox(height: 12), // Küçültüldü
+            _buildInfoField('Cinsiyet', _formatGender(user.userGender), labelSize: 13, valueSize: 13),
+            const SizedBox(height: 12), // Küçültüldü
+            _buildInfoField('Adres', user.userAddress ?? '-', maxLines: 3, labelSize: 13, valueSize: 13),
+            const SizedBox(height: 24), // Küçültüldü
             Center(
               child: InkWell(
                 onTap: _launchURL,
@@ -86,46 +86,46 @@ class ProfileDetailView extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.blue,
-                    fontSize: 14,
+                    fontSize: 12, // Küçültüldü
                     decoration: TextDecoration.underline,
                     decorationColor: Colors.blue,
                   ),
                 ),
               ),
             ),
+            const SizedBox(height: 16), // Eklendi (Alt boşluk)
           ],
         ),
       ),
     );
   }
 
-  // Bilgi alanını oluşturan yardımcı metot
-  Widget _buildInfoField(String label, String value, {int maxLines = 1}) {
+  Widget _buildInfoField(String label, String value, {int maxLines = 1, double labelSize = 15, double valueSize = 14}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 15,
+          style: TextStyle(
+            fontSize: labelSize, // Parametre kullanıldı
             color: Colors.black54,
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 5), // Küçültüldü
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), // Padding azaltıldı
           decoration: BoxDecoration(
-            color: Colors.grey[100], // Hafif gri arka plan
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey[300]!), // İnce kenarlık
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(6), // Küçültüldü
+            border: Border.all(color: Colors.grey[300]!), 
           ),
           width: double.infinity,
           child: Text(
-            value.isEmpty ? '-' : value, // Boş değerler için tire göster
+            value.isEmpty ? '-' : value, 
             maxLines: maxLines,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 14, color: Colors.black87),
+            style: TextStyle(fontSize: valueSize, color: Colors.black87), // Parametre kullanıldı
           ),
         ),
       ],

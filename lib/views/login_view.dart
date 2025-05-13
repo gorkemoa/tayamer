@@ -90,8 +90,8 @@ class _LoginViewState extends State<LoginView> {
   Widget _buildLogo() {
     return Image.asset(
       'assets/images/tayamer-logo.png',
-      width: 280,
-      height: 150,
+      width: 240,
+      height: 130,
       color: Colors.white,
     );
   }
@@ -114,14 +114,14 @@ class _LoginViewState extends State<LoginView> {
               decoration: BoxDecoration(
                 color: appTheme.colorScheme.secondary, // Turuncu arka plan
                 borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(24),
-                  bottomRight: Radius.circular(24),
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
                 ),
               ),
               child: SafeArea(
                 bottom: false,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 40.0),
+                  padding: const EdgeInsets.symmetric(vertical: 30.0, horizontal: 40.0),
                   child: Column(
                     children: [
                       // Tayamer logo
@@ -140,7 +140,7 @@ class _LoginViewState extends State<LoginView> {
                   const Text(
                     'MÜŞTERİ GİRİŞİ',
                     style: TextStyle(
-                      fontSize: 23,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFFE0622C), // Secondary color
                     ),
@@ -150,7 +150,7 @@ class _LoginViewState extends State<LoginView> {
                   const Text(
                     'Lütfen size iletilen kullanıcı adı ve şifreniz ile\ngiriş yapınız.',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 13,
                       color: Colors.grey,
                       height: 1.5,
                     ),
@@ -218,11 +218,11 @@ class _LoginViewState extends State<LoginView> {
                             textAlign: TextAlign.center,
                           ),
                         ],
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 30),
                         // Giriş butonu
                         Container(
                           width: double.infinity,
-                          height: 56,
+                          height: 50,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -248,7 +248,7 @@ class _LoginViewState extends State<LoginView> {
                                 : const Text(
                                     'Giriş Yap',
                                     style: TextStyle(
-                                      fontSize: 18,
+                                      fontSize: 15,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),

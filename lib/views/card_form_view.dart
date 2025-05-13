@@ -70,30 +70,30 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
           'Kart Bilgileri',
           style: TextStyle(
             color: Colors.white,
-            fontSize: 20,
+            fontSize: 17,
           ),
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
             icon: _isScanning 
               ? const SizedBox(
-                  width: 24, 
-                  height: 24, 
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 1.5)
                 )
-              : const Icon(Icons.camera_alt, color: Colors.white),
+              : const Icon(Icons.camera_alt, color: Colors.white, size: 22),
             tooltip: 'Kartı Tarayarak Doldur',
             onPressed: _isScanning ? null : _scanCard,
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(15.0),
+        padding: const EdgeInsets.all(12.0),
         child: Form(
           key: _formKey,
           child: Column(
@@ -103,45 +103,21 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                 'Kart bilgilerinizi kontrol ederek, ödemeyi tamamlayabilirsiniz.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 15),
+              const SizedBox(height: 12),
 
               // Kart Üzerindeki Ad Soyad
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Kart Üzerideki Ad Soyad',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
+              _buildLabel('Kart Üzerideki Ad Soyad'),
+              const SizedBox(height: 6),
               TextFormField(
                 controller: _cardHolderController,
-                decoration: InputDecoration(
+                style: const TextStyle(fontSize: 14),
+                decoration: _inputDecoration(
                   hintText: 'Örn: Ahmet Yılmaz',
-                  filled: true,
-                  fillColor: Colors.white,
-                  prefixIcon: Icon(Icons.person_outline, color: Colors.grey[600]),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+                  prefixIcon: Icons.person_outline,
                 ),
                 textCapitalization: TextCapitalization.characters,
                 validator: (value) {
@@ -151,41 +127,17 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                   return null;
                 },
               ),
-              const SizedBox(height: 15),
+              const SizedBox(height: 12),
               
               // Kart Numarası
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Kart Numarası',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
+              _buildLabel('Kart Numarası'),
+              const SizedBox(height: 6),
               TextFormField(
                 controller: _cardNumberController,
-                decoration: InputDecoration(
+                style: const TextStyle(fontSize: 14),
+                decoration: _inputDecoration(
                   hintText: 'Örn: "1234 5678 9012 3456"',
-                  filled: true,
-                  fillColor: Colors.white,
-                  prefixIcon: Icon(Icons.credit_card, color: Colors.grey[600]),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+                  prefixIcon: Icons.credit_card,
                 ),
                 keyboardType: TextInputType.number,
                 inputFormatters: [
@@ -207,41 +159,20 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                   return null;
                 },
               ),
-              const SizedBox(height: 15),
+              const SizedBox(height: 12),
               
               // SKT Tek satırda
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'SKT',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
+                  _buildLabel('SKT'),
+                  const SizedBox(height: 6),
                   TextFormField(
                     controller: _expiryDateController,
-                    decoration: InputDecoration(
+                    style: const TextStyle(fontSize: 14),
+                    decoration: _inputDecoration(
                       hintText: 'AA/YY',
-                      filled: true,
-                      fillColor: Colors.white,
-                      prefixIcon: Icon(Icons.date_range_outlined, size: 20, color: Colors.grey[600]),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      prefixIcon: Icons.date_range_outlined,
                     ),
                     keyboardType: TextInputType.number,
                     inputFormatters: [
@@ -273,7 +204,7 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                   ),
                 ],
               ),
-              const SizedBox(height: 15),
+              const SizedBox(height: 12),
 
               // CVV ve Taksit yan yana
               Row(
@@ -285,35 +216,14 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'CVV',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
+                        _buildLabel('CVV'),
+                        const SizedBox(height: 6),
                         TextFormField(
                           controller: _cvvController,
-                          decoration: InputDecoration(
+                          style: const TextStyle(fontSize: 14),
+                          decoration: _inputDecoration(
                             hintText: '123',
-                            filled: true,
-                            fillColor: Colors.white,
-                            prefixIcon: Icon(Icons.lock_outline, size: 20, color: Colors.grey[600]),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                            prefixIcon: Icons.lock_outline,
                           ),
                           keyboardType: TextInputType.number,
                           inputFormatters: [
@@ -333,7 +243,7 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   
                   // Taksit
                   Expanded(
@@ -341,37 +251,31 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Taksit',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
+                        _buildLabel('Taksit'),
+                        const SizedBox(height: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: Colors.grey.shade300),
                           ),
                           child: DropdownButtonFormField<String>(
                             value: _instalmentValue,
+                            style: const TextStyle(fontSize: 14, color: Colors.black87),
                             decoration: const InputDecoration(
                               border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(vertical: 0),
+                              contentPadding: EdgeInsets.symmetric(vertical: 4),
                             ),
                             isExpanded: true,
-                            icon: Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
+                            icon: Icon(Icons.arrow_drop_down, color: Colors.grey[600], size: 20),
                             items: List.generate(widget.maxInstallment, (index) {
                               final count = index + 1;
                               return DropdownMenuItem(
                                 value: count.toString(),
                                 child: Text(
                                   count == 1 ? "Tek Çekim" : "$count Taksit",
-                                  style: const TextStyle(fontSize: 14),
+                                  style: const TextStyle(fontSize: 13),
                                 ),
                               );
                             }),
@@ -396,41 +300,17 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                 ],
               ),
               
-              const SizedBox(height: 15),
+              const SizedBox(height: 12),
               
               // TC No
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Kart Sahibi TC No',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
+              _buildLabel('Kart Sahibi TC No'),
+              const SizedBox(height: 6),
               TextFormField(
                 controller: _tcNoController,
-                decoration: InputDecoration(
+                style: const TextStyle(fontSize: 14),
+                decoration: _inputDecoration(
                   hintText: 'Örn: 12345678900',
-                  filled: true,
-                  fillColor: Colors.white,
-                  prefixIcon: Icon(Icons.badge_outlined, color: Colors.grey[600]),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+                  prefixIcon: Icons.badge_outlined,
                 ),
                 keyboardType: TextInputType.number,
                 inputFormatters: [
@@ -451,41 +331,17 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                 },
               ),
               
-              const SizedBox(height: 15),
+              const SizedBox(height: 12),
               
               // Doğum Tarihi
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Kart Sahibi Doğum Tarihi',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
+              _buildLabel('Kart Sahibi Doğum Tarihi'),
+              const SizedBox(height: 6),
               TextFormField(
                 controller: _birthDateController,
-                decoration: InputDecoration(
+                style: const TextStyle(fontSize: 14),
+                decoration: _inputDecoration(
                   hintText: 'Örn: GG.AA.YYYY',
-                  filled: true,
-                  fillColor: Colors.white,
-                  prefixIcon: Icon(Icons.cake_outlined, color: Colors.grey[600]),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+                  prefixIcon: Icons.cake_outlined,
                 ),
                 keyboardType: TextInputType.datetime,
                 inputFormatters: [
@@ -514,7 +370,7 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                 },
               ),
               
-              const SizedBox(height: 30),
+              const SizedBox(height: 24),
               
               // Ödemeyi Tamamla butonu
               SizedBox(
@@ -524,13 +380,13 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1E3A8A),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    elevation: 5,
+                    elevation: 3,
                     textStyle: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -538,13 +394,13 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
                 ),
               ),
               
-              const SizedBox(height: 15),
+              const SizedBox(height: 12),
               
               const Text(
                 'Ödemeyi Tamamla butonuna tıklayarak, yukarıdaki bilgilerin doğruluğunu onaylamış olursunuz.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   color: Colors.grey,
                 ),
               ),
@@ -711,6 +567,46 @@ class _CardManualEntryViewState extends State<CardManualEntryView> {
       );
     }
   }
+
+  // Helper widget for labels
+  Widget _buildLabel(String text) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: Colors.black87,
+        ),
+      ),
+    );
+  }
+
+  // Helper for InputDecoration
+  InputDecoration _inputDecoration({required String hintText, IconData? prefixIcon}) {
+    return InputDecoration(
+      hintText: hintText,
+      hintStyle: TextStyle(fontSize: 13, color: Colors.grey[500]),
+      filled: true,
+      fillColor: Colors.white,
+      isDense: true,
+      prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: Colors.grey[600], size: 18) : null,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 1.5),
+      ),
+      contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+    );
+  }
 }
 
 // Ödeme onay ekranı
@@ -737,24 +633,28 @@ class PaymentConfirmationView extends StatelessWidget {
           'Ödeme Onayı',
           style: TextStyle(
             color: Colors.white,
-            fontSize: 20,
+            fontSize: 17,
           ),
         ),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
               'Kart Bilgileri:',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             
             // Kart bilgileri gösterimi
             _buildInfoRow('Kart Numarası', _maskCardNumber(cardData.cardNumber)),
@@ -765,7 +665,7 @@ class PaymentConfirmationView extends StatelessWidget {
             if (cardData.instalment != null && cardData.instalment != "1")
               _buildInfoRow('Taksit', '${cardData.instalment} Taksit'),
             
-            const SizedBox(height: 40),
+            const SizedBox(height: 30),
             
             // Ödeme butonu
             SizedBox(
@@ -779,26 +679,27 @@ class PaymentConfirmationView extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1E3A8A),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      disabledBackgroundColor: Colors.grey,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      disabledBackgroundColor: Colors.grey[300],
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
                     ),
                     child: paymentViewModel.isLoading
                         ? const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               SizedBox(
-                                width: 20,
-                                height: 20,
+                                width: 18,
+                                height: 18,
                                 child: CircularProgressIndicator(
                                   color: Colors.white,
-                                  strokeWidth: 2,
+                                  strokeWidth: 1.5,
                                 ),
                               ),
-                              SizedBox(width: 10),
+                              SizedBox(width: 8),
                               Text(
                                 'İşleniyor...',
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -807,7 +708,7 @@ class PaymentConfirmationView extends StatelessWidget {
                         : const Text(
                             'Ödemeyi Tamamla',
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 14,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -857,25 +758,28 @@ class PaymentConfirmationView extends StatelessWidget {
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 15.0),
+      padding: const EdgeInsets.only(bottom: 10.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 140,
+            width: 120,
             child: Text(
               '$label:',
               style: const TextStyle(
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w500,
                 color: Colors.grey,
+                fontSize: 13,
               ),
             ),
           ),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               value,
               style: const TextStyle(
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
               ),
             ),
           ),

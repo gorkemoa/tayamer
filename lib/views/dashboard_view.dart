@@ -59,12 +59,12 @@ class _DashboardViewState extends State<DashboardView> {
 
     // Kullanıcı istatistikleri veya null değerleri kullan
     final statistics = _user?.statistics;
-    final totalOffer = statistics?.totalOffer.toString() ?? '2';
-    final totalPolicy = statistics?.totalPolicy.toString() ?? '1';
+    final totalOffer = statistics?.totalOffer.toString();
+    final totalPolicy = statistics?.totalPolicy.toString();
     
     // Para formatında gösterim için 
-    final monthlyAmount = _formatAmount(statistics?.monthlyAmount ?? '000.00');
-    final totalAmount = _formatAmount(statistics?.totalAmount ?? '000.00');
+    final monthlyAmount = _formatAmount(statistics?.monthlyAmount ?? '');
+    final totalAmount = _formatAmount(statistics?.totalAmount ?? '');
 
     return Scaffold(
       backgroundColor: Theme.of(context).primaryColor,
@@ -128,23 +128,23 @@ class _DashboardViewState extends State<DashboardView> {
             child: Column(
               children: [
                 Container(
-                  width: 120,
-                  height: 120,
-                  margin: const EdgeInsets.symmetric(vertical: 15),
+                  width: 100,
+                  height: 100,
+                  margin: const EdgeInsets.symmetric(vertical: 12),
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.white,
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(60),
+                    borderRadius: BorderRadius.circular(50),
                     child: _user?.profilePhoto != null && _user!.profilePhoto.isNotEmpty
                       ? Image.network(
                           _user!.profilePhoto,
-                          width: 120,
-                          height: 120,
+                          width: 100,
+                          height: 100,
                           fit: BoxFit.cover,
                         )
-                      : const Icon(Icons.person, size: 80, color: Colors.grey),
+                      : const Icon(Icons.person, size: 60, color: Colors.grey),
                   ),
                 ),
                 Padding(
@@ -153,21 +153,21 @@ class _DashboardViewState extends State<DashboardView> {
                     _user?.userFullname ?? 'Görkem ÖZTÜRK',
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 24,
+                      fontSize: 21,
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(height: 5),
+                const SizedBox(height: 6),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
                     _user?.userEmail ?? 'gorkem.ozturk@office701.com',
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 16,
+                      fontSize: 13,
                     ),
                     textAlign: TextAlign.center,
                     overflow: TextOverflow.ellipsis,
@@ -198,12 +198,12 @@ class _DashboardViewState extends State<DashboardView> {
                     children: [
                       // Toplam Teklif
                       Expanded(
-                        child: _buildInfoCard('Toplam Teklif', totalOffer),
+                        child: _buildInfoCard('Toplam Teklif', totalOffer ?? '0'),
                       ),
                       const SizedBox(width: 15),
                       // Toplam Poliçe
                       Expanded(
-                        child: _buildInfoCard('Toplam Poliçe', totalPolicy),
+                        child: _buildInfoCard('Toplam Poliçe', totalPolicy ?? '0'),
                       ),
                     ],
                   ),
@@ -233,7 +233,7 @@ class _DashboardViewState extends State<DashboardView> {
 
   Widget _buildInfoCard(String title, String value) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20),
+      padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
@@ -251,7 +251,7 @@ class _DashboardViewState extends State<DashboardView> {
           Text(
             title,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 11,
               fontWeight: FontWeight.w500,
             ),
             textAlign: TextAlign.center,
@@ -260,7 +260,7 @@ class _DashboardViewState extends State<DashboardView> {
           Text(
             value,
             style: const TextStyle(
-              fontSize: 24,
+              fontSize: 21,
               fontWeight: FontWeight.bold,
             ),
             textAlign: TextAlign.center,

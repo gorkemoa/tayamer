@@ -43,13 +43,16 @@ class _NotificationsViewState extends State<NotificationsView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bildirimler'),
+        title: const Text('Bildirimler', style: TextStyle(fontSize: 17)),
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, size: 22),
+          onPressed: () => Navigator.pop(context),
+        ),
         actions: [
-          // Bildirimleri yenile butonu
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, size: 22),
             tooltip: 'Bildirimleri yenile',
             onPressed: _fetchNotifications,
           ),
@@ -71,18 +74,19 @@ class _NotificationsViewState extends State<NotificationsView> {
                   const Icon(
                     Icons.error_outline,
                     color: Colors.red,
-                    size: 50,
+                    size: 40,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   Text(
                     'Hata: ${viewModel.errorMessage}',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.red),
+                    style: const TextStyle(color: Colors.red, fontSize: 13),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   ElevatedButton(
                     onPressed: _fetchNotifications,
-                    child: const Text('Tekrar Dene'),
+                    child: const Text('Tekrar Dene', style: TextStyle(fontSize: 12)),
+                    style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
                   ),
                 ],
               ),
@@ -95,7 +99,7 @@ class _NotificationsViewState extends State<NotificationsView> {
             return const Center(
               child: Text(
                 'Bildirim bulunamadı',
-                style: TextStyle(fontSize: 18),
+                style: TextStyle(fontSize: 14),
               ),
             );
           }
@@ -103,7 +107,7 @@ class _NotificationsViewState extends State<NotificationsView> {
           return RefreshIndicator(
             onRefresh: _fetchNotifications,
             child: ListView.builder(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(6.0),
               itemCount: notifications.length,
               itemBuilder: (context, index) {
                 final notification = notifications[index];
@@ -137,30 +141,30 @@ class _NotificationsViewState extends State<NotificationsView> {
     
     return Card(
       color: cardColor,
-      margin: const EdgeInsets.symmetric(vertical: 6.0),
-      elevation: 2,
+      margin: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 2.0),
+      elevation: 1.5,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       child: InkWell(
         onTap: () => _handleNotificationTap(notification),
+        borderRadius: BorderRadius.circular(6),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(10.0),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // İkon
               Container(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(5.0),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E3A8A).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8.0),
+                  color: const Color(0xFF1E3A8A).withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(6.0),
                 ),
                 child: Icon(
                   notificationIcon,
                   color: const Color(0xFF1E3A8A),
-                  size: 24,
+                  size: 18,
                 ),
               ),
-              const SizedBox(width: 16),
-              // İçerik
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,22 +173,23 @@ class _NotificationsViewState extends State<NotificationsView> {
                       notification.title,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        fontSize: 14,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
                       notification.body,
                       style: const TextStyle(
                         color: Colors.black87,
+                        fontSize: 12,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       'Tarih: ${notification.createDate}',
                       style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
+                        color: Colors.grey[700],
+                        fontSize: 10,
                       ),
                     ),
                   ],

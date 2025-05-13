@@ -108,51 +108,50 @@ class _OffersViewState extends State<OffersView> {
           }
 
           return Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
             child: ListView.builder(
               itemCount: viewModel.offers.length,
               itemBuilder: (context, index) {
                 final offer = viewModel.offers[index];
                 
-                // GENEL SOHBET (id: -1) için farklı tasarım kullan
                 final isGeneralChat = offer.id.toString() == '-1';
                 
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
+                  padding: const EdgeInsets.only(bottom: 8.0),
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(6),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 5,
-                          offset: const Offset(0, 2),
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
                         ),
                       ],
                     ),
                     child: ListTile(
-                      contentPadding: const EdgeInsets.all(16),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       leading: Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
+                        padding: const EdgeInsets.only(right: 4.0),
                         child: SizedBox(
-                          width: 40,
-                          height: 40,
+                          width: 32,
+                          height: 32,
                           child: Center(
                             child: isGeneralChat 
-                              ? const Icon(
+                              ? Icon(
                                     FontAwesomeIcons.comments,
-                                    color: Colors.black,
-                                    size: 22,
+                                    color: Colors.grey[700],
+                                    size: 18,
                                   )
-                              : offer.chatUrl.isNotEmpty // Eğer chat URL varsa ikonu göster
+                              : offer.chatUrl.isNotEmpty
                                 ? IconButton(
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(),
                                     icon: Icon(
                                       FontAwesomeIcons.comments,
                                       color: Theme.of(context).primaryColor,
-                                      size: 22,
+                                      size: 18,
                                     ),
                                     onPressed: () {
                                       Navigator.push(
@@ -166,13 +165,13 @@ class _OffersViewState extends State<OffersView> {
                                       );
                                     },
                                   )
-                                : CircleAvatar( // Chat URL yoksa varsayılan araba ikonu
-                                    backgroundColor: Theme.of(context).primaryColor.withOpacity(0.8),
-                                    radius: 18,
+                                : CircleAvatar( 
+                                    backgroundColor: Theme.of(context).primaryColor.withOpacity(0.7),
+                                    radius: 14,
                                     child: const Icon(
                                       Icons.directions_car,
                                       color: Colors.white,
-                                      size: 18,
+                                      size: 14,
                                     ),
                                   ),
                           ),
@@ -181,37 +180,38 @@ class _OffersViewState extends State<OffersView> {
                       title: Text(
                         isGeneralChat ? offer.tcNo : offer.plaka,
                         style: const TextStyle(
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(offer.code),
-                          const SizedBox(height: 4),
+                          Text(offer.code, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                          const SizedBox(height: 3),
                           if (!isGeneralChat && offer.statusText.isNotEmpty)
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
+                                horizontal: 6,
+                                vertical: 1.5,
                               ),
                               decoration: BoxDecoration(
                                 color: _parseColor(offer.statusColor, fallbackColor: Colors.grey),
-                                borderRadius: BorderRadius.circular(4),
+                                borderRadius: BorderRadius.circular(3),
                               ),
                               child: Text(
                                 offer.statusText,
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 10,
+                                  fontSize: 8,
                                 ),
                               ),
                             ),
                         ],
                       ),
                       trailing: isGeneralChat
-                        ? const Icon(Icons.arrow_forward_ios)
-                        : null, // Normal teklifler için trailing kaldırıldı
+                        ? Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[600])
+                        : null, 
                       onTap: () {
                         if (isGeneralChat) {
                           // GENEL SOHBET için WebView açılacak

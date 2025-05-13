@@ -136,8 +136,8 @@ class _OfferSuccessViewState extends State<OfferSuccessView> {
                   children: [
                     // Başarı ikonu
                     Container(
-                      width: 120,
-                      height: 120,
+                      width: 100,
+                      height: 100,
                       decoration: BoxDecoration(
                         color: Colors.green.shade50,
                         shape: BoxShape.circle,
@@ -145,10 +145,10 @@ class _OfferSuccessViewState extends State<OfferSuccessView> {
                       child: Icon(
                         Icons.check_circle,
                         color: Colors.green.shade700,
-                        size: 80,
+                        size: 70,
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 28),
                     
                     // Başlık
                     Text(
@@ -166,7 +166,7 @@ class _OfferSuccessViewState extends State<OfferSuccessView> {
                     Text(
                       widget.message,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 13,
                         color: Colors.black87,
                       ),
                       textAlign: TextAlign.center,
@@ -178,7 +178,7 @@ class _OfferSuccessViewState extends State<OfferSuccessView> {
                       onPressed: _navigateToHome,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1C3879),
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -186,8 +186,9 @@ class _OfferSuccessViewState extends State<OfferSuccessView> {
                       child: const Text(
                         'Ana Sayfaya Dön',
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          fontWeight: FontWeight.normal,
+                          color: Colors.black54,
                         ),
                       ),
                     ),

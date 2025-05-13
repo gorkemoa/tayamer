@@ -89,16 +89,18 @@ class _WebViewScreenState extends State<WebViewScreen> {
         backgroundColor: Theme.of(context).primaryColor,
         title: Text(
           widget.title,
-          style: const TextStyle(color: Colors.white),
+          style: const TextStyle(color: Colors.white, fontSize: 17),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: Colors.white, size: 22),
         actions: [
           IconButton(
-            icon: const Icon(Icons.open_in_browser, color: Colors.white),
+            icon: const Icon(Icons.open_in_browser, color: Colors.white, size: 22),
+            tooltip: 'Tarayıcıda Aç',
             onPressed: _openInBrowser,
           ),
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
+            icon: const Icon(Icons.refresh, color: Colors.white, size: 22),
+            tooltip: 'Yenile',
             onPressed: () => controller.reload(),
           ),
         ],
@@ -117,26 +119,29 @@ class _WebViewScreenState extends State<WebViewScreen> {
                 children: [
                   Icon(
                     Icons.error_outline,
-                    size: 64,
+                    size: 48,
                     color: Colors.red[300],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   const Text(
                     'Dosya yüklenirken bir hata oluştu',
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(fontSize: 14),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   ElevatedButton(
                     onPressed: _openInBrowser,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1D3A70),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      textStyle: const TextStyle(fontSize: 13)
                     ),
                     child: const Text('Tarayıcıda Aç'),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   TextButton(
                     onPressed: () => controller.reload(),
-                    child: const Text('Tekrar Dene'),
+                    child: const Text('Tekrar Dene', style: TextStyle(fontSize: 13)),
                   ),
                 ],
               ),
