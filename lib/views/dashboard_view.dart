@@ -62,9 +62,9 @@ class _DashboardViewState extends State<DashboardView> {
     final totalOffer = statistics?.totalOffer.toString();
     final totalPolicy = statistics?.totalPolicy.toString();
     
-    // Para formatında gösterim için 
-    final monthlyAmount = _formatAmount(statistics?.monthlyAmount ?? '');
-    final totalAmount = _formatAmount(statistics?.totalAmount ?? '');
+    // Para formatı kaldırıldı - verileri olduğu gibi gösterme
+    final monthlyAmount = statistics?.monthlyAmount ?? '';
+    final totalAmount = statistics?.totalAmount ?? '';
 
     return Scaffold(
       backgroundColor: Theme.of(context).primaryColor,
@@ -257,41 +257,23 @@ class _DashboardViewState extends State<DashboardView> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 21,
-              fontWeight: FontWeight.bold,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 21,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.visible,
+              ),
             ),
-            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
-  }
-
-  String _formatAmount(String amount) {
-    // "9000.00" formatını "9.000,00" formatına dönüştürmek için
-    try {
-      // Önce noktadan ayırıp virgüle çevirelim
-      var parts = amount.split('.');
-      String integer = parts[0];
-      String fraction = parts.length > 1 ? parts[1] : '00';
-      
-      // Binlik ayracı için
-      String formattedInteger = '';
-      int counter = 0;
-      for (int i = integer.length - 1; i >= 0; i--) {
-        counter++;
-        formattedInteger = integer[i] + formattedInteger;
-        if (counter % 3 == 0 && i > 0) {
-          formattedInteger = '.' + formattedInteger;
-        }
-      }
-      
-      return '$formattedInteger,$fraction';
-    } catch (e) {
-      return amount;
-    }
   }
 } 
