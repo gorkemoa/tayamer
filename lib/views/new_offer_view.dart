@@ -57,10 +57,6 @@ class _NewOfferViewState extends State<NewOfferView> {
         elevation: 0,
         title: const Text('Yeni Teklif', style: TextStyle(color: Color(0xFF1C3879))),
         centerTitle: true,
-        leading: Navigator.of(context).canPop() ? IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1C3879)),
-          onPressed: () => Navigator.of(context).pop(),
-        ) : null,
       ),
       body: Center(
         child: Column(
