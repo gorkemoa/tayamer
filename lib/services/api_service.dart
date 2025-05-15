@@ -144,8 +144,7 @@ class ApiService {
       print('Paket bilgileri alınırken hata: $e');
       // Hata durumunda varsayılan değerler
       return {
-        'version': '1.0.0',  // Varsayılan sürüm bilgisi
-        'buildNumber': '1',
+       
       };
     }
   }

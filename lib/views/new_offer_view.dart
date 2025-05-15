@@ -111,19 +111,65 @@ class _NewOfferViewState extends State<NewOfferView> {
   }
   
   void _showPolicyTypeBottomSheet() {
-    if (_isBottomSheetActive) return;
+    // Eğer bottom sheet zaten aktifse veya poliçe seçilmişse, 
+    // tıklamayı işleme alma durumunu kontrol et
+    if (_isBottomSheetActive) {
+      print("DEBUG-BS: Bottom sheet zaten aktif, sıfırlanıyor");
+      // Eğer bottom sheet zaten aktifse, önce bu durumu sıfırlayalım
+      setState(() {
+        _isBottomSheetActive = false;
+      });
+      // Kısa bir gecikme ekleyerek yeniden açılmasına izin verelim
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          print("DEBUG-BS: Bottom sheet yeniden açılıyor");
+          _actuallyShowBottomSheet();
+        }
+      });
+      return;
+    }
+    
+    if (_isPolicySelected) {
+      print("DEBUG-BS: Poliçe seçiliyken bottom sheet açma denemesi");
+      // Eğer poliçe seçilmişse, öncelikle bu durumu sıfırla
+      setState(() {
+        _isPolicySelected = false;
+      });
+    }
+    
+    print("DEBUG-BS: Bottom sheet açılıyor");
+    _actuallyShowBottomSheet();
+  }
+  
+  void _actuallyShowBottomSheet() {
+    if (!mounted) return;
+    
+    // Eğer hala aktifse, erken çık
+    if (_isBottomSheetActive) {
+      print("DEBUG-BS: _actuallyShowBottomSheet'te _isBottomSheetActive=true");
+      return;
+    }
     
     setState(() {
       _isBottomSheetActive = true;
     });
     
+    print("DEBUG-BS: Bottom sheet gösterilecek, _isBottomSheetActive=$_isBottomSheetActive");
+    
     // Animasyon için kısa gecikme
-    Future.delayed(const Duration(milliseconds: 50), () {
+    Future.delayed(const Duration(milliseconds: 100), () {
       if (!mounted) {
+        print("DEBUG-BS: mounted=false, bottom sheet iptal edildi");
         _isBottomSheetActive = false;
         return;
       }
       
+      if (!_isBottomSheetActive) {
+        print("DEBUG-BS: _isBottomSheetActive=false, bottom sheet iptal edildi");
+        return;
+      }
+      
+      print("DEBUG-BS: showModalBottomSheet çağrılıyor");
       showModalBottomSheet(
         context: context,
         isDismissible: true,
@@ -134,7 +180,10 @@ class _NewOfferViewState extends State<NewOfferView> {
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         builder: (context) => _buildPolicyBottomSheet(context),
-      ).then((_) => _handleBottomSheetClosed());
+      ).then((value) {
+        print("DEBUG-BS: Bottom sheet kapandı, _handleBottomSheetClosed çağrılıyor");
+        _handleBottomSheetClosed();
+      });
     });
   }
   
@@ -311,6 +360,7 @@ class _NewOfferViewState extends State<NewOfferView> {
     
     setState(() {
       _isPolicySelected = true;
+      _isBottomSheetActive = false;
     });
     
     // Seçilen poliçe tipini ViewModel'e kaydet
@@ -327,6 +377,7 @@ class _NewOfferViewState extends State<NewOfferView> {
         // Yeni sayfaya geçmeden önce güvenli bir şekilde state güncellemesi
         setState(() {
           _isPolicySelected = false;
+          _isBottomSheetActive = false;
         });
         
         Navigator.push(
@@ -437,6 +488,7 @@ class _NewOfferViewState extends State<NewOfferView> {
     
     setState(() {
       _isPolicySelected = true;
+      _isBottomSheetActive = false; // QR tarama sırasında bottom sheet'i devre dışı bırak
     });
     
     try {
@@ -456,6 +508,10 @@ class _NewOfferViewState extends State<NewOfferView> {
             onManualEntry: () {
               Navigator.of(context).pop();
               if (mounted) {
+                setState(() {
+                  _isPolicySelected = true;
+                  _isBottomSheetActive = false;
+                });
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => formPage),
@@ -465,6 +521,10 @@ class _NewOfferViewState extends State<NewOfferView> {
             onResult: (data) {
               Navigator.of(context).pop();
               if (mounted) {
+                setState(() {
+                  _isPolicySelected = true;
+                  _isBottomSheetActive = false;
+                });
                 // QR sonucunu form sayfasına aktar
                 Navigator.push(
                   context,
@@ -493,6 +553,18 @@ class _NewOfferViewState extends State<NewOfferView> {
             backgroundColor: Colors.red,
           ),
         );
+        
+        // Hata durumunda bottom sheet'i yeniden açmaya çalış
+        setState(() {
+          _isPolicySelected = false;
+          _isBottomSheetActive = false;
+        });
+        
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted) {
+            _showPolicyTypeBottomSheet();
+          }
+        });
       }
     } finally {
       if (mounted) {
@@ -510,14 +582,18 @@ class _NewOfferViewState extends State<NewOfferView> {
       _isBottomSheetActive = false;
     });
     
-    // Bottom sheet kapandığında herhangi bir yönlendirme yapmıyoruz
-    // Böylece kullanıcı en son görüntülediği sayfada kalacak
-    
-    // Eğer doğrudan yeni teklif sayfasına gelmiş ve geri gidilecek sayfa yoksa
-    // (Yani Navigator.of(context).canPop() false ise) ana sayfaya yönlendir
+    // Bottom sheet kapandığında, eğer hiçbir poliçe seçilmemişse ve
+    // doğrudan yeni teklif sayfasına gidildiyse (ana sayfa üzerinden değil)
+    // sadece şu koşulda ana sayfaya yönlendir:
+    // 1. Hiç poliçe seçilmemiş
+    // 2. Geri gidilecek sayfa yok (ilk açılan sayfa)
+    // 3. Kullanıcı kapatma ikonuna tıkladı
+    // Bu koşul çıkartılıyor, böylece otomatik yönlendirmeyi kaldırıyoruz
+    /*
     if (!_isPolicySelected && mounted && !Navigator.of(context).canPop()) {
       _navigateToHomeIndex(1);
     }
+    */
   }
 
   void _navigateToHomeIndex(int index) {
@@ -652,6 +728,14 @@ class _ManualEntryViewState extends State<ManualEntryView> {
           if (ancestor != null && ancestor.mounted) {
             ancestor.setState(() {
               ancestor._isPolicySelected = false;
+              ancestor._isBottomSheetActive = false;
+            });
+            
+            // Kısa bir gecikme ekleyerek bottom sheet'in tekrar açılabilmesini sağla
+            Future.delayed(const Duration(milliseconds: 300), () {
+              if (ancestor.mounted) {
+                ancestor._showPolicyTypeBottomSheet();
+              }
             });
           }
         }
@@ -681,6 +765,14 @@ class _ManualEntryViewState extends State<ManualEntryView> {
               if (ancestor != null && ancestor.mounted) {
                 ancestor.setState(() {
                   ancestor._isPolicySelected = false;
+                  ancestor._isBottomSheetActive = false;
+                });
+                
+                // Kısa bir gecikme ekleyerek bottom sheet'in tekrar açılabilmesini sağla
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  if (ancestor.mounted) {
+                    ancestor._showPolicyTypeBottomSheet();
+                  }
                 });
               }
               Navigator.of(context).pop();
@@ -1347,9 +1439,16 @@ class _QRScannerViewState extends State<QRScannerView> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.of(context).pop();
-            if (widget.parentState != null && widget.parentState!.mounted) {
-              widget.parentState!._showPolicyTypeBottomSheet();
-            }
+            // Geri butonuna basıldığında bottom sheet'i göster, 
+            // ancak kısa bir gecikme ekleyin ki navigasyon tamamlansın
+            Future.delayed(const Duration(milliseconds: 300), () {
+              if (widget.parentState != null && widget.parentState!.mounted) {
+                widget.parentState!.setState(() {
+                  widget.parentState!._isBottomSheetActive = false;
+                });
+                widget.parentState!._showPolicyTypeBottomSheet();
+              }
+            });
           },
         ),
         title: const Text('QR Kod Tarama'),

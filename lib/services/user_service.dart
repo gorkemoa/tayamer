@@ -1,9 +1,6 @@
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import 'api_service.dart';
-import 'http_interceptor.dart';
 import 'package:version/version.dart';
 import 'update_notifier.dart';
 
@@ -87,7 +84,12 @@ class UserService {
             data['data']['user'] is Map<String, dynamic>) {
           
           // Kullanıcı verisini data.user'dan al
-          final user = User.fromJson(data['data']['user']);
+          final userJson = data['data']['user'];
+          
+          // Güncel versiyon bilgisini doğrudan API'den al
+          userJson['userVersion'] = packageInfo['version'] ?? '';
+          
+          final user = User.fromJson(userJson);
           print('Kullanıcı bilgileri alındı: ${user.userFullname}');
           
           // Sürüm kontrolü yapılıyor
