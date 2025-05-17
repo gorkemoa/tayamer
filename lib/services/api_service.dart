@@ -136,8 +136,18 @@ class ApiService {
   Future<Map<String, String>> getPackageInfo() async {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
+      final String platform = getPlatform();
+      
+      // Platform bazında farklı sürüm numaraları
+      String version;
+      if (platform == 'ios') {
+        version = "2.3.7";  // iOS için özel versiyon
+      } else {
+        version = "2.3.5";  // Android için özel versiyon
+      }
+      
       return {
-        'version': packageInfo.version,
+        'version': version,
         'buildNumber': packageInfo.buildNumber,
       };
     } catch (e) {
