@@ -1,0 +1,72 @@
+flutter_native_splash:
+  # This package generates native code to customize Flutter's default white splash screen
+  # with background color and splash image. Customize the parameters below, and run
+  # the following command in the terminal:
+  # flutter pub run flutter_native_splash:create
+  # To restore Flutter's default white splash screen, run the following command in the terminal:
+  # flutter pub run flutter_native_splash:remove
+
+  # color or background_image is required.
+  color: "#ffffff"
+  # image: "assets/images/tayamer-logo.png"
+  
+  # Alternately use background_image to set a background image.
+  background_image: "assets/images/tayamer-logo.png"
+
+  # The image parameter allows you to specify an image used in the splash screen.
+  image: assets/images/tayamer-logo.png
+
+  # The branding property allows you to specify an image used as branding in the splash screen.
+  # branding: assets/dart.png
+  # branding_mode: contain
+
+  # The color_dark, background_image_dark, and image_dark are parameters that set the background
+  # and image when the device is in dark mode. If they are not specified, the app will use the
+  # parameters from above. If the image_dark parameter is specified, color_dark or
+  # background_image_dark must be specified.
+  color_dark: "#ffffff"
+  # background_image_dark: "assets/dark-background.png"
+  image_dark: assets/images/tayamer-logo.png
+
+  android_12:
+    # The image parameter sets the splash screen icon image.  If this parameter is not specified,
+    # the app's launcher icon will be used instead.
+    image: assets/images/tayamer-logo.png
+    # image_dark: assets/android12splash-invert.png
+
+    # Splash screen background color.
+    color: "#ffffff"
+    # color_dark: "#121212"
+
+    # App icon background color.
+    icon_background_color: "#ffffff"
+    # icon_background_color_dark: "#121212"
+
+  # The android, ios and web parameters can be used to disable generating a splash screen on a given
+  # platform.
+  android: true
+  ios: true
+  web: false
+
+  # platform_android:
+  #   image: assets/splash-android.png
+  #   color: "#ffffff"
+  #   icon_background_color: "#ffffff"
+  # platform_ios:
+  #   image: assets/splash-ios.png
+  #   color: "#ffffff"
+
+  # The position of the splash image can be set with android_gravity, ios_content_mode, and
+  # web_image_mode parameters.  All default to center.
+  android_gravity: center
+  ios_content_mode: center
+
+  # To hide the notification bar, use the fullscreen parameter
+  fullscreen: true
+
+  # If you have changed the name(s) of your info.plist file(s), you can specify the filename(s)
+  # with the info_plist_files parameter.  Remove only the # characters in the three lines below,
+  # do not remove any spaces:
+  #info_plist_files:
+  #  - 'ios/Runner/Info-Debug.plist'
+  #  - 'ios/Runner/Info-Release.plist' 

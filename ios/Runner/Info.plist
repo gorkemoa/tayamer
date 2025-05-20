@@ -1,116 +1,117 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
-	<key>CFBundleDevelopmentRegion</key>
-	<string>$(DEVELOPMENT_LANGUAGE)</string>
-	<key>CFBundleDisplayName</key>
-	<string>Tayamer</string>
-	<key>CFBundleExecutable</key>
-	<string>$(EXECUTABLE_NAME)</string>
-	<key>CFBundleIdentifier</key>
-	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
-	<key>CFBundleName</key>
-	<string>tayamer</string>
-	<key>CFBundlePackageType</key>
-	<string>APPL</string>
-	<key>CFBundleShortVersionString</key>
-	<string>$(FLUTTER_BUILD_NAME)</string>
-	<key>CFBundleSignature</key>
-	<string>????</string>
-	<key>CFBundleVersion</key>
-	<string>$(FLUTTER_BUILD_NUMBER)</string>
-	<key>FLTEnableImpeller</key>
-	<false/>
-	<key>FirebaseAppDelegateProxyEnabled</key>
-	<false/>
-	<key>LSRequiresIPhoneOS</key>
-	<true/>
-	<key>NSBundleDisplayName</key>
-	<string>Tayamer</string>
-	<key>NSBundleIdentifier</key>
-	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-	<key>NSBundleName</key>
-	<string>Tayamer</string>
-	<key>NSCalendarsUsageDescription</key>
-	<string>Takvim izni gerekmemektedir</string>
-	<key>NSCameraUsageDescription</key>
-	<string>QR kod taraması yapabilmek için kamera izni gerekiyor</string>
-	<key>NSContactsUsageDescription</key>
-	<string>Kişiler izni gerekmemektedir</string>
-	<key>NSFileProviderDomainUsageDescription</key>
-	<string>Uygulama QR kod işlemek için dosya erişimine ihtiyaç duyar</string>
-	<key>NSFileProviderPresenceUsageDescription</key>
-	<string>Uygulama QR kod işlemek için dosya erişimine ihtiyaç duyar</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>QR kod içeren görselleri seçebilmek için galeri erişim izni gerekiyor</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Galeriye fotoğraf kaydetmek için izin gerekir</string>
-	<key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
-	<true/>
-	<key>NSAppleMusicUsageDescription</key>
-	<string>Medya erişimi gerekmemektedir</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Mikrofon erişimi gerekmemektedir</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Konum erişimi gerekmemektedir</string>
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>Konum erişimi gerekmemektedir</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Konum erişimi gerekmemektedir</string>
-	<key>NSUserNotificationAlertStyle</key>
-	<string>alert</string>
-	<key>NSUserNotificationCenterDelegate</key>
-	<string>$(PRODUCT_MODULE_NAME).AppDelegate</string>
-	<key>NSUserNotificationEnabled</key>
-	<true/>
-	<key>NSUserNotificationUsageDescription</key>
-	<string>Bildirimler aracılığıyla size önemli güncellemeler ve doğrulama kodları göndereceğiz.</string>
-	<key>NSUserNotificationsUsageDescription</key>
-	<string>Bildirimler aracılığıyla size önemli güncellemeler ve doğrulama kodları göndereceğiz.</string>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>fetch</string>
-		<string>remote-notification</string>
-	</array>
-	<key>LSSupportsOpeningDocumentsInPlace</key>
-	<true/>
-	<key>UIFileSharingEnabled</key>
-	<true/>
-
-	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
-	<key>UIMainStoryboardFile</key>
-	<string>Main</string>
-	<key>UISupportedInterfaceOrientations</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>UISupportedInterfaceOrientations~ipad</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>io.flutter.embedded_views_preview</key>
-	<true/>
-	<key>UIViewControllerBasedStatusBarAppearance</key>
-	<false/>
-	<key>LSApplicationQueriesSchemes</key>
-	<array>
-		<string>photos-redirect</string>
-		<string>photos</string>
-	</array>
-	<key>UISupportsDocumentBrowser</key>
-	<true/>
-</dict>
+	<dict>
+		<key>CADisableMinimumFrameDurationOnPhone</key>
+		<true/>
+		<key>CFBundleDevelopmentRegion</key>
+		<string>$(DEVELOPMENT_LANGUAGE)</string>
+		<key>CFBundleDisplayName</key>
+		<string>Tayamer</string>
+		<key>CFBundleExecutable</key>
+		<string>$(EXECUTABLE_NAME)</string>
+		<key>CFBundleIdentifier</key>
+		<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+		<key>CFBundleInfoDictionaryVersion</key>
+		<string>6.0</string>
+		<key>CFBundleName</key>
+		<string>tayamer</string>
+		<key>CFBundlePackageType</key>
+		<string>APPL</string>
+		<key>CFBundleShortVersionString</key>
+		<string>$(FLUTTER_BUILD_NAME)</string>
+		<key>CFBundleSignature</key>
+		<string>????</string>
+		<key>CFBundleVersion</key>
+		<string>$(FLUTTER_BUILD_NUMBER)</string>
+		<key>FLTEnableImpeller</key>
+		<false/>
+		<key>FirebaseAppDelegateProxyEnabled</key>
+		<false/>
+		<key>LSRequiresIPhoneOS</key>
+		<true/>
+		<key>NSBundleDisplayName</key>
+		<string>Tayamer</string>
+		<key>NSBundleIdentifier</key>
+		<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+		<key>NSBundleName</key>
+		<string>Tayamer</string>
+		<key>NSCalendarsUsageDescription</key>
+		<string>Takvim izni gerekmemektedir</string>
+		<key>NSCameraUsageDescription</key>
+		<string>QR kod taraması yapabilmek için kamera izni gerekiyor</string>
+		<key>NSContactsUsageDescription</key>
+		<string>Kişiler izni gerekmemektedir</string>
+		<key>NSFileProviderDomainUsageDescription</key>
+		<string>Uygulama QR kod işlemek için dosya erişimine ihtiyaç duyar</string>
+		<key>NSFileProviderPresenceUsageDescription</key>
+		<string>Uygulama QR kod işlemek için dosya erişimine ihtiyaç duyar</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>QR kod içeren görselleri seçebilmek için galeri erişim izni gerekiyor</string>
+		<key>NSPhotoLibraryAddUsageDescription</key>
+		<string>Galeriye fotoğraf kaydetmek için izin gerekir</string>
+		<key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
+		<true/>
+		<key>NSAppleMusicUsageDescription</key>
+		<string>Medya erişimi gerekmemektedir</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>Mikrofon erişimi gerekmemektedir</string>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>Konum erişimi gerekmemektedir</string>
+		<key>NSLocationAlwaysUsageDescription</key>
+		<string>Konum erişimi gerekmemektedir</string>
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>Konum erişimi gerekmemektedir</string>
+		<key>NSUserNotificationAlertStyle</key>
+		<string>alert</string>
+		<key>NSUserNotificationCenterDelegate</key>
+		<string>$(PRODUCT_MODULE_NAME).AppDelegate</string>
+		<key>NSUserNotificationEnabled</key>
+		<true/>
+		<key>NSUserNotificationUsageDescription</key>
+		<string>Bildirimler aracılığıyla size önemli güncellemeler ve doğrulama kodları göndereceğiz.</string>
+		<key>NSUserNotificationsUsageDescription</key>
+		<string>Bildirimler aracılığıyla size önemli güncellemeler ve doğrulama kodları göndereceğiz.</string>
+		<key>UIApplicationSupportsIndirectInputEvents</key>
+		<true/>
+		<key>UIBackgroundModes</key>
+		<array>
+			<string>fetch</string>
+			<string>remote-notification</string>
+		</array>
+		<key>LSSupportsOpeningDocumentsInPlace</key>
+		<true/>
+		<key>UIFileSharingEnabled</key>
+		<true/>
+		<key>UILaunchStoryboardName</key>
+		<string>LaunchScreen</string>
+		<key>UIMainStoryboardFile</key>
+		<string>Main</string>
+		<key>UISupportedInterfaceOrientations</key>
+		<array>
+			<string>UIInterfaceOrientationPortrait</string>
+			<string>UIInterfaceOrientationLandscapeLeft</string>
+			<string>UIInterfaceOrientationLandscapeRight</string>
+		</array>
+		<key>UISupportedInterfaceOrientations~ipad</key>
+		<array>
+			<string>UIInterfaceOrientationPortrait</string>
+			<string>UIInterfaceOrientationPortraitUpsideDown</string>
+			<string>UIInterfaceOrientationLandscapeLeft</string>
+			<string>UIInterfaceOrientationLandscapeRight</string>
+		</array>
+		<key>io.flutter.embedded_views_preview</key>
+		<true/>
+		<key>UIViewControllerBasedStatusBarAppearance</key>
+		<false/>
+		<key>LSApplicationQueriesSchemes</key>
+		<array>
+			<string>photos-redirect</string>
+			<string>photos</string>
+		</array>
+		<key>UISupportsDocumentBrowser</key>
+		<true/>
+		<key>UIStatusBarHidden</key>
+		<true/>
+	</dict>
 </plist>

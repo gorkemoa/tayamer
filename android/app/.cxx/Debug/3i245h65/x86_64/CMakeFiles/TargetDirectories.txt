@@ -1,0 +1,2 @@
+/Users/gorkem/Projeler/tayamer/android/app/.cxx/Debug/3i245h65/x86_64/CMakeFiles/edit_cache.dir
+/Users/gorkem/Projeler/tayamer/android/app/.cxx/Debug/3i245h65/x86_64/CMakeFiles/rebuild_cache.dir

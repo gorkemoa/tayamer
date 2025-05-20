@@ -18,13 +18,19 @@ tasks.register("clean", Delete) {
 
 // Buildscript bloğu
 buildscript {
+    ext {
+        kotlin_version = '1.9.20'
+        java_version = JavaVersion.VERSION_11
+    }
     repositories {
         google()
         mavenCentral()
+        jcenter()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.2.2'
         classpath 'com.google.gms:google-services:4.4.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
@@ -33,17 +39,41 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        jcenter()
     }
 }
 
-// 💡 Eksik namespace'ler için varsayılan olarak com.office701.tayamer ile başlayan bir yapı atanır
-subprojects {
-    project.plugins.withId("com.android.library") {
-        project.android {
-            if (!project.android.hasProperty("namespace")) {
-                namespace = "com.office701.tayamer.${project.name.replace('-', '_')}"
-            }
+// Kotlin metadata sürüm kontrolünü devre dışı bırak
+allprojects {
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions {
+            freeCompilerArgs += [
+                "-Xskip-metadata-version-check",
+                "-Xsuppress-version-warnings"
+            ]
         }
+    }
+}
+
+// Alt projelere namespace ataması yapmak için pluginManager hook'unu kullanalım
+pluginManager.withPlugin('com.android.library') { plugin ->
+    android {
+        if (!hasProperty('namespace') || namespace == null) {
+            namespace = "com.office701.tayamer.${project.name.replace('-', '_')}"
+        }
+        println("📦 ${project.name} için namespace: ${namespace}")
+        
+        compileOptions {
+            sourceCompatibility = rootProject.ext.java_version
+            targetCompatibility = rootProject.ext.java_version
+        }
+    }
+}
+
+// Tüm alt projelere print uygula
+subprojects {
+    pluginManager.withPlugin('com.android.library') {
+        println("🛠️ ${project.name} eklentisi yapılandırılıyor...")
     }
 }
 
